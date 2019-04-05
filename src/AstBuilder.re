@@ -76,79 +76,124 @@ let numberIsValidForBase = (base, atomNucleus) =>
 type numState('a, 'b) = {
   numBase: option(base),
   numString: string,
-  numSup: 'a,
   numHasDecimal: bool,
-  imag: bool,
-  imagSup: 'a,
-  magSup: 'a,
+  numSup: option(SciLine.t),
+  imag: option(SciLine.t),
+  magSup: option(SciLine.t),
+  degree: option(SciLine.t),
+  arcMin: option(SciLine.t),
+  arcSec: option(SciLine.t),
 };
 
-let reduceNumberState = (state, element) =>
+let rec reduceNumberState = (state, element) =>
   switch (state, element) {
-  | ({numString: "", numBase: None, imag: false}, `Base(numBase)) =>
+  | ({numString: "", numBase: None, imag: None}, `Base(numBase)) =>
     Some({...state, numBase: Some(numBase)})
   | (
-      {numSup: Empty, imag: false, magSup: Empty},
+      {numSup: None, imag: None, magSup: None},
       `Digit({atomNucleus, superscript}),
     )
       when numberIsValidForBase(state.numBase, atomNucleus) =>
-    Some({
-      ...state,
-      numString: state.numString ++ atomNucleus,
-      numSup: superscript,
-    })
+    let numSup =
+      switch (superscript) {
+      | Node(v) => Some(v)
+      | _ => None
+      };
+    Some({...state, numString: state.numString ++ atomNucleus, numSup});
   | (
-      {numHasDecimal: false, numSup: Empty, imag: false, magSup: Empty},
+      {numHasDecimal: false, numSup: None, imag: None, magSup: None},
       `DecimalSeparator,
     ) =>
     Some({...state, numString: state.numString ++ ".", numHasDecimal: true})
   /* Allow 3^2i, 3^2 i^2, but not 3i^2, because that's ambiguous */
   | (
-      {numSup: Node(_), magSup: Empty, imag: false},
-      `ImaginaryUnit(Empty as superscript),
-    )
-  | (
-      {numSup: Empty, magSup: Empty, imag: false},
-      `ImaginaryUnit((Node(_) | Empty) as superscript),
+      {numSup: Some(_) | None, magSup: None, imag: None},
+      `ImaginaryUnit(Empty),
     ) =>
-    Some({...state, imagSup: superscript, imag: true})
-  | (_, `Magnitude(magSup)) when state.numString != "" =>
-    Some({...state, magSup})
+    Some({...state, imag: Some(SciLine.i)})
+  | (
+      {numSup: None, magSup: None, imag: None},
+      `ImaginaryUnit(Node(imagSuperscript)),
+    ) =>
+    Some({...state, imag: Some(SciLine.pow(SciLine.i, imagSuperscript))})
+  | (_, `Magnitude(Node(magSuperscript))) when state.numString != "" =>
+    Some({...state, magSup: Some(magSuperscript)})
+  | (
+      {numSup: None, imag: None, degree: None, arcMin: None, arcSec: None},
+      `Degree,
+    ) =>
+    parseNumber(state)
+    ->Belt.Option.map(degree => {
+        let degree =
+          degree
+          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.of_int(180)))
+          ->Some;
+        {...initialNumberState, degree};
+      })
+  | ({numSup: None, imag: None, arcMin: None, arcSec: None}, `ArcMinute) =>
+    parseNumber(state)
+    ->Belt.Option.map(arcMin => {
+        let {degree} = state;
+        let arcMin =
+          arcMin
+          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.of_int(10800)))
+          ->Some;
+        {...initialNumberState, degree, arcMin};
+      })
+  | ({numSup: None, imag: None, arcSec: None}, `ArcSecond) =>
+    parseNumber(state)
+    ->Belt.Option.map(arcSec => {
+        let {degree, arcMin} = state;
+        let arcSec =
+          arcSec
+          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.of_int(648000)))
+          ->Some;
+        {...initialNumberState, degree, arcMin, arcSec};
+      })
   | _ => None
-  };
-let numberForState = ({numBase, numString, numSup, imag, magSup}) =>
+  }
+and parseNumber = ({numBase, numString, numSup, imag, magSup}) =>
   if ((numBase == None || numString != "")
-      && (imag || numString != "")
+      && (imag != None || numString != "")
       && numString != ".") {
-    let stringWithBase =
+    let num =
       numBase->Belt.Option.mapWithDefault("", stringOfBase) ++ numString;
+    let out = num == "" ? SciLine.one : SciLine.of_string(num);
+    let out = numSup->Belt.Option.mapWithDefault(out, SciLine.pow(out));
     let out =
-      switch (stringWithBase, imag) {
-      | ("", true) => SciLine.i
-      | (s, true) => SciLine.mul(SciLine.of_string(s), SciLine.i)
-      | (s, false) => SciLine.of_string(s)
-      };
-    let out =
-      switch (nodeWithSuperscript(numSup, out), magSup) {
-      | (`Ok(a), Node(mag)) =>
-        `Ok(SciLine.mul(a, SciLine.pow(SciLine.of_int(10), mag)))
-      | (`Ok(_) as a, Empty) => a
-      | (`Error(_) as e, _) => e
-      | (_, Error(i)) => `Error(i)
-      };
+      magSup
+      ->Belt.Option.map(SciLine.mul(SciLine.of_int(10)))
+      ->Belt.Option.mapWithDefault(out, SciLine.mul(out));
+    let out = imag->Belt.Option.mapWithDefault(out, SciLine.mul(out));
     Some(out);
   } else {
     None;
-  };
-
-let initialNumberState = {
+  }
+and numberForState = ({degree, arcMin, arcSec} as s) =>
+  if (degree == None && arcMin == None && arcSec == None) {
+    parseNumber(s);
+  } else if (s.numBase == None
+             && s.numString == ""
+             && s.imag == None
+             && s.magSup == None) {
+    let out = SciLine.zero;
+    let out = degree->Belt.Option.mapWithDefault(out, SciLine.add(out));
+    let out = arcMin->Belt.Option.mapWithDefault(out, SciLine.add(out));
+    let out = arcSec->Belt.Option.mapWithDefault(out, SciLine.add(out));
+    Some(out);
+  } else {
+    None;
+  }
+and initialNumberState = {
   numBase: None,
   numString: "",
-  numSup: Empty,
+  numSup: None,
   numHasDecimal: false,
-  imag: false,
-  imagSup: Empty,
-  magSup: Empty,
+  imag: None,
+  magSup: None,
+  degree: None,
+  arcMin: None,
+  arcSec: None,
 };
 
 let rec parseRest = (~current=Empty, elements) =>
@@ -187,8 +232,7 @@ let parseNumbers = elements => {
     | Some((state, after)) => iter(state, after)
     | None =>
       switch (numberForState(state)) {
-      | Some(`Ok(number)) => next([Resolved(number), ...rest])
-      | Some(`Error(i)) => Error(i)
+      | Some(number) => next([Resolved(number), ...rest])
       | None => next(elements)
       }
     };
@@ -319,13 +363,14 @@ let mapElement = (element, i) =>
   switch (element) {
   | `Placeholder(_) => `Error(i)
   | (
-      `Base(_) | `Digit(_) | `Magnitude(_) | `ImaginaryUnit(_) | `Operator(_) |
-      `Factorial |
+      `Base(_) | `Operator(_) | `OpenBracket | `DecimalSeparator | `Factorial |
       `Degree |
       `ArcMinute |
       `ArcSecond |
-      `OpenBracket |
-      `CloseBracket(_)
+      `ImaginaryUnit(_) |
+      `Magnitude(_) |
+      `CloseBracket(_) |
+      `Digit(_)
     ) as e =>
     `Ok(Unresolved(e, i))
   | `Function(fn) => `Ok(UnresolvedFunction(GenericFunction(fn), i))
@@ -348,6 +393,15 @@ let mapElement = (element, i) =>
     SciLine.div(fracNum, den)->partialNodeWithSuperscript(superscript)
   | `Abs({absArg: Node(absArg), superscript}) =>
     SciLine.abs(absArg)->partialNodeWithSuperscript(superscript)
+  | `Sqrt({rootRadicand: Node(rootRadicand), superscript}) =>
+    SciLine.sqrt(rootRadicand)->partialNodeWithSuperscript(superscript)
+  | `NRoot({
+      nrootDegree: Node(nrootDegree),
+      radicand: Node(radicand),
+      superscript,
+    }) =>
+    SciLine.pow(radicand, SciLine.div(SciLine.one, nrootDegree))
+    ->partialNodeWithSuperscript(superscript)
   | `Table({tableElements, superscript, numRows, numColumns})
       when tableElements->Belt.Array.every(isNode) =>
     let tableElements = tableElements->Belt.Array.map(toNode);

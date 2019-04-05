@@ -18,8 +18,11 @@ let wrapSuperscript = (~attributes=?, superscript, element) =>
   | s => createElement(~attributes?, "msup", element ++ s)
   };
 
-let elementWithIndex = (~superscript="", element, i, i', body) => {
-  let attributes = [("id", string_of_int(i) ++ ":" ++ string_of_int(i'))];
+let elementWithIndex = (~attributes=[], ~superscript="", element, i, i', body) => {
+  let attributes = [
+    ("id", string_of_int(i) ++ ":" ++ string_of_int(i')),
+    ...attributes,
+  ];
   switch (superscript) {
   | "" => createElement(~attributes, element, body)
   | s => wrapSuperscript(~attributes, s, createElement(element, body))
@@ -92,8 +95,9 @@ let reduceFn = (accum, element, i, i') =>
       elementWithIndex(~superscript, "mo", i, i', ")")->concatAccum(accum)
     }
   | `Placeholder(superscript) =>
-    elementWithIndex(~superscript, "mi", i, i', "&#x25a1;")
-    ->concatAccum(accum)
+    let attributes = [("class", "placeholder")];
+    elementWithIndex(~attributes, ~superscript, "mi", i, i', "&#x25a1;")
+    ->concatAccum(accum);
   | `Base(base) =>
     (stringOfBase(base) |> elementWithIndex("mn", i, i'))
     ->concatAccum(accum)
