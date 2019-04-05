@@ -154,16 +154,12 @@ let reduceFn = (accum, element, i, i') =>
       accum,
     )
   | `Abs({absArg, superscript}) =>
+    let body =
+      createElement("mo", "|") ++ absArg ++ createElement("mo", "|");
     concatAccum(
-      createElement(
-        "mrow",
-        elementWithIndex("mo", i, i', "|")
-        ++ absArg
-        ++ elementWithIndex("mo", i, i', "|"),
-      )
-      |> wrapSuperscript(superscript),
+      elementWithIndex("mrow", i, i', body) |> wrapSuperscript(superscript),
       accum,
-    )
+    );
   | `Sum({rangeStart, rangeEnd}) =>
     concatAccum(
       elementWithIndex("mo", i, i', "&#x2211;")
