@@ -8,3 +8,4 @@ let parse = elements =>
   };
 let keys = Keys.keys;
 let commands = Keys.commands;
+let customAtom = (value, mml) => Keys.customAtom(~value, ~mml);

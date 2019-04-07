@@ -128,6 +128,8 @@ let reduceFn = (accum, element, i, i') =>
   | `Constant({constant, superscript}) =>
     atomLikeWithIndex(~superscript, "mi", i, i', stringOfConstant(constant))
     ->concatAccum(accum)
+  | `CustomAtom({mml, superscript}) =>
+    atomLikeWithIndex(~superscript, "mrow", i, i', mml)->concatAccum(accum)
   | `Function(f) =>
     elementWithIndex("mi", i, i', stringOfFunction(f))->concatAccum(accum)
   | `Factorial => elementWithIndex("mo", i, i', "!")->concatAccum(accum)

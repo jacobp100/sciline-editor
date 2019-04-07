@@ -1,3 +1,5 @@
+module SciLine = ScilineCalculator.SciLine;
+
 type base =
   | Bin
   | Oct
@@ -22,6 +24,11 @@ type atom('a) = {
 };
 type constantAtom('a) = {
   constant,
+  superscript: 'a,
+};
+type customAtom('a) = {
+  customAtomValue: SciLine.t,
+  mml: string,
   superscript: 'a,
 };
 type frac('a) = {
@@ -71,6 +78,7 @@ type t = [
   | `Digit(atom(list(t)))
   | `Variable(atom(list(t)))
   | `Constant(constantAtom(list(t)))
+  | `CustomAtom(customAtom(list(t)))
   | `Frac(frac(list(t)))
   | `Sqrt(root(list(t)))
   | `NRoot(nroot(list(t)))

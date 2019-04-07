@@ -123,6 +123,8 @@ let separateAtomLikeSuperscript = element =>
     Some((`Variable({atomNucleus, superscript: []}), superscript))
   | `Constant({constant, superscript}) =>
     Some((`Constant({constant, superscript: []}), superscript))
+  | `CustomAtom({customAtomValue, mml, superscript}) =>
+    Some((`CustomAtom({customAtomValue, mml, superscript: []}), superscript))
   | `ImaginaryUnit(superscript) => Some((`ImaginaryUnit([]), superscript))
   /* | `CloseBracket(superscript) => Some((`CloseBracket([]), superscript)) */
   | _ => None
@@ -153,6 +155,8 @@ let coalesceWithSuperscript = (element, superscript) =>
     Some(`Variable({atomNucleus, superscript}))
   | `Constant({constant, superscript: []}) =>
     Some(`Constant({constant, superscript}))
+  | `CustomAtom({customAtomValue, mml, superscript: []}) =>
+    Some(`CustomAtom({customAtomValue, mml, superscript}))
   | `Frac({fracNum, den, superscript: []}) =>
     Some(`Frac({fracNum, den, superscript}))
   | `Sqrt({rootRadicand, superscript: []}) =>
@@ -240,6 +244,7 @@ let shouldDeleteElement = element =>
   | `Digit({atomNucleus: _, superscript})
   | `Variable({atomNucleus: _, superscript})
   | `Constant({constant: _, superscript})
+  | `CustomAtom({customAtomValue: _, superscript})
   | `ImaginaryUnit(superscript)
   | `CloseBracket(superscript) => superscript == []
   | `Placeholder(superscript) => isEmpty(superscript)

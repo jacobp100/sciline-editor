@@ -382,6 +382,8 @@ let mapElement = (element, i) =>
     `Ok(UnresolvedFunction(Product({rangeStart, rangeEnd}), i))
   | `Variable({atomNucleus, superscript}) =>
     SciLine.variable(atomNucleus)->partialNodeWithSuperscript(superscript)
+  | `CustomAtom({customAtomValue, superscript}) =>
+    customAtomValue->partialNodeWithSuperscript(superscript)
   | `Constant({constant, superscript}) =>
     let c =
       switch (constant) {

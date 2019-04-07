@@ -81,3 +81,6 @@ Js.Dict.set(commands, "magnitude", `Magnitude([]));
 Js.Dict.set(commands, "degree", `Degree);
 Js.Dict.set(commands, "arcminute", `ArcMinute);
 Js.Dict.set(commands, "arcsecond", `ArcSecond);
+
+let customAtom = (~value as customAtomValue, ~mml) =>
+  `CustomAtom({customAtomValue, mml, superscript: []});

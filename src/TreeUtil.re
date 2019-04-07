@@ -44,6 +44,11 @@ let walkI = (elements, initValue, finalize, fn) => {
       let (i', superscript) = iterAtomLike(i, superscript);
       let accum = fn(accum, `Constant({constant, superscript}), i, i');
       (i', accum);
+    | `CustomAtom({customAtomValue, mml, superscript}) =>
+      let (i', superscript) = iterAtomLike(i, superscript);
+      let accum =
+        fn(accum, `CustomAtom({customAtomValue, mml, superscript}), i, i');
+      (i', accum);
     | `Frac({fracNum, den, superscript}) =>
       let (i', fracNum, den, superscript) =
         iterArgs3(i, fracNum, den, superscript);
