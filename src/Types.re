@@ -12,8 +12,17 @@ type binaryOperator =
   | Dot;
 type func =
   | Sin
+  | Arcsin
+  | Sinh
+  | Arcsinh
   | Cos
+  | Arccos
+  | Cosh
+  | Arccosh
   | Tan
+  | Arctan
+  | Tanh
+  | Arctanh
   | Log;
 type constant =
   | Pi

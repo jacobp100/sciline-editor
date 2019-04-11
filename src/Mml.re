@@ -52,8 +52,17 @@ let stringOfOperator = x =>
 let stringOfFunction = x =>
   switch (x) {
   | Sin => "sin"
+  | Arcsin => "arcsin"
+  | Sinh => "sinh"
+  | Arcsinh => "arcsinh"
   | Cos => "cos"
+  | Arccos => "arccos"
+  | Cosh => "cosh"
+  | Arccosh => "arccosh"
   | Tan => "tan"
+  | Arctan => "arctan"
+  | Tanh => "tanh"
+  | Arctanh => "arctanh"
   | Log => "log"
   };
 

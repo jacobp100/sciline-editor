@@ -30,10 +30,25 @@ let partialNodeWithSuperscript = (a, superscript) =>
   | `Error(_) as err => err
   };
 
+let handleGenericFunction = (arg, fn) =>
+  switch (fn) {
+  | Sin => SciLine.sin(arg)
+  | Arcsin => SciLine.asin(arg)
+  | Sinh => SciLine.sinh(arg)
+  | Arcsinh => SciLine.asinh(arg)
+  | Cos => SciLine.cos(arg)
+  | Arccos => SciLine.acos(arg)
+  | Cosh => SciLine.cosh(arg)
+  | Arccosh => SciLine.acosh(arg)
+  | Tan => SciLine.tan(arg)
+  | Arctan => SciLine.atan(arg)
+  | Tanh => SciLine.tanh(arg)
+  | Arctanh => SciLine.atanh(arg)
+  | Log => SciLine.log(arg)
+  };
 let handleFunction = (arg, fn) =>
   switch (fn) {
-  | GenericFunction(Sin) => SciLine.sin(arg)
-  | GenericFunction(_) => failwith("TODO")
+  | GenericFunction(fn) => handleGenericFunction(arg, fn)
   | NLog({nlogBase}) =>
     SciLine.div(SciLine.log(arg), SciLine.log(nlogBase))
   | Sum({rangeStart, rangeEnd}) => SciLine.sum(rangeStart, rangeEnd, arg)
