@@ -48,7 +48,6 @@ let stringOfOperator = x =>
   | Div => "&div;"
   | Dot => "&#xb7;"
   };
-
 let stringOfFunction = x =>
   switch (x) {
   | Sin => "sin"
@@ -65,7 +64,12 @@ let stringOfFunction = x =>
   | Arctanh => "arctanh"
   | Log => "log"
   };
-
+let stringOfBase = base =>
+  switch (base) {
+  | Bin => "0b"
+  | Oct => "0o"
+  | Hex => "0x"
+  };
 let stringOfConstant = constant =>
   switch (constant) {
   | Pi => "&pi;"

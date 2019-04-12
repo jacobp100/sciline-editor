@@ -29,6 +29,10 @@ Js.Dict.set(keys, "(", `OpenBracket);
 Js.Dict.set(keys, ")", `CloseBracket([]));
 
 let commands: Js.Dict.t(t) = Js.Dict.empty();
+Js.Dict.set(commands, "base2", `Base(Bin));
+Js.Dict.set(commands, "base8", `Base(Oct));
+Js.Dict.set(commands, "base16", `Base(Hex));
+Js.Dict.set(commands, "exp", `Magnitude([]));
 Js.Dict.set(commands, "sqrt", `Sqrt({rootRadicand: [], superscript: []}));
 Js.Dict.set(
   commands,

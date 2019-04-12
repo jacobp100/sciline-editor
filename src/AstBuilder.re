@@ -141,7 +141,7 @@ let rec reduceNumberState = (state, element) =>
     ->Belt.Option.map(degree => {
         let degree =
           degree
-          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.of_int(180)))
+          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.ofInt(180)))
           ->Some;
         {...initialNumberState, degree};
       })
@@ -151,7 +151,7 @@ let rec reduceNumberState = (state, element) =>
         let {degree} = state;
         let arcMin =
           arcMin
-          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.of_int(10800)))
+          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.ofInt(10800)))
           ->Some;
         {...initialNumberState, degree, arcMin};
       })
@@ -161,7 +161,7 @@ let rec reduceNumberState = (state, element) =>
         let {degree, arcMin} = state;
         let arcSec =
           arcSec
-          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.of_int(648000)))
+          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.ofInt(648000)))
           ->Some;
         {...initialNumberState, degree, arcMin, arcSec};
       })
@@ -171,13 +171,19 @@ and parseNumber = ({numBase, numString, numSup, imag, magSup}) =>
   if ((numBase == None || numString != "")
       && (imag != None || numString != "")
       && numString != ".") {
-    let num =
-      numBase->Belt.Option.mapWithDefault("", stringOfBase) ++ numString;
-    let out = num == "" ? SciLine.one : SciLine.of_string(num);
+    let base =
+      switch (numBase) {
+      | Some(Bin) => 2
+      | Some(Oct) => 8
+      | Some(Hex) => 16
+      | None => 10
+      };
+    let out =
+      numString == "" ? SciLine.one : SciLine.ofStringBase(base, numString);
     let out = numSup->Belt.Option.mapWithDefault(out, SciLine.pow(out));
     let out =
       magSup
-      ->Belt.Option.map(SciLine.mul(SciLine.of_int(10)))
+      ->Belt.Option.map(SciLine.pow(SciLine.ofInt(10)))
       ->Belt.Option.mapWithDefault(out, SciLine.mul(out));
     let out = imag->Belt.Option.mapWithDefault(out, SciLine.mul(out));
     Some(out);
@@ -422,7 +428,7 @@ let mapElement = (element, i) =>
   | `Table({tableElements, superscript, numRows, numColumns})
       when tableElements->Belt.Array.every(isNode) =>
     let tableElements = tableElements->Belt.Array.map(toNode);
-    SciLine.matrix_of_elements(numRows, numColumns, tableElements)
+    SciLine.matrixOfElements(numRows, numColumns, tableElements)
     ->partialNodeWithSuperscript(superscript);
   | _ => `Error(i)
   };

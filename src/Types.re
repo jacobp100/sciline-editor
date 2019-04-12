@@ -97,10 +97,3 @@ type t = [
   | `Product(range(list(t)))
   | `Table(table(list(t)))
 ];
-
-let stringOfBase = base =>
-  switch (base) {
-  | Bin => "0b"
-  | Oct => "0o"
-  | Hex => "0x"
-  };
