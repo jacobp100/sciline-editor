@@ -110,8 +110,10 @@ and combineElements = (element, (before, after)) =>
   if (before == [] && after == []) {
     [element];
   } else {
-    Belt.List.concat(before, [element, ...after])
-    ->expandInsertedElementsInRow;
+    Belt.List.concat(
+      before,
+      [element, ...expandInsertedElementsInRow(after)],
+    );
   };
 
 /* This preserves indices */

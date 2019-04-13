@@ -1,5 +1,6 @@
 let insertIndex = Mutation.insertIndex;
 let deleteIndex = Mutation.deleteIndex;
+let length = TreeUtil.length;
 let toMml = Mml.create;
 let parse = elements =>
   switch (AstBuilder.parse(elements)) {
