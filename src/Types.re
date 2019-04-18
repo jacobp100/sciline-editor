@@ -36,7 +36,7 @@ type constantAtom('a) = {
   superscript: 'a,
 };
 type customAtom('a) = {
-  customAtomValue: SciLine.t,
+  customAtomValue: SciLine.Result.wrappedValue,
   mml: string,
   superscript: 'a,
 };

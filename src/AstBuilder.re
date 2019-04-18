@@ -404,7 +404,8 @@ let mapElement = (element, i) =>
   | `Variable({atomNucleus, superscript}) =>
     SciLine.variable(atomNucleus)->partialNodeWithSuperscript(superscript)
   | `CustomAtom({customAtomValue, superscript}) =>
-    customAtomValue->partialNodeWithSuperscript(superscript)
+    SciLine.ofResult(customAtomValue)
+    ->partialNodeWithSuperscript(superscript)
   | `Constant({constant, superscript}) =>
     let c =
       switch (constant) {
