@@ -105,5 +105,11 @@ Js.Dict.set(commands, "degree", `Degree);
 Js.Dict.set(commands, "arcminute", `ArcMinute);
 Js.Dict.set(commands, "arcsecond", `ArcSecond);
 
-let customAtom = (~value as customAtomValue, ~mml) =>
+let customAtom = (~value, ~mml) =>
+  `CustomAtom({
+    customAtomValue: SciLine.encode(value),
+    mml,
+    superscript: [],
+  });
+let customAtomEncoded = (~value as customAtomValue, ~mml) =>
   `CustomAtom({customAtomValue, mml, superscript: []});
