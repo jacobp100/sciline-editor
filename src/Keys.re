@@ -78,6 +78,25 @@ Js.Dict.set(
   "ans",
   `Variable({atomNucleus: "Ans", superscript: []}),
 );
+Js.Dict.set(commands, "gamma", `Function(Gamma));
+Js.Dict.set(commands, "rand", `Rand([]));
+Js.Dict.set(
+  commands,
+  "randint",
+  `RandInt({randIntA: [], b: [], superscript: []}),
+);
+Js.Dict.set(commands, "npr", `NPR({statN: [], r: []}));
+Js.Dict.set(commands, "ncr", `NCR({statN: [], r: []}));
+Js.Dict.set(
+  commands,
+  "differential",
+  `Differential({differentialX: [], body: []}),
+);
+Js.Dict.set(
+  commands,
+  "integral",
+  `Integral({integralA: [], b: [], body: []}),
+);
 Js.Dict.set(commands, "sum", `Sum({rangeStart: [], rangeEnd: []}));
 Js.Dict.set(commands, "product", `Product({rangeStart: [], rangeEnd: []}));
 Js.Dict.set(commands, "dot", `Operator(Dot));

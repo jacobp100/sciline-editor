@@ -23,7 +23,8 @@ type func =
   | Arctan
   | Tanh
   | Arctanh
-  | Log;
+  | Log
+  | Gamma;
 type constant =
   | Pi
   | E;
@@ -36,7 +37,7 @@ type constantAtom('a) = {
   superscript: 'a,
 };
 type customAtom('a) = {
-  customAtomValue: SciLine.Result.wrappedValue,
+  customAtomValue: ScilineCalculator.Encoding.encoding,
   mml: string,
   superscript: 'a,
 };
@@ -58,6 +59,24 @@ type nlog('a) = {nlogBase: 'a};
 type abs('a) = {
   absArg: 'a,
   superscript: 'a,
+};
+type randInt('a) = {
+  randIntA: 'a,
+  b: 'a,
+  superscript: 'a,
+};
+type stat('a) = {
+  statN: 'a,
+  r: 'a,
+};
+type differential('a) = {
+  differentialX: 'a,
+  body: 'a,
+};
+type integral('a) = {
+  integralA: 'a,
+  b: 'a,
+  body: 'a,
 };
 type range('a) = {
   rangeStart: 'a,
@@ -93,6 +112,12 @@ type t = [
   | `NRoot(nroot(list(t)))
   | `NLog(nlog(list(t)))
   | `Abs(abs(list(t)))
+  | `Rand(list(t))
+  | `RandInt(randInt(list(t)))
+  | `NPR(stat(list(t)))
+  | `NCR(stat(list(t)))
+  | `Differential(differential(list(t)))
+  | `Integral(integral(list(t)))
   | `Sum(range(list(t)))
   | `Product(range(list(t)))
   | `Table(table(list(t)))

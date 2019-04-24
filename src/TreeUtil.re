@@ -32,6 +32,10 @@ let walkI = (elements, initValue, finalize, fn) => {
       let (i', superscript) = iterArgs1(i, superscript);
       let accum = fn(accum, `CloseBracket(superscript), i, i');
       (i', accum);
+    | `Rand(superscript) =>
+      let (i', superscript) = iterAtomLike(i, superscript);
+      let accum = fn(accum, `Rand(superscript), i, i');
+      (i', accum);
     | `Digit({atomNucleus, superscript}) =>
       let (i', superscript) = iterAtomLike(i, superscript);
       let accum = fn(accum, `Digit({atomNucleus, superscript}), i, i');
@@ -72,6 +76,27 @@ let walkI = (elements, initValue, finalize, fn) => {
     | `Abs({absArg, superscript}) =>
       let (i', absArg, superscript) = iterArgs2(i, absArg, superscript);
       let accum = fn(accum, `Abs({absArg, superscript}), i, i');
+      (i', accum);
+    | `RandInt({randIntA, b, superscript}) =>
+      let (i', randIntA, b, superscript) =
+        iterArgs3(i, randIntA, b, superscript);
+      let accum = fn(accum, `RandInt({randIntA, b, superscript}), i, i');
+      (i', accum);
+    | `NPR({statN, r}) =>
+      let (i', statN, r) = iterArgs2(i, statN, r);
+      let accum = fn(accum, `NPR({statN, r}), i, i');
+      (i', accum);
+    | `NCR({statN, r}) =>
+      let (i', statN, r) = iterArgs2(i, statN, r);
+      let accum = fn(accum, `NCR({statN, r}), i, i');
+      (i', accum);
+    | `Differential({body, differentialX}) =>
+      let (i', body, differentialX) = iterArgs2(i, body, differentialX);
+      let accum = fn(accum, `Differential({body, differentialX}), i, i');
+      (i', accum);
+    | `Integral({integralA, b, body}) =>
+      let (i', integralA, b, body) = iterArgs3(i, integralA, b, body);
+      let accum = fn(accum, `Integral({integralA, b, body}), i, i');
       (i', accum);
     | `Sum({rangeStart, rangeEnd}) =>
       let (i', rangeStart, rangeEnd) = iterArgs2(i, rangeStart, rangeEnd);

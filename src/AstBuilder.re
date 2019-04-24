@@ -45,6 +45,7 @@ let handleGenericFunction = (arg, fn) =>
   | Tanh => SciLine.tanh(arg)
   | Arctanh => SciLine.atanh(arg)
   | Log => SciLine.log(arg)
+  | Gamma => SciLine.gamma(arg)
   };
 let handleFunction = (arg, fn) =>
   switch (fn) {
@@ -397,6 +398,18 @@ let mapElement = (element, i) =>
   | `Function(fn) => `Ok(UnresolvedFunction(GenericFunction(fn), i))
   | `NLog({nlogBase: Node(nlogBase)}) =>
     `Ok(UnresolvedFunction(NLog({nlogBase: nlogBase}), i))
+  | `Rand(superscript) =>
+    SciLine.rand()->partialNodeWithSuperscript(superscript)
+  | `RandInt({randIntA: Node(randIntA), b: Node(b), superscript}) =>
+    SciLine.randInt(randIntA, b)->partialNodeWithSuperscript(superscript)
+  | `NPR({statN: Node(statN), r: Node(r)}) =>
+    `Ok(Resolved(SciLine.nPr(statN, r)))
+  | `NCR({statN: Node(statN), r: Node(r)}) =>
+    `Ok(Resolved(SciLine.nCr(statN, r)))
+  | `Differential({differentialX: Node(differentialX), body: Node(body)}) =>
+    `Ok(Resolved(SciLine.differential(differentialX, body)))
+  | `Integral({integralA: Node(integralA), b: Node(b), body: Node(body)}) =>
+    `Ok(Resolved(SciLine.integral(integralA, b, body)))
   | `Sum({rangeStart: Node(rangeStart), rangeEnd: Node(rangeEnd)}) =>
     `Ok(UnresolvedFunction(Sum({rangeStart, rangeEnd}), i))
   | `Product({rangeStart: Node(rangeStart), rangeEnd: Node(rangeEnd)}) =>
@@ -404,7 +417,7 @@ let mapElement = (element, i) =>
   | `Variable({atomNucleus, superscript}) =>
     SciLine.variable(atomNucleus)->partialNodeWithSuperscript(superscript)
   | `CustomAtom({customAtomValue, superscript}) =>
-    SciLine.ofResult(customAtomValue)
+    SciLine.ofEncoded(customAtomValue)
     ->partialNodeWithSuperscript(superscript)
   | `Constant({constant, superscript}) =>
     let c =
@@ -429,9 +442,47 @@ let mapElement = (element, i) =>
   | `Table({tableElements, superscript, numRows, numColumns})
       when tableElements->Belt.Array.every(isNode) =>
     let tableElements = tableElements->Belt.Array.map(toNode);
-    SciLine.matrixOfElements(numRows, numColumns, tableElements)
-    ->partialNodeWithSuperscript(superscript);
-  | _ => `Error(i)
+    /* FIXME */
+    let matrix =
+      switch (numRows, numColumns) {
+      | (2, 1) => SciLine.vector2(tableElements[0], tableElements[1])
+      | (3, 1) =>
+        SciLine.vector3(tableElements[0], tableElements[1], tableElements[2])
+      | (2, 2) =>
+        SciLine.matrix2(
+          tableElements[0],
+          tableElements[1],
+          tableElements[2],
+          tableElements[3],
+        )
+      | (3, 3) =>
+        SciLine.matrix3(
+          tableElements[0],
+          tableElements[1],
+          tableElements[2],
+          tableElements[3],
+          tableElements[4],
+          tableElements[5],
+          tableElements[6],
+          tableElements[7],
+          tableElements[8],
+        )
+      | _ => invalid_arg("create_matrix")
+      };
+    matrix->partialNodeWithSuperscript(superscript);
+  | `NLog(_)
+  | `NPR(_)
+  | `NCR(_)
+  | `Integral(_)
+  | `Differential(_)
+  | `Sum(_)
+  | `Product(_)
+  | `Frac(_)
+  | `Abs(_)
+  | `Sqrt(_)
+  | `NRoot(_)
+  | `RandInt(_)
+  | `Table(_) => `Error(i)
   };
 let reduceFn = (accum, element, i, _) =>
   switch (accum) {

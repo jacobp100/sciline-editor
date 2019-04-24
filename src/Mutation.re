@@ -1,6 +1,6 @@
 open Types;
 
-let rec ensurePlaceholders = element =>
+let rec ensurePlaceholders = (element: t): t =>
   switch (element) {
   | `Magnitude(exponent) => `Magnitude(ensurePlaceholder(exponent))
   | `Frac({fracNum, den, superscript}) =>
@@ -20,6 +20,27 @@ let rec ensurePlaceholders = element =>
   | `NLog({nlogBase}) => `NLog({nlogBase: ensurePlaceholder(nlogBase)})
   | `Abs({absArg, superscript}) =>
     `Abs({absArg: ensurePlaceholder(absArg), superscript})
+  | `RandInt({randIntA, b, superscript}) =>
+    `RandInt({
+      randIntA: ensurePlaceholder(randIntA),
+      b: ensurePlaceholder(b),
+      superscript,
+    })
+  | `NPR({statN, r}) =>
+    `NPR({statN: ensurePlaceholder(statN), r: ensurePlaceholder(r)})
+  | `NCR({statN, r}) =>
+    `NCR({statN: ensurePlaceholder(statN), r: ensurePlaceholder(r)})
+  | `Differential({differentialX, body}) =>
+    `Differential({
+      differentialX: ensurePlaceholder(differentialX),
+      body: ensurePlaceholder(body),
+    })
+  | `Integral({integralA, b, body}) =>
+    `Integral({
+      integralA: ensurePlaceholder(integralA),
+      b: ensurePlaceholder(b),
+      body: ensurePlaceholder(body),
+    })
   | `Sum({rangeStart, rangeEnd}) =>
     `Sum({
       rangeStart: ensurePlaceholder(rangeStart),
@@ -35,7 +56,21 @@ let rec ensurePlaceholders = element =>
       ...t,
       tableElements: Array.map(ensurePlaceholder, tableElements),
     })
-  | e => e
+  | (
+      `Base(_) | `Operator(_) | `Function(_) | `OpenBracket | `DecimalSeparator |
+      `Factorial |
+      `Degree |
+      `ArcMinute |
+      `ArcSecond |
+      `Placeholder(_) |
+      `ImaginaryUnit(_) |
+      `CloseBracket(_) |
+      `Digit(_) |
+      `Variable(_) |
+      `Constant(_) |
+      `CustomAtom(_) |
+      `Rand(_)
+    ) as e => e
   }
 and ensurePlaceholder = x =>
   switch (x) {
@@ -147,7 +182,7 @@ let separateSuperscripts = elements =>
   );
 let prepareForMutation = separateSuperscripts;
 
-let coalesceWithSuperscript = (element, superscript) =>
+let coalesceWithSuperscript = (element: t, superscript: list(t)): option(t) =>
   switch (element) {
   | `CloseBracket([]) => Some(`CloseBracket(superscript))
   | `ImaginaryUnit([]) => Some(`ImaginaryUnit(superscript))
@@ -231,7 +266,7 @@ let isEmpty = element =>
   | [`Placeholder([])] => true
   | _ => false
   };
-let shouldDeleteElement = element =>
+let shouldDeleteElement = (element: t): bool =>
   switch (element) {
   | `Base(_)
   | `Operator(_)
@@ -241,19 +276,27 @@ let shouldDeleteElement = element =>
   | `Degree
   | `ArcMinute
   | `ArcSecond
-  | `Ans
   | `Function(_) => true
   | `Digit({atomNucleus: _, superscript})
   | `Variable({atomNucleus: _, superscript})
   | `Constant({constant: _, superscript})
   | `CustomAtom({customAtomValue: _, superscript})
   | `ImaginaryUnit(superscript)
-  | `CloseBracket(superscript) => superscript == []
+  | `CloseBracket(superscript)
+  | `Rand(superscript) => superscript == []
   | `Placeholder(superscript) => isEmpty(superscript)
   | `Magnitude(exponent) => isEmpty(exponent)
   | `Frac({fracNum, den}) => isEmpty(fracNum) && isEmpty(den)
   | `NRoot({nrootDegree, radicand}) =>
     isEmpty(nrootDegree) && isEmpty(radicand)
+  | `RandInt({randIntA, b, superscript}) =>
+    isEmpty(randIntA) && isEmpty(b) && isEmpty(superscript)
+  | `NPR({statN, r})
+  | `NCR({statN, r}) => isEmpty(statN) && isEmpty(r)
+  | `Differential({differentialX, body}) =>
+    isEmpty(differentialX) && isEmpty(body)
+  | `Integral({integralA, b, body}) =>
+    isEmpty(integralA) && isEmpty(b) && isEmpty(body)
   | `Sum({rangeStart, rangeEnd})
   | `Product({rangeStart, rangeEnd}) =>
     isEmpty(rangeStart) && isEmpty(rangeEnd)

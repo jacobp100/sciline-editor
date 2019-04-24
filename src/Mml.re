@@ -63,6 +63,7 @@ let stringOfFunction = x =>
   | Tanh => "tanh"
   | Arctanh => "arctanh"
   | Log => "log"
+  | Gamma => "&Gamma;"
   };
 let stringOfBase = base =>
   switch (base) {
@@ -143,6 +144,10 @@ let reduceFn = (accum, element, i, i') =>
     ->concatAccum(accum)
   | `CustomAtom({mml, superscript}) =>
     atomLikeWithIndex(~superscript, "mrow", i, i', mml)->concatAccum(accum)
+  | `Function(Gamma) =>
+    let attributes = [("mathvariant", "normal")];
+    elementWithIndex(~attributes, "mi", i, i', stringOfFunction(Gamma))
+    ->concatAccum(accum);
   | `Function(f) =>
     elementWithIndex("mi", i, i', stringOfFunction(f))->concatAccum(accum)
   | `Factorial => elementWithIndex("mo", i, i', "!")->concatAccum(accum)
@@ -175,6 +180,48 @@ let reduceFn = (accum, element, i, i') =>
       elementWithIndex("mrow", i, i', body) |> wrapSuperscript(superscript),
       accum,
     );
+  | `Rand(superscript) =>
+    atomLikeWithIndex(~superscript, "mi", i, i', "Rand")->concatAccum(accum)
+  | `RandInt({randIntA, b, superscript}) =>
+    let body =
+      createElement(
+        "msub",
+        createElement("mi", "Rand#")
+        ++ createElement("mrow", randIntA ++ createElement("mo", ",") ++ b),
+      );
+    atomLikeWithIndex(~superscript, "mrow", i, i', body)->concatAccum(accum);
+  | `NPR({statN, r}) =>
+    let nucleus =
+      createElement(~attributes=[("mathvariant", "bold")], "mi", "P");
+    let body = createElement("msubsup", nucleus ++ r ++ statN);
+    concatAccum(elementWithIndex("mrow", i, i', body), accum);
+  | `NCR({statN, r}) =>
+    let nucleus =
+      createElement(~attributes=[("mathvariant", "bold")], "mi", "C");
+    let body = createElement("msubsup", nucleus ++ r ++ statN);
+    concatAccum(elementWithIndex("mrow", i, i', body), accum);
+  | `Differential({body, differentialX}) =>
+    let pre =
+      createElement(
+        "mfrac",
+        createElement(~attributes=[("mathvariant", "normal")], "mi", "d")
+        ++ createElement("mi", "dx"),
+      );
+    let post =
+      createElement(
+        ~attributes=[("align", "left")],
+        "munder",
+        createElement("mo", "|") ++ xSetRow(differentialX),
+      );
+    concatAccum(elementWithIndex("mrow", i, i', pre ++ body ++ post), accum);
+  | `Integral({integralA, b, body}) =>
+    let pre =
+      createElement("mo", "&#x222B;")
+      ++ integralA
+      ++ b
+      |> createElement("msubsup");
+    let post = createElement("mi", "dx");
+    concatAccum(elementWithIndex("mrow", i, i', pre ++ body ++ post), accum);
   | `Sum({rangeStart, rangeEnd}) =>
     concatAccum(
       elementWithIndex("mo", i, i', "&#x2211;")
