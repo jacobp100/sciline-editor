@@ -257,14 +257,13 @@ let reduceFn = (accum, element, i, i') =>
       )
       |> String.concat("")
       |> createElement("mtable");
-    concatAccum(
+    let body =
       createElement("mo", "[")
       ++ inner
       ++ createElement("mo", "]")
       |> createElement("mrow")
-      |> wrapSuperscript(superscript),
-      accum,
-    );
+      |> wrapSuperscript(superscript);
+    concatAccum(elementWithIndex("mrow", i, i', body), accum);
   };
 
 let create = elements =>
