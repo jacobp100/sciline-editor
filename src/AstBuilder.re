@@ -45,6 +45,8 @@ let handleGenericFunction = (arg, fn) =>
   | Tanh => SciLine.tanh(arg)
   | Arctanh => SciLine.atanh(arg)
   | Log => SciLine.log(arg)
+  | Re => SciLine.re(arg)
+  | Im => SciLine.im(arg)
   | Gamma => SciLine.gamma(arg)
   };
 let handleFunction = (arg, fn) =>
@@ -238,6 +240,8 @@ let rec parseFactorials = elements =>
   switch (elements) {
   | [Resolved(next), Unresolved(`Factorial, _), ...rest] =>
     parseFactorials([Resolved(SciLine.factorial(next)), ...rest])
+  | [Resolved(next), Unresolved(`Conj, _), ...rest] =>
+    parseFactorials([Resolved(SciLine.conj(next)), ...rest])
   | _ => next(elements)
   };
 let next = parseFactorials;
@@ -386,6 +390,7 @@ let mapElement = (element, i) =>
   | `Placeholder(_) => `Error(i)
   | (
       `Base(_) | `Operator(_) | `OpenBracket | `DecimalSeparator | `Factorial |
+      `Conj |
       `Degree |
       `ArcMinute |
       `ArcSecond |

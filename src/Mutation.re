@@ -58,6 +58,7 @@ let rec ensurePlaceholders = (element: t): t =>
     })
   | (
       `Base(_) | `Operator(_) | `Function(_) | `OpenBracket | `DecimalSeparator |
+      `Conj |
       `Factorial |
       `Degree |
       `ArcMinute |
@@ -272,6 +273,7 @@ let shouldDeleteElement = (element: t): bool =>
   | `Operator(_)
   | `OpenBracket
   | `DecimalSeparator
+  | `Conj
   | `Factorial
   | `Degree
   | `ArcMinute

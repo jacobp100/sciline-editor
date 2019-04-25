@@ -6,6 +6,7 @@ let walkI = (elements, initValue, finalize, fn) => {
     | (
         `Base(_) | `Operator(_) | `Function(_) | `OpenBracket |
         `DecimalSeparator |
+        `Conj |
         `Factorial |
         `Degree |
         `ArcMinute |

@@ -1,115 +1,282 @@
 open Types;
 
-let keys: Js.Dict.t(t) = Js.Dict.empty();
-Js.Dict.set(keys, "0", `Digit({atomNucleus: "0", superscript: []}));
-Js.Dict.set(keys, "1", `Digit({atomNucleus: "1", superscript: []}));
-Js.Dict.set(keys, "2", `Digit({atomNucleus: "2", superscript: []}));
-Js.Dict.set(keys, "3", `Digit({atomNucleus: "3", superscript: []}));
-Js.Dict.set(keys, "4", `Digit({atomNucleus: "4", superscript: []}));
-Js.Dict.set(keys, "5", `Digit({atomNucleus: "5", superscript: []}));
-Js.Dict.set(keys, "6", `Digit({atomNucleus: "6", superscript: []}));
-Js.Dict.set(keys, "7", `Digit({atomNucleus: "7", superscript: []}));
-Js.Dict.set(keys, "8", `Digit({atomNucleus: "8", superscript: []}));
-Js.Dict.set(keys, "9", `Digit({atomNucleus: "9", superscript: []}));
-Js.Dict.set(keys, "A", `Digit({atomNucleus: "A", superscript: []}));
-Js.Dict.set(keys, "B", `Digit({atomNucleus: "B", superscript: []}));
-Js.Dict.set(keys, "C", `Digit({atomNucleus: "C", superscript: []}));
-Js.Dict.set(keys, "D", `Digit({atomNucleus: "D", superscript: []}));
-Js.Dict.set(keys, "E", `Digit({atomNucleus: "E", superscript: []}));
-Js.Dict.set(keys, "F", `Digit({atomNucleus: "F", superscript: []}));
-Js.Dict.set(keys, ".", `DecimalSeparator);
-Js.Dict.set(keys, "+", `Operator(Add));
-Js.Dict.set(keys, "-", `Operator(Sub));
-Js.Dict.set(keys, "*", `Operator(Mul));
-Js.Dict.set(keys, "/", `Operator(Div));
-Js.Dict.set(keys, "_", `Frac({fracNum: [], den: [], superscript: []}));
-Js.Dict.set(keys, "^", `Placeholder([`Placeholder([])]));
-Js.Dict.set(keys, "!", `Factorial);
-Js.Dict.set(keys, "(", `OpenBracket);
-Js.Dict.set(keys, ")", `CloseBracket([]));
+[@bs.deriving abstract]
+type key = {
+  value: t,
+  flags: int,
+};
 
-let commands: Js.Dict.t(t) = Js.Dict.empty();
-Js.Dict.set(commands, "base2", `Base(Bin));
-Js.Dict.set(commands, "base8", `Base(Oct));
-Js.Dict.set(commands, "base16", `Base(Hex));
-Js.Dict.set(commands, "exp", `Magnitude([]));
-Js.Dict.set(commands, "sqrt", `Sqrt({rootRadicand: [], superscript: []}));
+let flags_none = 0b000;
+let flags_premium = 0b001;
+
+let keys: Js.Dict.t(key) = Js.Dict.empty();
+
 Js.Dict.set(
-  commands,
+  keys,
+  "0",
+  key(~value=`Digit({atomNucleus: "0", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "1",
+  key(~value=`Digit({atomNucleus: "1", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "2",
+  key(~value=`Digit({atomNucleus: "2", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "3",
+  key(~value=`Digit({atomNucleus: "3", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "4",
+  key(~value=`Digit({atomNucleus: "4", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "5",
+  key(~value=`Digit({atomNucleus: "5", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "6",
+  key(~value=`Digit({atomNucleus: "6", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "7",
+  key(~value=`Digit({atomNucleus: "7", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "8",
+  key(~value=`Digit({atomNucleus: "8", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "9",
+  key(~value=`Digit({atomNucleus: "9", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "A",
+  key(~value=`Digit({atomNucleus: "A", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "B",
+  key(~value=`Digit({atomNucleus: "B", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "C",
+  key(~value=`Digit({atomNucleus: "C", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "D",
+  key(~value=`Digit({atomNucleus: "D", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "E",
+  key(~value=`Digit({atomNucleus: "E", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "F",
+  key(~value=`Digit({atomNucleus: "F", superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(keys, ".", key(~value=`DecimalSeparator, ~flags=flags_none));
+Js.Dict.set(keys, "+", key(~value=`Operator(Add), ~flags=flags_none));
+Js.Dict.set(keys, "-", key(~value=`Operator(Sub), ~flags=flags_none));
+Js.Dict.set(keys, "*", key(~value=`Operator(Mul), ~flags=flags_none));
+Js.Dict.set(keys, "/", key(~value=`Operator(Div), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "_",
+  key(
+    ~value=`Frac({fracNum: [], den: [], superscript: []}),
+    ~flags=flags_none,
+  ),
+);
+Js.Dict.set(
+  keys,
+  "^",
+  key(~value=`Placeholder([`Placeholder([])]), ~flags=flags_none),
+);
+Js.Dict.set(keys, "!", key(~value=`Factorial, ~flags=flags_none));
+Js.Dict.set(keys, "(", key(~value=`OpenBracket, ~flags=flags_none));
+Js.Dict.set(keys, ")", key(~value=`CloseBracket([]), ~flags=flags_none));
+Js.Dict.set(keys, "base2", key(~value=`Base(Bin), ~flags=flags_none));
+Js.Dict.set(keys, "base8", key(~value=`Base(Oct), ~flags=flags_none));
+Js.Dict.set(keys, "base16", key(~value=`Base(Hex), ~flags=flags_none));
+Js.Dict.set(keys, "exp", key(~value=`Magnitude([]), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "sqrt",
+  key(~value=`Sqrt({rootRadicand: [], superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
   "nroot",
-  `NRoot({nrootDegree: [], radicand: [], superscript: []}),
+  key(
+    ~value=`NRoot({nrootDegree: [], radicand: [], superscript: []}),
+    ~flags=flags_none,
+  ),
 );
-Js.Dict.set(commands, "abs", `Abs({absArg: [], superscript: []}));
-Js.Dict.set(commands, "log", `Function(Log));
 Js.Dict.set(
-  commands,
+  keys,
+  "abs",
+  key(~value=`Abs({absArg: [], superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(keys, "log", key(~value=`Function(Log), ~flags=flags_none));
+Js.Dict.set(
+  keys,
   "log2",
-  `NLog({nlogBase: [`Digit({atomNucleus: "2", superscript: []})]}),
+  key(
+    ~value=`NLog({nlogBase: [`Digit({atomNucleus: "2", superscript: []})]}),
+    ~flags=flags_none,
+  ),
 );
 Js.Dict.set(
-  commands,
+  keys,
   "log10",
-  `NLog({
-    nlogBase: [
-      `Digit({atomNucleus: "1", superscript: []}),
-      `Digit({atomNucleus: "0", superscript: []}),
-    ],
-  }),
+  key(
+    ~value=
+      `NLog({
+        nlogBase: [
+          `Digit({atomNucleus: "1", superscript: []}),
+          `Digit({atomNucleus: "0", superscript: []}),
+        ],
+      }),
+    ~flags=flags_none,
+  ),
 );
-Js.Dict.set(commands, "logn", `NLog({nlogBase: []}));
-Js.Dict.set(commands, "sin", `Function(Sin));
-Js.Dict.set(commands, "arcsin", `Function(Arcsin));
-Js.Dict.set(commands, "sinh", `Function(Sinh));
-Js.Dict.set(commands, "arcsinh", `Function(Arcsinh));
-Js.Dict.set(commands, "cos", `Function(Cos));
-Js.Dict.set(commands, "arccos", `Function(Arccos));
-Js.Dict.set(commands, "cosh", `Function(Cosh));
-Js.Dict.set(commands, "arccosh", `Function(Arccosh));
-Js.Dict.set(commands, "tan", `Function(Tan));
-Js.Dict.set(commands, "arctan", `Function(Arctan));
-Js.Dict.set(commands, "tanh", `Function(Tanh));
-Js.Dict.set(commands, "arctanh", `Function(Arctanh));
-Js.Dict.set(commands, "i", `ImaginaryUnit([]));
-Js.Dict.set(commands, "x", `Variable({atomNucleus: "x", superscript: []}));
-Js.Dict.set(commands, "pi", `Constant({constant: Pi, superscript: []}));
-Js.Dict.set(commands, "e", `Constant({constant: E, superscript: []}));
 Js.Dict.set(
-  commands,
+  keys,
+  "logn",
+  key(~value=`NLog({nlogBase: []}), ~flags=flags_none),
+);
+Js.Dict.set(keys, "sin", key(~value=`Function(Sin), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "arcsin",
+  key(~value=`Function(Arcsin), ~flags=flags_none),
+);
+Js.Dict.set(keys, "sinh", key(~value=`Function(Sinh), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "arcsinh",
+  key(~value=`Function(Arcsinh), ~flags=flags_none),
+);
+Js.Dict.set(keys, "cos", key(~value=`Function(Cos), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "arccos",
+  key(~value=`Function(Arccos), ~flags=flags_none),
+);
+Js.Dict.set(keys, "cosh", key(~value=`Function(Cosh), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "arccosh",
+  key(~value=`Function(Arccosh), ~flags=flags_none),
+);
+Js.Dict.set(keys, "tan", key(~value=`Function(Tan), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "arctan",
+  key(~value=`Function(Arctan), ~flags=flags_none),
+);
+Js.Dict.set(keys, "tanh", key(~value=`Function(Tanh), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "arctanh",
+  key(~value=`Function(Arctanh), ~flags=flags_none),
+);
+Js.Dict.set(keys, "i", key(~value=`ImaginaryUnit([]), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "x",
+  key(
+    ~value=`Variable({atomNucleus: "x", superscript: []}),
+    ~flags=flags_none,
+  ),
+);
+Js.Dict.set(
+  keys,
+  "pi",
+  key(~value=`Constant({constant: Pi, superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "e",
+  key(~value=`Constant({constant: E, superscript: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
   "ans",
-  `Variable({atomNucleus: "Ans", superscript: []}),
+  key(
+    ~value=`Variable({atomNucleus: "Ans", superscript: []}),
+    ~flags=flags_none,
+  ),
 );
-Js.Dict.set(commands, "gamma", `Function(Gamma));
-Js.Dict.set(commands, "rand", `Rand([]));
+Js.Dict.set(keys, "re", key(~value=`Function(Re), ~flags=flags_none));
+Js.Dict.set(keys, "im", key(~value=`Function(Im), ~flags=flags_none));
+Js.Dict.set(keys, "conj", key(~value=`Conj, ~flags=flags_none));
+Js.Dict.set(keys, "gamma", key(~value=`Function(Gamma), ~flags=flags_none));
+Js.Dict.set(keys, "rand", key(~value=`Rand([]), ~flags=flags_none));
 Js.Dict.set(
-  commands,
+  keys,
   "randint",
-  `RandInt({randIntA: [], b: [], superscript: []}),
+  key(
+    ~value=`RandInt({randIntA: [], b: [], superscript: []}),
+    ~flags=flags_none,
+  ),
 );
-Js.Dict.set(commands, "npr", `NPR({statN: [], r: []}));
-Js.Dict.set(commands, "ncr", `NCR({statN: [], r: []}));
 Js.Dict.set(
-  commands,
+  keys,
+  "npr",
+  key(~value=`NPR({statN: [], r: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "ncr",
+  key(~value=`NCR({statN: [], r: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
   "differential",
-  `Differential({differentialX: [], body: []}),
+  key(
+    ~value=`Differential({differentialX: [], body: []}),
+    ~flags=flags_none,
+  ),
 );
 Js.Dict.set(
-  commands,
+  keys,
   "integral",
-  `Integral({integralA: [], b: [], body: []}),
+  key(~value=`Integral({integralA: [], b: [], body: []}), ~flags=flags_none),
 );
-Js.Dict.set(commands, "sum", `Sum({rangeStart: [], rangeEnd: []}));
-Js.Dict.set(commands, "product", `Product({rangeStart: [], rangeEnd: []}));
-Js.Dict.set(commands, "dot", `Operator(Dot));
-Js.Dict.set(commands, "magnitude", `Magnitude([]));
-Js.Dict.set(commands, "degree", `Degree);
-Js.Dict.set(commands, "arcminute", `ArcMinute);
-Js.Dict.set(commands, "arcsecond", `ArcSecond);
-
-let customAtom = (~value, ~mml) =>
-  `CustomAtom({
-    customAtomValue: SciLine.encode(value),
-    mml,
-    superscript: [],
-  });
-let customAtomEncoded = (~value as customAtomValue, ~mml) =>
-  `CustomAtom({customAtomValue, mml, superscript: []});
+Js.Dict.set(
+  keys,
+  "sum",
+  key(~value=`Sum({rangeStart: [], rangeEnd: []}), ~flags=flags_none),
+);
+Js.Dict.set(
+  keys,
+  "product",
+  key(~value=`Product({rangeStart: [], rangeEnd: []}), ~flags=flags_none),
+);
+Js.Dict.set(keys, "dot", key(~value=`Operator(Dot), ~flags=flags_none));
+Js.Dict.set(
+  keys,
+  "magnitude",
+  key(~value=`Magnitude([]), ~flags=flags_none),
+);
+Js.Dict.set(keys, "degree", key(~value=`Degree, ~flags=flags_none));
+Js.Dict.set(keys, "arcminute", key(~value=`ArcMinute, ~flags=flags_none));
+Js.Dict.set(keys, "arcsecond", key(~value=`ArcSecond, ~flags=flags_none));

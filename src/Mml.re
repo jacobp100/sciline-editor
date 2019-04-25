@@ -63,6 +63,8 @@ let stringOfFunction = x =>
   | Tanh => "tanh"
   | Arctanh => "arctanh"
   | Log => "log"
+  | Re => "re"
+  | Im => "im"
   | Gamma => "&Gamma;"
   };
 let stringOfBase = base =>
@@ -124,6 +126,9 @@ let reduceFn = (accum, element, i, i') =>
     elementWithIndex(~superscript, "mn", i, i', "")->concatAccum(accum);
   | `ArcSecond =>
     let superscript = createElement("mn", "&#8243;");
+    elementWithIndex(~superscript, "mn", i, i', "")->concatAccum(accum);
+  | `Conj =>
+    let superscript = createElement("mn", "*");
     elementWithIndex(~superscript, "mn", i, i', "")->concatAccum(accum);
   | `DecimalSeparator =>
     concatAccum(elementWithIndex("mn", i, i', "."), accum)

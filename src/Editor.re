@@ -1,3 +1,5 @@
+open Types;
+
 let insertIndex = Mutation.insertIndex;
 let deleteIndex = Mutation.deleteIndex;
 let length = TreeUtil.length;
@@ -8,5 +10,12 @@ let parse = elements =>
   | `Error(i) => (Some(i), None)
   };
 let keys = Keys.keys;
-let commands = Keys.commands;
-let customAtom = (value, mml) => Keys.customAtom(~value, ~mml);
+
+let customAtom = (~value, ~mml) =>
+  `CustomAtom({
+    customAtomValue: SciLine.encode(value),
+    mml,
+    superscript: [],
+  });
+let customAtomEncoded = (~value as customAtomValue, ~mml) =>
+  `CustomAtom({customAtomValue, mml, superscript: []});

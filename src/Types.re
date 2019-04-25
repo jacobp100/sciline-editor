@@ -24,6 +24,8 @@ type func =
   | Tanh
   | Arctanh
   | Log
+  | Re
+  | Im
   | Gamma;
 type constant =
   | Pi
@@ -95,6 +97,7 @@ type t = [
   | `Function(func)
   | `OpenBracket
   | `DecimalSeparator
+  | `Conj
   | `Factorial
   | `Degree
   | `ArcMinute
