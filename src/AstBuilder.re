@@ -1,26 +1,26 @@
 open Types;
-module SciLine = ScilineCalculator.SciLine;
+module AST = ScilineCalculator.ASTTypes;
 
 type funcitionLike =
   | GenericFunction(func)
-  | NLog(nlog(SciLine.t))
-  | Sum(range(SciLine.t))
-  | Product(range(SciLine.t));
+  | NLog(nlog(AST.t))
+  | Sum(range(AST.t))
+  | Product(range(AST.t));
 type partialNode('a) =
-  | Resolved(SciLine.t)
+  | Resolved(AST.t)
   | Unresolved('a, int)
   | UnresolvedFunction(funcitionLike, int);
 type reduceState('a) =
   | Row(MutableListBuilder.t(partialNode('a)))
   | ReduceError(int);
 type finalState =
-  | Node(SciLine.t)
+  | Node(AST.t)
   | Empty
   | Error(int);
 
 let nodeWithSuperscript = (superscript, a) =>
   switch (superscript) {
-  | Node(superscript) => `Ok(SciLine.pow(a, superscript))
+  | Node(superscript) => `Ok(AST.pow(a, superscript))
   | Empty => `Ok(a)
   | Error(i) => `Error(i)
   };
@@ -32,31 +32,29 @@ let partialNodeWithSuperscript = (a, superscript) =>
 
 let handleGenericFunction = (arg, fn) =>
   switch (fn) {
-  | Sin => SciLine.sin(arg)
-  | Arcsin => SciLine.asin(arg)
-  | Sinh => SciLine.sinh(arg)
-  | Arcsinh => SciLine.asinh(arg)
-  | Cos => SciLine.cos(arg)
-  | Arccos => SciLine.acos(arg)
-  | Cosh => SciLine.cosh(arg)
-  | Arccosh => SciLine.acosh(arg)
-  | Tan => SciLine.tan(arg)
-  | Arctan => SciLine.atan(arg)
-  | Tanh => SciLine.tanh(arg)
-  | Arctanh => SciLine.atanh(arg)
-  | Log => SciLine.log(arg)
-  | Re => SciLine.re(arg)
-  | Im => SciLine.im(arg)
-  | Gamma => SciLine.gamma(arg)
+  | Sin => AST.sin(arg)
+  | Arcsin => AST.asin(arg)
+  | Sinh => AST.sinh(arg)
+  | Arcsinh => AST.asinh(arg)
+  | Cos => AST.cos(arg)
+  | Arccos => AST.acos(arg)
+  | Cosh => AST.cosh(arg)
+  | Arccosh => AST.acosh(arg)
+  | Tan => AST.tan(arg)
+  | Arctan => AST.atan(arg)
+  | Tanh => AST.tanh(arg)
+  | Arctanh => AST.atanh(arg)
+  | Log => AST.log(arg)
+  | Re => AST.re(arg)
+  | Im => AST.im(arg)
+  | Gamma => AST.gamma(arg)
   };
 let handleFunction = (arg, fn) =>
   switch (fn) {
   | GenericFunction(fn) => handleGenericFunction(arg, fn)
-  | NLog({nlogBase}) =>
-    SciLine.div(SciLine.log(arg), SciLine.log(nlogBase))
-  | Sum({rangeStart, rangeEnd}) => SciLine.sum(rangeStart, rangeEnd, arg)
-  | Product({rangeStart, rangeEnd}) =>
-    SciLine.product(rangeStart, rangeEnd, arg)
+  | NLog({nlogBase}) => AST.div(AST.log(arg), AST.log(nlogBase))
+  | Sum({rangeStart, rangeEnd}) => AST.sum(rangeStart, rangeEnd, arg)
+  | Product({rangeStart, rangeEnd}) => AST.product(rangeStart, rangeEnd, arg)
   };
 
 let overArg = (a, fn, i) =>
@@ -75,11 +73,11 @@ let overArgs2 = (a, b, fn, i) =>
   };
 let handleOp = (op, a, b) =>
   switch (op) {
-  | Add => Node(SciLine.add(a, b))
-  | Sub => Node(SciLine.sub(a, b))
-  | Mul => Node(SciLine.mul(a, b))
-  | Div => Node(SciLine.div(a, b))
-  | Dot => Node(SciLine.mul(a, b))
+  | Add => Node(AST.add(a, b))
+  | Sub => Node(AST.sub(a, b))
+  | Mul => Node(AST.mul(a, b))
+  | Div => Node(AST.div(a, b))
+  | Dot => Node(AST.mul(a, b))
   };
 
 let numberIsValidForBase = (base, atomNucleus) =>
@@ -95,12 +93,12 @@ type numState('a, 'b) = {
   numBase: option(base),
   numString: string,
   numHasDecimal: bool,
-  numSup: option(SciLine.t),
-  imag: option(SciLine.t),
-  magSup: option(SciLine.t),
-  degree: option(SciLine.t),
-  arcMin: option(SciLine.t),
-  arcSec: option(SciLine.t),
+  numSup: option(AST.t),
+  imag: option(AST.t),
+  magSup: option(AST.t),
+  degree: option(AST.t),
+  arcMin: option(AST.t),
+  arcSec: option(AST.t),
 };
 
 let rec reduceNumberState = (state, element) =>
@@ -128,12 +126,12 @@ let rec reduceNumberState = (state, element) =>
       {numSup: Some(_) | None, magSup: None, imag: None},
       `ImaginaryUnit(Empty),
     ) =>
-    Some({...state, imag: Some(SciLine.i)})
+    Some({...state, imag: Some(AST.i)})
   | (
       {numSup: None, magSup: None, imag: None},
       `ImaginaryUnit(Node(imagSuperscript)),
     ) =>
-    Some({...state, imag: Some(SciLine.pow(SciLine.i, imagSuperscript))})
+    Some({...state, imag: Some(AST.pow(AST.i, imagSuperscript))})
   | (_, `Magnitude(Node(magSuperscript))) when state.numString != "" =>
     Some({...state, magSup: Some(magSuperscript)})
   | (
@@ -142,10 +140,7 @@ let rec reduceNumberState = (state, element) =>
     ) =>
     parseNumber(state)
     ->Belt.Option.map(degree => {
-        let degree =
-          degree
-          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.ofInt(180)))
-          ->Some;
+        let degree = degree->AST.mul(AST.div(AST.pi, AST.ofInt(180)))->Some;
         {...initialNumberState, degree};
       })
   | ({numSup: None, imag: None, arcMin: None, arcSec: None}, `ArcMinute) =>
@@ -153,9 +148,7 @@ let rec reduceNumberState = (state, element) =>
     ->Belt.Option.map(arcMin => {
         let {degree} = state;
         let arcMin =
-          arcMin
-          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.ofInt(10800)))
-          ->Some;
+          arcMin->AST.mul(AST.div(AST.pi, AST.ofInt(10800)))->Some;
         {...initialNumberState, degree, arcMin};
       })
   | ({numSup: None, imag: None, arcSec: None}, `ArcSecond) =>
@@ -163,9 +156,7 @@ let rec reduceNumberState = (state, element) =>
     ->Belt.Option.map(arcSec => {
         let {degree, arcMin} = state;
         let arcSec =
-          arcSec
-          ->SciLine.mul(SciLine.div(SciLine.pi, SciLine.ofInt(648000)))
-          ->Some;
+          arcSec->AST.mul(AST.div(AST.pi, AST.ofInt(648000)))->Some;
         {...initialNumberState, degree, arcMin, arcSec};
       })
   | _ => None
@@ -181,14 +172,13 @@ and parseNumber = ({numBase, numString, numSup, imag, magSup}) =>
       | Some(Hex) => 16
       | None => 10
       };
-    let out =
-      numString == "" ? SciLine.one : SciLine.ofStringBase(base, numString);
-    let out = numSup->Belt.Option.mapWithDefault(out, SciLine.pow(out));
+    let out = numString == "" ? AST.one : AST.ofStringBase(base, numString);
+    let out = numSup->Belt.Option.mapWithDefault(out, AST.pow(out));
     let out =
       magSup
-      ->Belt.Option.map(SciLine.pow(SciLine.ofInt(10)))
-      ->Belt.Option.mapWithDefault(out, SciLine.mul(out));
-    let out = imag->Belt.Option.mapWithDefault(out, SciLine.mul(out));
+      ->Belt.Option.map(AST.pow(AST.ofInt(10)))
+      ->Belt.Option.mapWithDefault(out, AST.mul(out));
+    let out = imag->Belt.Option.mapWithDefault(out, AST.mul(out));
     Some(out);
   } else {
     None;
@@ -200,10 +190,10 @@ and numberForState = ({degree, arcMin, arcSec} as s) =>
              && s.numString == ""
              && s.imag == None
              && s.magSup == None) {
-    let out = SciLine.zero;
-    let out = degree->Belt.Option.mapWithDefault(out, SciLine.add(out));
-    let out = arcMin->Belt.Option.mapWithDefault(out, SciLine.add(out));
-    let out = arcSec->Belt.Option.mapWithDefault(out, SciLine.add(out));
+    let out = AST.zero;
+    let out = degree->Belt.Option.mapWithDefault(out, AST.add(out));
+    let out = arcMin->Belt.Option.mapWithDefault(out, AST.add(out));
+    let out = arcSec->Belt.Option.mapWithDefault(out, AST.add(out));
     Some(out);
   } else {
     None;
@@ -225,7 +215,7 @@ let rec parseRest = (~current=Empty, elements) =>
   | [Resolved(next), ...rest] =>
     let current =
       switch (current) {
-      | Node(a) => Node(SciLine.mul(a, next))
+      | Node(a) => Node(AST.mul(a, next))
       | Empty => Node(next)
       | Error(_) as e => e
       };
@@ -239,9 +229,9 @@ let next = parseRest;
 let rec parseFactorials = elements =>
   switch (elements) {
   | [Resolved(next), Unresolved(`Factorial, _), ...rest] =>
-    parseFactorials([Resolved(SciLine.factorial(next)), ...rest])
+    parseFactorials([Resolved(AST.factorial(next)), ...rest])
   | [Resolved(next), Unresolved(`Conj, _), ...rest] =>
-    parseFactorials([Resolved(SciLine.conj(next)), ...rest])
+    parseFactorials([Resolved(AST.conj(next)), ...rest])
   | _ => next(elements)
   };
 let next = parseFactorials;
@@ -271,7 +261,7 @@ let rec parseUnary = elements =>
   switch (elements) {
   | [Unresolved(`Operator((Add | Sub) as op), i'), ...rest] =>
     parseUnary(rest)
-    ->overArg(arg => Node(op == Sub ? SciLine.neg(arg) : arg), i')
+    ->overArg(arg => Node(op == Sub ? AST.neg(arg) : arg), i')
   | _ => next(elements)
   };
 let next = parseUnary;
@@ -403,46 +393,50 @@ let mapElement = (element, i) =>
   | `Function(fn) => `Ok(UnresolvedFunction(GenericFunction(fn), i))
   | `NLog({nlogBase: Node(nlogBase)}) =>
     `Ok(UnresolvedFunction(NLog({nlogBase: nlogBase}), i))
-  | `Rand(superscript) =>
-    SciLine.rand()->partialNodeWithSuperscript(superscript)
+  | `Rand(superscript) => AST.rand()->partialNodeWithSuperscript(superscript)
   | `RandInt({randIntA: Node(randIntA), b: Node(b), superscript}) =>
-    SciLine.randInt(randIntA, b)->partialNodeWithSuperscript(superscript)
+    AST.randInt(randIntA, b)->partialNodeWithSuperscript(superscript)
   | `NPR({statN: Node(statN), r: Node(r)}) =>
-    `Ok(Resolved(SciLine.nPr(statN, r)))
+    `Ok(Resolved(AST.nPr(statN, r)))
   | `NCR({statN: Node(statN), r: Node(r)}) =>
-    `Ok(Resolved(SciLine.nCr(statN, r)))
+    `Ok(Resolved(AST.nCr(statN, r)))
   | `Differential({differentialX: Node(differentialX), body: Node(body)}) =>
-    `Ok(Resolved(SciLine.differential(differentialX, body)))
+    `Ok(Resolved(AST.differential(differentialX, body)))
   | `Integral({integralA: Node(integralA), b: Node(b), body: Node(body)}) =>
-    `Ok(Resolved(SciLine.integral(integralA, b, body)))
+    `Ok(Resolved(AST.integral(integralA, b, body)))
   | `Sum({rangeStart: Node(rangeStart), rangeEnd: Node(rangeEnd)}) =>
     `Ok(UnresolvedFunction(Sum({rangeStart, rangeEnd}), i))
   | `Product({rangeStart: Node(rangeStart), rangeEnd: Node(rangeEnd)}) =>
     `Ok(UnresolvedFunction(Product({rangeStart, rangeEnd}), i))
   | `Variable({atomNucleus, superscript}) =>
-    SciLine.variable(atomNucleus)->partialNodeWithSuperscript(superscript)
+    AST.variable(atomNucleus)->partialNodeWithSuperscript(superscript)
   | `CustomAtom({customAtomValue, superscript}) =>
-    SciLine.ofEncoded(customAtomValue)
-    ->partialNodeWithSuperscript(superscript)
+    AST.ofEncoded(customAtomValue)->partialNodeWithSuperscript(superscript)
   | `Constant({constant, superscript}) =>
     let c =
       switch (constant) {
-      | Pi => SciLine.pi
-      | E => SciLine.e
+      | Pi => AST.pi
+      | E => AST.e
       };
     c->partialNodeWithSuperscript(superscript);
   | `Frac({fracNum: Node(fracNum), den: Node(den), superscript}) =>
-    SciLine.div(fracNum, den)->partialNodeWithSuperscript(superscript)
-  | `Abs({absArg: Node(absArg), superscript}) =>
-    SciLine.abs(absArg)->partialNodeWithSuperscript(superscript)
+    AST.div(fracNum, den)->partialNodeWithSuperscript(superscript)
+  | `Abs({unaryArg: Node(unaryArg), superscript}) =>
+    AST.abs(unaryArg)->partialNodeWithSuperscript(superscript)
+  | `Floor({unaryArg: Node(unaryArg), superscript}) =>
+    AST.floor(unaryArg)->partialNodeWithSuperscript(superscript)
+  | `Ceil({unaryArg: Node(unaryArg), superscript}) =>
+    AST.ceil(unaryArg)->partialNodeWithSuperscript(superscript)
+  | `Round({unaryArg: Node(unaryArg), superscript}) =>
+    AST.round(unaryArg)->partialNodeWithSuperscript(superscript)
   | `Sqrt({rootRadicand: Node(rootRadicand), superscript}) =>
-    SciLine.sqrt(rootRadicand)->partialNodeWithSuperscript(superscript)
+    AST.sqrt(rootRadicand)->partialNodeWithSuperscript(superscript)
   | `NRoot({
       nrootDegree: Node(nrootDegree),
       radicand: Node(radicand),
       superscript,
     }) =>
-    SciLine.pow(radicand, SciLine.div(SciLine.one, nrootDegree))
+    AST.pow(radicand, AST.div(AST.one, nrootDegree))
     ->partialNodeWithSuperscript(superscript)
   | `Table({tableElements, superscript, numRows, numColumns})
       when tableElements->Belt.Array.every(isNode) =>
@@ -450,18 +444,18 @@ let mapElement = (element, i) =>
     /* FIXME */
     let matrix =
       switch (numRows, numColumns) {
-      | (2, 1) => SciLine.vector2(tableElements[0], tableElements[1])
+      | (2, 1) => AST.vector2(tableElements[0], tableElements[1])
       | (3, 1) =>
-        SciLine.vector3(tableElements[0], tableElements[1], tableElements[2])
+        AST.vector3(tableElements[0], tableElements[1], tableElements[2])
       | (2, 2) =>
-        SciLine.matrix2(
+        AST.matrix2(
           tableElements[0],
           tableElements[1],
           tableElements[2],
           tableElements[3],
         )
       | (3, 3) =>
-        SciLine.matrix3(
+        AST.matrix3(
           tableElements[0],
           tableElements[1],
           tableElements[2],
@@ -484,6 +478,9 @@ let mapElement = (element, i) =>
   | `Product(_)
   | `Frac(_)
   | `Abs(_)
+  | `Floor(_)
+  | `Ceil(_)
+  | `Round(_)
   | `Sqrt(_)
   | `NRoot(_)
   | `RandInt(_)

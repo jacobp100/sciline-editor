@@ -2,19 +2,18 @@
   "name": "sciline-editor",
   "version": "0.1.0",
   "sources": {
-    "dir" : "src",
-    "subdirs" : true
+    "dir": "src",
+    "subdirs": true
   },
   "package-specs": {
-    "module": "commonjs",
+    "module": "es6-global",
     "in-source": true
   },
   "suffix": ".bs.js",
-  "bs-dependencies": [
-      "sciline-calculator"
-  ],
+  "bs-dependencies": ["sciline-calculator"],
   "warnings": {
-    "error" : "+101"
+    "error": "+101"
   },
+  "namespace": true,
   "refmt": 3
 }

@@ -1,5 +1,3 @@
-module SciLine = ScilineCalculator.SciLine;
-
 type base =
   | Bin
   | Oct
@@ -58,8 +56,8 @@ type nroot('a) = {
   superscript: 'a,
 };
 type nlog('a) = {nlogBase: 'a};
-type abs('a) = {
-  absArg: 'a,
+type unary('a) = {
+  unaryArg: 'a,
   superscript: 'a,
 };
 type randInt('a) = {
@@ -114,7 +112,10 @@ type t = [
   | `Sqrt(root(list(t)))
   | `NRoot(nroot(list(t)))
   | `NLog(nlog(list(t)))
-  | `Abs(abs(list(t)))
+  | `Abs(unary(list(t)))
+  | `Floor(unary(list(t)))
+  | `Ceil(unary(list(t)))
+  | `Round(unary(list(t)))
   | `Rand(list(t))
   | `RandInt(randInt(list(t)))
   | `NPR(stat(list(t)))

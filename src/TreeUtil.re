@@ -74,9 +74,21 @@ let walkI = (elements, initValue, finalize, fn) => {
       let (i', nlogBase) = iterArgs1(i, nlogBase);
       let accum = fn(accum, `NLog({nlogBase: nlogBase}), i, i');
       (i', accum);
-    | `Abs({absArg, superscript}) =>
-      let (i', absArg, superscript) = iterArgs2(i, absArg, superscript);
-      let accum = fn(accum, `Abs({absArg, superscript}), i, i');
+    | `Abs({unaryArg, superscript}) =>
+      let (i', unaryArg, superscript) = iterArgs2(i, unaryArg, superscript);
+      let accum = fn(accum, `Abs({unaryArg, superscript}), i, i');
+      (i', accum);
+    | `Floor({unaryArg, superscript}) =>
+      let (i', unaryArg, superscript) = iterArgs2(i, unaryArg, superscript);
+      let accum = fn(accum, `Floor({unaryArg, superscript}), i, i');
+      (i', accum);
+    | `Ceil({unaryArg, superscript}) =>
+      let (i', unaryArg, superscript) = iterArgs2(i, unaryArg, superscript);
+      let accum = fn(accum, `Ceil({unaryArg, superscript}), i, i');
+      (i', accum);
+    | `Round({unaryArg, superscript}) =>
+      let (i', unaryArg, superscript) = iterArgs2(i, unaryArg, superscript);
+      let accum = fn(accum, `Round({unaryArg, superscript}), i, i');
       (i', accum);
     | `RandInt({randIntA, b, superscript}) =>
       let (i', randIntA, b, superscript) =

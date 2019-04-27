@@ -178,9 +178,19 @@ let reduceFn = (accum, element, i, i') =>
       |> elementWithIndex("msub", i, i'),
       accum,
     )
-  | `Abs({absArg, superscript}) =>
+  | (`Abs(arg) | `Floor(arg) | `Ceil(arg) | `Round(arg)) as unary =>
+    let {unaryArg, superscript} = arg;
+    let (leftBracket, rightBracket) =
+      switch (unary) {
+      | `Abs(_) => ("|", "|")
+      | `Floor(_) => ("&lfloor;", "&rfloor;")
+      | `Ceil(_) => ("&lceil;", "&rceil;")
+      | `Round(_) => ("&lfloorl;", "&rceil;")
+      };
     let body =
-      createElement("mo", "|") ++ absArg ++ createElement("mo", "|");
+      createElement("mo", leftBracket)
+      ++ unaryArg
+      ++ createElement("mo", rightBracket);
     concatAccum(
       elementWithIndex("mrow", i, i', body) |> wrapSuperscript(superscript),
       accum,

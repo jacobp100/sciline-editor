@@ -14,7 +14,5 @@
   "devDependencies": {
     "bs-platform": "^4.0.18"
   },
-  "dependencies": {
-    "sciline-calculator": "../sciline-calculator/"
-  }
+  "dependencies": {}
 }

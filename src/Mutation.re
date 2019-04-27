@@ -18,8 +18,14 @@ let rec ensurePlaceholders = (element: t): t =>
       superscript,
     })
   | `NLog({nlogBase}) => `NLog({nlogBase: ensurePlaceholder(nlogBase)})
-  | `Abs({absArg, superscript}) =>
-    `Abs({absArg: ensurePlaceholder(absArg), superscript})
+  | `Abs({unaryArg, superscript}) =>
+    `Abs({unaryArg: ensurePlaceholder(unaryArg), superscript})
+  | `Floor({unaryArg, superscript}) =>
+    `Floor({unaryArg: ensurePlaceholder(unaryArg), superscript})
+  | `Ceil({unaryArg, superscript}) =>
+    `Ceil({unaryArg: ensurePlaceholder(unaryArg), superscript})
+  | `Round({unaryArg, superscript}) =>
+    `Round({unaryArg: ensurePlaceholder(unaryArg), superscript})
   | `RandInt({randIntA, b, superscript}) =>
     `RandInt({
       randIntA: ensurePlaceholder(randIntA),
@@ -54,7 +60,7 @@ let rec ensurePlaceholders = (element: t): t =>
   | `Table({tableElements} as t) =>
     `Table({
       ...t,
-      tableElements: Array.map(ensurePlaceholder, tableElements),
+      tableElements: Belt.Array.map(tableElements, ensurePlaceholder),
     })
   | (
       `Base(_) | `Operator(_) | `Function(_) | `OpenBracket | `DecimalSeparator |
@@ -201,7 +207,13 @@ let coalesceWithSuperscript = (element: t, superscript: list(t)): option(t) =>
     Some(`Sqrt({rootRadicand, superscript}))
   | `NRoot({nrootDegree, radicand, superscript: []}) =>
     Some(`NRoot({nrootDegree, radicand, superscript}))
-  | `Abs({absArg, superscript: []}) => Some(`Abs({absArg, superscript}))
+  | `Abs({unaryArg, superscript: []}) => Some(`Abs({unaryArg, superscript}))
+  | `Floor({unaryArg, superscript: []}) =>
+    Some(`Floor({unaryArg, superscript}))
+  | `Ceil({unaryArg, superscript: []}) =>
+    Some(`Ceil({unaryArg, superscript}))
+  | `Round({unaryArg, superscript: []}) =>
+    Some(`Round({unaryArg, superscript}))
   | _ => None
   };
 let rec coalescePlaceholderSuperscripts = elements =>
@@ -304,7 +316,10 @@ let shouldDeleteElement = (element: t): bool =>
     isEmpty(rangeStart) && isEmpty(rangeEnd)
   | `Sqrt({rootRadicand: arg})
   | `NLog({nlogBase: arg})
-  | `Abs({absArg: arg}) => isEmpty(arg)
+  | `Abs({unaryArg: arg})
+  | `Floor({unaryArg: arg})
+  | `Ceil({unaryArg: arg})
+  | `Round({unaryArg: arg}) => isEmpty(arg)
   | `Table({tableElements}) => tableElements->Belt.Array.every(isEmpty)
   };
 
