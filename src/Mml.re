@@ -90,12 +90,12 @@ let concatAccum = (element, accum) =>
   | [current, ...rest] => [current ++ element, ...rest]
   | _ => failwith("Empty")
   };
-let finalize = (body, _, _) =>
+let mapValue = ({TreeUtil.accum: body}): string =>
   switch (body->Belt.List.reverse |> String.concat("")) {
   | "" as body => body
   | body => createElement("mrow", body)
   };
-let reduceFn = (accum, element, i, i') =>
+let reduceFn = ({TreeUtil.accum, rangeStart: i, rangeEnd: i'}, element) =>
   switch (element) {
   | `OpenBracket => [elementWithIndex("mo", i, i', "("), ...accum]
   | `CloseBracket(superscript) =>
@@ -283,5 +283,5 @@ let create = elements =>
       ("xmlns", "http://www.w3.org/1998/Math/MathML"),
       ("display", "block"),
     ],
-    elements->TreeUtil.walk([""], finalize, reduceFn),
+    TreeUtil.map(elements, [""], mapValue, reduceFn),
   );

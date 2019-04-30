@@ -6,17 +6,17 @@ type funcitionLike =
   | NLog(nlog(AST.t))
   | Sum(range(AST.t))
   | Product(range(AST.t));
-type partialNode('a) =
-  | Resolved(AST.t)
-  | Unresolved('a, int)
-  | UnresolvedFunction(funcitionLike, int);
-type reduceState('a) =
-  | Row(MutableListBuilder.t(partialNode('a)))
-  | ReduceError(int);
 type finalState =
   | Node(AST.t)
   | Empty
   | Error(int);
+type partialNode =
+  | Resolved(AST.t)
+  | Unresolved(node(finalState), int)
+  | UnresolvedFunction(funcitionLike, int);
+type reduceState =
+  | Row(MutableListBuilder.t(partialNode))
+  | ReduceError(int);
 
 let nodeWithSuperscript = (superscript, a) =>
   switch (superscript) {
@@ -360,8 +360,8 @@ let rec handleBrackets = elements => {
 };
 let next = handleBrackets;
 
-let finalize = (elements, _, _) =>
-  switch (elements) {
+let mapValue = ({TreeUtil.accum}): finalState =>
+  switch (accum) {
   | Row(nodes) => next(MutableListBuilder.toList(nodes))
   | ReduceError(i) => Error(i)
   };
@@ -486,11 +486,11 @@ let mapElement = (element, i) =>
   | `RandInt(_)
   | `Table(_) => `Error(i)
   };
-let reduceFn = (accum, element, i, _) =>
+let reduceFn = ({TreeUtil.accum, rangeStart}, element) =>
   switch (accum) {
   | ReduceError(_) as e => e
   | Row(list) =>
-    switch (mapElement(element, i)) {
+    switch (mapElement(element, rangeStart)) {
     | `Ok(next) => Row(MutableListBuilder.append(list, next))
     | `Error(i) => ReduceError(i)
     }
@@ -498,9 +498,10 @@ let reduceFn = (accum, element, i, _) =>
 
 let parse = (elements: list(Types.t)) => {
   let out =
-    elements->TreeUtil.walk(
+    TreeUtil.map(
+      elements,
       Row(MutableListBuilder.empty),
-      finalize,
+      mapValue,
       reduceFn,
     );
   switch (out) {

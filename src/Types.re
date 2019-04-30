@@ -89,7 +89,17 @@ type table('a) = {
   numColumns: int,
 };
 
-type t = [
+type atomNode('a) = [
+  | `ImaginaryUnit('a)
+  | `Rand('a)
+  | `Digit(atom('a))
+  | `Variable(atom('a))
+  | `Constant(constantAtom('a))
+  | `CustomAtom(customAtom('a))
+];
+
+type node('a) = [
+  atomNode('a)
   | `Base(base)
   | `Operator(binaryOperator)
   | `Function(func)
@@ -100,29 +110,27 @@ type t = [
   | `Degree
   | `ArcMinute
   | `ArcSecond
-  | `Placeholder(list(t))
-  | `ImaginaryUnit(list(t))
-  | `Magnitude(list(t))
-  | `CloseBracket(list(t))
-  | `Digit(atom(list(t)))
-  | `Variable(atom(list(t)))
-  | `Constant(constantAtom(list(t)))
-  | `CustomAtom(customAtom(list(t)))
-  | `Frac(frac(list(t)))
-  | `Sqrt(root(list(t)))
-  | `NRoot(nroot(list(t)))
-  | `NLog(nlog(list(t)))
-  | `Abs(unary(list(t)))
-  | `Floor(unary(list(t)))
-  | `Ceil(unary(list(t)))
-  | `Round(unary(list(t)))
-  | `Rand(list(t))
-  | `RandInt(randInt(list(t)))
-  | `NPR(stat(list(t)))
-  | `NCR(stat(list(t)))
-  | `Differential(differential(list(t)))
-  | `Integral(integral(list(t)))
-  | `Sum(range(list(t)))
-  | `Product(range(list(t)))
-  | `Table(table(list(t)))
+  | `Placeholder('a)
+  | `Magnitude('a)
+  | `CloseBracket('a)
+  | `Frac(frac('a))
+  | `Sqrt(root('a))
+  | `NRoot(nroot('a))
+  | `NLog(nlog('a))
+  | `Abs(unary('a))
+  | `Floor(unary('a))
+  | `Ceil(unary('a))
+  | `Round(unary('a))
+  | `RandInt(randInt('a))
+  | `NPR(stat('a))
+  | `NCR(stat('a))
+  | `Differential(differential('a))
+  | `Integral(integral('a))
+  | `Sum(range('a))
+  | `Product(range('a))
+  | `Table(table('a))
 ];
+
+type t = node(list(t));
+
+type atomT = atomNode(list(t));
