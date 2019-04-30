@@ -180,14 +180,13 @@ let walkI =
   and iter =
       (
         context: 'context,
-        context': 'context,
         rangeStart: int,
         rollup: 'rollup,
         elements: list(t),
       ) => {
     let reduceFn = ((i, rollup, accum), element: t) => {
       let (i', rollup, element) =
-        recurseElement(context', i, rollup, element);
+        recurseElement(context, i, rollup, element);
       let (rollup, accum) =
         reduceFn(
           {accum, rollup, rangeStart: i, rangeEnd: i', context},
@@ -214,7 +213,7 @@ let walkI =
       : (int, 'rollup, 'a) => {
     let indexIncr = a != [] ? 1 : 0;
     let context' = mapContext(context, selector);
-    let (finalIndex, rollup, a) = iter(context, context', i, rollup, a);
+    let (finalIndex, rollup, a) = iter(context', i, rollup, a);
     (finalIndex + indexIncr, rollup, a);
   }
   and iterArgs1 = (context, i, rollup, a, aSelector) => {
@@ -248,7 +247,7 @@ let walkI =
     (i', rollup, superscript);
   };
 
-  iter(initialContext, initialContext, 0, initialRollup, elements);
+  iter(initialContext, 0, initialRollup, elements);
 };
 
 let map = (elements, initialValue, mapValue, reduceFn) => {

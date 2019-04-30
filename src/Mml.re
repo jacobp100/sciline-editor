@@ -106,14 +106,17 @@ let openBracket = (i, i', (level0Body, bracketGroup)) => (
   level0Body,
   [{i, i', body: ""}, ...bracketGroup],
 );
+
+let invalidClass = "invalid";
 let closeBracket = (i, i', superscript, (level0Body, bracketGroup)) =>
   switch (bracketGroup) {
   | [closed, ...rest] =>
-    let inner =
+    let body =
       elementWithIndex("mo", closed.i, closed.i', "(")
       ++ closed.body
-      ++ elementWithIndex("mo", i, i', ")");
-    let body = wrapSuperscript(superscript, createElement("mrow", inner));
+      ++ elementWithIndex("mo", i, i', ")")
+      |> createElement("mrow")
+      |> wrapSuperscript(superscript);
     switch (rest) {
     | [next, ...rest] => (
         level0Body,
@@ -122,12 +125,12 @@ let closeBracket = (i, i', superscript, (level0Body, bracketGroup)) =>
     | [] => (level0Body ++ body, [])
     };
   | [] =>
-    let attributes = [("stretchy", "false")];
+    let attributes = [("class", invalidClass), ("stretchy", "false")];
     let element = elementWithIndex(~attributes, "mo", i, i', ")");
     (level0Body ++ element, []);
   };
 let accumToString = ((level0Body, bracketGroup)) => {
-  let attributes = [("stretchy", "false")];
+  let attributes = [("class", invalidClass), ("stretchy", "false")];
   let closed =
     bracketGroup
     ->Belt.List.map(({i, i', body}) =>
