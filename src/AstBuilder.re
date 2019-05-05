@@ -360,7 +360,7 @@ let rec handleBrackets = elements => {
 };
 let next = handleBrackets;
 
-let mapValue = ({TreeUtil.accum}): finalState =>
+let mapValue = ({Tree.accum}): finalState =>
   switch (accum) {
   | Row(nodes) => next(MutableListBuilder.toList(nodes))
   | ReduceError(i) => Error(i)
@@ -486,7 +486,7 @@ let mapElement = (element, i) =>
   | `RandInt(_)
   | `Table(_) => `Error(i)
   };
-let reduceFn = ({TreeUtil.accum, rangeStart}, element) =>
+let reduceFn = ({Tree.accum, rangeStart}, element) =>
   switch (accum) {
   | ReduceError(_) as e => e
   | Row(list) =>
@@ -498,7 +498,7 @@ let reduceFn = ({TreeUtil.accum, rangeStart}, element) =>
 
 let parse = (elements: list(Types.t)) => {
   let out =
-    TreeUtil.map(
+    Tree.map(
       elements,
       Row(MutableListBuilder.empty),
       mapValue,

@@ -146,12 +146,12 @@ let concatAccum = (element, accum) =>
   | [current, ...rest] => [current ++ element, ...rest]
   | _ => failwith("Empty")
   };
-let mapValue = ({TreeUtil.accum}): string =>
+let mapValue = ({Tree.accum}): string =>
   switch (accumToString(accum)) {
   | "" as body => body
   | body => createElement("mrow", body)
   };
-let reduceFn = ({TreeUtil.accum, rangeStart: i, rangeEnd: i'}, element) =>
+let reduceFn = ({Tree.accum, rangeStart: i, rangeEnd: i'}, element) =>
   switch (element) {
   | `OpenBracket => openBracket(i, i', accum)
   | `CloseBracket(superscript) => closeBracket(i, i', superscript, accum)
@@ -324,5 +324,5 @@ let create = elements =>
       ("xmlns", "http://www.w3.org/1998/Math/MathML"),
       ("display", "block"),
     ],
-    TreeUtil.map(elements, defaultAccum, mapValue, reduceFn),
+    Tree.map(elements, defaultAccum, mapValue, reduceFn),
   );

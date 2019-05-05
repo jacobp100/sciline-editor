@@ -164,11 +164,11 @@ let separateAtomLikeSuperscript = element =>
   | _ => None
   };
 let separateSuperscripts = (elements: list(t)): list(t) =>
-  TreeUtil.map(
+  Tree.map(
     elements,
     MutableListBuilder.empty,
-    ({TreeUtil.accum: elements}) => MutableListBuilder.toList(elements),
-    ({TreeUtil.accum}, element) =>
+    ({Tree.accum: elements}) => MutableListBuilder.toList(elements),
+    ({Tree.accum}, element) =>
       switch (separateAtomLikeSuperscript(element)) {
       | Some((element, superscript)) =>
         accum
@@ -227,7 +227,7 @@ type insertionFlags =
 
 let reduceSelectorFlags = (existingFlags, selector) =>
   switch (selector) {
-  | TreeUtil.Superscript
+  | Tree.Superscript
   | Subscript
   | Upper
   | Lower
@@ -256,7 +256,7 @@ let insertIndex = (elements, newElement, index) =>
   } else {
     let finalize = arg => {
       let {
-        TreeUtil.accum: elements,
+        Tree.accum: elements,
         rollup: inserted,
         context,
         rangeStart,
@@ -283,7 +283,7 @@ let insertIndex = (elements, newElement, index) =>
     };
 
     let reduceFn = (arg, element) => {
-      let {TreeUtil.accum: elements, rollup: inserted, rangeStart: i, context} = arg;
+      let {Tree.accum: elements, rollup: inserted, rangeStart: i, context} = arg;
 
       let (inserted, elements) =
         if (inserted != NotInserted || index != i) {
@@ -298,7 +298,7 @@ let insertIndex = (elements, newElement, index) =>
     };
 
     let (inserted, elements) =
-      TreeUtil.rollup(
+      Tree.rollup(
         ~initialRollup=NotInserted,
         ~mapContext=reduceSelectorFlags,
         ~initialContext=AnyElement,
@@ -339,7 +339,8 @@ let shouldDeleteElement = (element: t): bool =>
   | `ImaginaryUnit(superscript)
   | `CloseBracket(superscript)
   | `Rand(superscript) => superscript == []
-  | `Placeholder(superscript) => isEmpty(superscript)
+  | `Placeholder(_) => false
+  // | `Placeholder(superscript) => isEmpty(superscript)
   | `Magnitude(exponent) => isEmpty(exponent)
   | `Frac({fracNum, den}) => isEmpty(fracNum) && isEmpty(den)
   | `NRoot({nrootDegree, radicand}) =>
@@ -364,30 +365,31 @@ let shouldDeleteElement = (element: t): bool =>
   | `Table({tableElements}) => tableElements->Belt.Array.every(isEmpty)
   };
 
-let deleteIndex = (elements, index) => {
-  let nextIndex = index - 1;
-
+let deleteIndex = (inputElements, index) => {
   let (didDelete, elements) =
-    TreeUtil.rollup(
+    Tree.rollup(
       ~initialRollup=false,
       ~initialContext=(),
-      elements->prepareForMutation,
+      inputElements->prepareForMutation,
       MutableListBuilder.empty,
-      ({TreeUtil.accum: elements, rollup}) => (
-        rollup,
-        MutableListBuilder.toList(elements)->finalizeMutation->normalizeRow,
-      ),
-      ({TreeUtil.accum, rollup, rangeStart: i}, element) =>
-        if (i == nextIndex && shouldDeleteElement(element)) {
+      ({Tree.accum: elements, rollup}) =>
+        (
+          rollup,
+          MutableListBuilder.toList(elements)->finalizeMutation->normalizeRow,
+        ),
+      ({Tree.accum, rollup, rangeStart: i}, element) =>
+        if (i == index && shouldDeleteElement(element)) {
           (true, accum);
         } else {
           (rollup, MutableListBuilder.append(accum, element));
         },
     );
 
+  let index = max(index, 0);
+
   switch (elements, didDelete) {
-  | ([`Placeholder([])], _) => Some(([], 0))
-  | (_, true) => Some((elements, nextIndex))
-  | _ => None
+  | ([`Placeholder([])], _) => ([], 0)
+  | (_, true) => (elements, index)
+  | _ => (inputElements, index)
   };
 };

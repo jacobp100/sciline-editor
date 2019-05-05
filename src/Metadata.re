@@ -49,7 +49,7 @@ type rollup = {
 };
 
 let reduceBracketGroupsAccum =
-    (bracketGroups, {TreeUtil.accum, rangeStart, rangeEnd}, element) =>
+    (bracketGroups, {Tree.accum, rangeStart, rangeEnd}, element) =>
   switch (accum, element) {
   | (_, `OpenBracket) => (bracketGroups, [rangeStart, ...accum])
   | ([openBracket, ...rest], `CloseBracket(_)) => (
@@ -60,23 +60,23 @@ let reduceBracketGroupsAccum =
   };
 
 let reduceTableGroups =
-    (noTableGroups, {TreeUtil.context, rangeStart, rangeEnd}) =>
+    (noTableGroups, {Tree.context, rangeStart, rangeEnd}) =>
   rangeStart != rangeEnd && context == Mutation.NonTableElements ?
     addRange((rangeStart, rangeEnd), noTableGroups) : noTableGroups;
 
 let getMetadata = elements => {
   let (length, {bracketGroups, noTableGroups}, _) =
-    TreeUtil.walkI(
+    Tree.walkI(
       ~initialContext=Mutation.AnyElement,
       ~mapContext=Mutation.reduceSelectorFlags,
       ~initialRollup={bracketGroups: [], noTableGroups: []},
       elements,
       [],
-      ({TreeUtil.rollup} as arg) => {
+      ({Tree.rollup} as arg) => {
         let noTableGroups = reduceTableGroups(rollup.noTableGroups, arg);
         ({...rollup, noTableGroups}, None);
       },
-      ({TreeUtil.rollup} as arg, element) => {
+      ({Tree.rollup} as arg, element) => {
         let (bracketGroups, accum) =
           reduceBracketGroupsAccum(rollup.bracketGroups, arg, element);
         ({...rollup, bracketGroups}, accum);
