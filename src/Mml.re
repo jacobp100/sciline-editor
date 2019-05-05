@@ -114,9 +114,8 @@ let closeBracket = (i, i', superscript, (level0Body, bracketGroup)) =>
     let body =
       elementWithIndex("mo", closed.i, closed.i', "(")
       ++ closed.body
-      ++ elementWithIndex("mo", i, i', ")")
-      |> createElement("mrow")
-      |> wrapSuperscript(superscript);
+      ++ elementWithIndex(~superscript, "mo", i, i', ")")
+      |> createElement("mrow");
     switch (rest) {
     | [next, ...rest] => (
         level0Body,
@@ -232,10 +231,7 @@ let reduceFn = ({Tree.accum, rangeStart: i, rangeEnd: i'}, element) =>
       createElement("mo", leftBracket)
       ++ unaryArg
       ++ createElement("mo", rightBracket);
-    append(
-      elementWithIndex("mrow", i, i', body) |> wrapSuperscript(superscript),
-      accum,
-    );
+    append(elementWithIndex(~superscript, "mrow", i, i', body), accum);
   | `Rand(superscript) =>
     atomLikeWithIndex(~superscript, "mi", i, i', "Rand")->append(accum)
   | `RandInt({randIntA, b, superscript}) =>

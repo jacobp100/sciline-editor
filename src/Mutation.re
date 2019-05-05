@@ -163,21 +163,31 @@ let separateAtomLikeSuperscript = element =>
   /* | `CloseBracket(superscript) => Some((`CloseBracket([]), superscript)) */
   | _ => None
   };
-let separateSuperscripts = (elements: list(t)): list(t) =>
-  Tree.map(
-    elements,
-    MutableListBuilder.empty,
-    ({Tree.accum: elements}) => MutableListBuilder.toList(elements),
-    ({Tree.accum}, element) =>
-      switch (separateAtomLikeSuperscript(element)) {
-      | Some((element, superscript)) =>
-        accum
-        ->MutableListBuilder.append(element)
-        ->MutableListBuilder.append(`Placeholder(superscript))
-      | _ => MutableListBuilder.append(accum, element)
-      },
-  );
-let prepareForMutation = separateSuperscripts;
+let appendElementSeparatingSuperscripts = (listBuilder, element) =>
+  switch (separateAtomLikeSuperscript(element)) {
+  | Some((element, superscript)) =>
+    listBuilder
+    ->MutableListBuilder.append(element)
+    ->MutableListBuilder.append(`Placeholder(superscript))
+  | _ => MutableListBuilder.append(listBuilder, element)
+  };
+/*
+ let separateSuperscripts = (elements: list(t)): list(t) =>
+   Tree.map(
+     elements,
+     MutableListBuilder.empty,
+     ({Tree.accum: elements}) => MutableListBuilder.toList(elements),
+     ({Tree.accum}, element) =>
+       switch (separateAtomLikeSuperscript(element)) {
+       | Some((element, superscript)) =>
+         accum
+         ->MutableListBuilder.append(element)
+         ->MutableListBuilder.append(`Placeholder(superscript))
+       | _ => MutableListBuilder.append(accum, element)
+       },
+   );
+ let prepareForMutation = separateSuperscripts;
+ */
 
 let coalesceWithSuperscript = (element: t, superscript: list(t)): option(t) =>
   switch (element) {
@@ -219,7 +229,6 @@ let rec coalescePlaceholderSuperscripts = elements =>
   | [x, ...rest] => [x, ...coalescePlaceholderSuperscripts(rest)]
   | [] => []
   };
-let finalizeMutation = elements => coalescePlaceholderSuperscripts(elements);
 
 type insertionFlags =
   | AnyElement
@@ -254,47 +263,38 @@ let insertIndex = (elements, newElement, index) =>
   if (elements == []) {
     Some((normalizeRow([newElement]), 1));
   } else {
-    let finalize = arg => {
-      let {
-        Tree.accum: elements,
-        rollup: inserted,
-        context,
-        rangeStart,
-        rangeEnd,
-      } = arg;
-
+    let finalize = ({Tree.accum, rollup, context, rangeStart, rangeEnd}) => {
       let (inserted, elements) =
-        if (inserted != NotInserted
+        if (rollup != NotInserted
             || rangeStart == rangeEnd
             || index != rangeEnd) {
-          (inserted, elements);
+          (rollup, accum);
         } else if (!canInsert(context, newElement)) {
-          (InsertionFailed, elements);
+          (InsertionFailed, accum);
         } else {
-          let nextElements = MutableListBuilder.append(elements, newElement);
+          let nextElements = MutableListBuilder.append(accum, newElement);
           (Inserted, nextElements);
         };
       let elements =
         MutableListBuilder.toList(elements)
-        ->finalizeMutation
+        ->coalescePlaceholderSuperscripts
         ->expandInsertedElementsInRow
         ->normalizeRow;
       (inserted, elements);
     };
 
     let reduceFn = (arg, element) => {
-      let {Tree.accum: elements, rollup: inserted, rangeStart: i, context} = arg;
+      let {Tree.accum, rollup, rangeStart: i, context} = arg;
 
       let (inserted, elements) =
-        if (inserted != NotInserted || index != i) {
-          (inserted, elements);
+        if (rollup != NotInserted || index != i) {
+          (rollup, accum);
         } else if (!canInsert(context, newElement)) {
-          (InsertionFailed, elements);
+          (InsertionFailed, accum);
         } else {
-          let nextElements = elements->MutableListBuilder.append(newElement);
-          (Inserted, nextElements);
+          (Inserted, MutableListBuilder.append(accum, newElement));
         };
-      (inserted, elements->MutableListBuilder.append(element));
+      (inserted, appendElementSeparatingSuperscripts(elements, element));
     };
 
     let (inserted, elements) =
@@ -302,7 +302,7 @@ let insertIndex = (elements, newElement, index) =>
         ~initialRollup=NotInserted,
         ~mapContext=reduceSelectorFlags,
         ~initialContext=AnyElement,
-        prepareForMutation(elements),
+        elements,
         MutableListBuilder.empty,
         finalize,
         reduceFn,
@@ -339,12 +339,13 @@ let shouldDeleteElement = (element: t): bool =>
   | `ImaginaryUnit(superscript)
   | `CloseBracket(superscript)
   | `Rand(superscript) => superscript == []
-  | `Placeholder(_) => false
-  // | `Placeholder(superscript) => isEmpty(superscript)
+  | `Placeholder(superscript) => isEmpty(superscript)
   | `Magnitude(exponent) => isEmpty(exponent)
-  | `Frac({fracNum, den}) => isEmpty(fracNum) && isEmpty(den)
-  | `NRoot({nrootDegree, radicand}) =>
-    isEmpty(nrootDegree) && isEmpty(radicand)
+  | `NLog({nlogBase}) => isEmpty(nlogBase)
+  | `Frac({fracNum, den, superscript}) =>
+    isEmpty(fracNum) && isEmpty(den) && isEmpty(superscript)
+  | `NRoot({nrootDegree, radicand, superscript}) =>
+    isEmpty(nrootDegree) && isEmpty(radicand) && isEmpty(superscript)
   | `RandInt({randIntA, b, superscript}) =>
     isEmpty(randIntA) && isEmpty(b) && isEmpty(superscript)
   | `NPR({statN, r})
@@ -356,36 +357,39 @@ let shouldDeleteElement = (element: t): bool =>
   | `Sum({rangeStart, rangeEnd})
   | `Product({rangeStart, rangeEnd}) =>
     isEmpty(rangeStart) && isEmpty(rangeEnd)
-  | `Sqrt({rootRadicand: arg})
-  | `NLog({nlogBase: arg})
-  | `Abs({unaryArg: arg})
-  | `Floor({unaryArg: arg})
-  | `Ceil({unaryArg: arg})
-  | `Round({unaryArg: arg}) => isEmpty(arg)
-  | `Table({tableElements}) => tableElements->Belt.Array.every(isEmpty)
+  | `Sqrt({rootRadicand: arg, superscript})
+  | `Abs({unaryArg: arg, superscript})
+  | `Floor({unaryArg: arg, superscript})
+  | `Ceil({unaryArg: arg, superscript})
+  | `Round({unaryArg: arg, superscript}) =>
+    isEmpty(arg) && isEmpty(superscript)
+  | `Table({tableElements, superscript}) =>
+    tableElements->Belt.Array.every(isEmpty) && isEmpty(superscript)
   };
 
 let deleteIndex = (inputElements, index) => {
+  let index = max(index - 1, 0);
+
   let (didDelete, elements) =
     Tree.rollup(
       ~initialRollup=false,
       ~initialContext=(),
-      inputElements->prepareForMutation,
+      inputElements,
       MutableListBuilder.empty,
-      ({Tree.accum: elements, rollup}) =>
+      ({Tree.accum, rollup}) =>
         (
           rollup,
-          MutableListBuilder.toList(elements)->finalizeMutation->normalizeRow,
+          MutableListBuilder.toList(accum)
+          ->coalescePlaceholderSuperscripts
+          ->normalizeRow,
         ),
-      ({Tree.accum, rollup, rangeStart: i}, element) =>
+      ({Tree.accum, rollup: inserted, rangeStart: i}, element) =>
         if (i == index && shouldDeleteElement(element)) {
           (true, accum);
         } else {
-          (rollup, MutableListBuilder.append(accum, element));
+          (inserted, appendElementSeparatingSuperscripts(accum, element));
         },
     );
-
-  let index = max(index, 0);
 
   switch (elements, didDelete) {
   | ([`Placeholder([])], _) => ([], 0)
