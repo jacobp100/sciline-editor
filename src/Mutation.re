@@ -148,9 +148,12 @@ and combineElements = (element, (before, after)) =>
     );
   };
 
-/* This preserves indices */
-let separateAtomLikeSuperscript = element =>
+let separateSuperscript = element =>
   switch (element) {
+  | `Placeholder(superscript) => Some((`Placeholder([]), superscript))
+  | `ImaginaryUnit(superscript) => Some((`ImaginaryUnit([]), superscript))
+  | `CloseBracket(superscript) => Some((`CloseBracket([]), superscript))
+  | `Rand(superscript) => Some((`Rand([]), superscript))
   | `Digit({atomNucleus, superscript}) =>
     Some((`Digit({atomNucleus, superscript: []}), superscript))
   | `Variable({atomNucleus, superscript}) =>
@@ -159,40 +162,29 @@ let separateAtomLikeSuperscript = element =>
     Some((`Constant({constant, superscript: []}), superscript))
   | `CustomAtom({customAtomValue, mml, superscript}) =>
     Some((`CustomAtom({customAtomValue, mml, superscript: []}), superscript))
-  | `ImaginaryUnit(superscript) => Some((`ImaginaryUnit([]), superscript))
-  /* | `CloseBracket(superscript) => Some((`CloseBracket([]), superscript)) */
+  | `Frac({fracNum, den, superscript}) =>
+    Some((`Frac({fracNum, den, superscript: []}), superscript))
+  | `Sqrt({rootRadicand, superscript}) =>
+    Some((`Sqrt({rootRadicand, superscript: []}), superscript))
+  | `NRoot({nrootDegree, radicand, superscript}) =>
+    Some((`NRoot({nrootDegree, radicand, superscript: []}), superscript))
+  | `Abs({unaryArg, superscript}) => Some((`Abs({unaryArg, superscript: []}), superscript))
+  | `Floor({unaryArg, superscript}) => Some((`Floor({unaryArg, superscript: []}), superscript))
+  | `Ceil({unaryArg, superscript}) => Some((`Ceil({unaryArg, superscript: []}), superscript))
+  | `Round({unaryArg, superscript}) => Some((`Round({unaryArg, superscript: []}), superscript))
+  | `RandInt({randIntA, b, superscript}) =>
+    Some((`RandInt({randIntA, b, superscript: []}), superscript))
+  | `Table({tableElements: _, superscript} as t) =>
+    Some((`Table({...t, superscript: []}), superscript))
   | _ => None
   };
-let appendElementSeparatingSuperscripts = (listBuilder, element) =>
-  switch (separateAtomLikeSuperscript(element)) {
-  | Some((element, superscript)) =>
-    listBuilder
-    ->MutableListBuilder.append(element)
-    ->MutableListBuilder.append(`Placeholder(superscript))
-  | _ => MutableListBuilder.append(listBuilder, element)
-  };
-/*
- let separateSuperscripts = (elements: list(t)): list(t) =>
-   Tree.map(
-     elements,
-     MutableListBuilder.empty,
-     ({Tree.accum: elements}) => MutableListBuilder.toList(elements),
-     ({Tree.accum}, element) =>
-       switch (separateAtomLikeSuperscript(element)) {
-       | Some((element, superscript)) =>
-         accum
-         ->MutableListBuilder.append(element)
-         ->MutableListBuilder.append(`Placeholder(superscript))
-       | _ => MutableListBuilder.append(accum, element)
-       },
-   );
- let prepareForMutation = separateSuperscripts;
- */
 
 let coalesceWithSuperscript = (element: t, superscript: list(t)): option(t) =>
   switch (element) {
-  | `CloseBracket([]) => Some(`CloseBracket(superscript))
+  | `Placeholder([]) => Some(`Placeholder(superscript))
   | `ImaginaryUnit([]) => Some(`ImaginaryUnit(superscript))
+  | `CloseBracket([]) => Some(`CloseBracket(superscript))
+  | `Rand([]) => Some(`Rand(superscript))
   | `Digit({atomNucleus, superscript: []}) =>
     Some(`Digit({atomNucleus, superscript}))
   | `Variable({atomNucleus, superscript: []}) =>
@@ -214,6 +206,10 @@ let coalesceWithSuperscript = (element: t, superscript: list(t)): option(t) =>
     Some(`Ceil({unaryArg, superscript}))
   | `Round({unaryArg, superscript: []}) =>
     Some(`Round({unaryArg, superscript}))
+  | `RandInt({randIntA, b, superscript: []}) =>
+    Some(`RandInt({randIntA, b, superscript}))
+  | `Table({tableElements: _, superscript: []} as t) =>
+    Some(`Table({...t, superscript}))
   | _ => None
   };
 let rec coalescePlaceholderSuperscripts = elements =>
@@ -283,18 +279,45 @@ let insertIndex = (elements, newElement, index) =>
       (inserted, elements);
     };
 
-    let reduceFn = (arg, element) => {
-      let {Tree.accum, rollup, rangeStart: i, context} = arg;
-
-      let (inserted, elements) =
-        if (rollup != NotInserted || index != i) {
-          (rollup, accum);
-        } else if (!canInsert(context, newElement)) {
-          (InsertionFailed, accum);
+    let reduceFn =
+        (
+          {Tree.accum, rollup, context, rangeStart, superscriptIndex},
+          element,
+        ) => {
+      let editMode =
+        if (index == rangeStart) {
+          `Normal;
+        } else if (index == superscriptIndex) {
+          `Superscript;
         } else {
-          (Inserted, MutableListBuilder.append(accum, newElement));
+          `None;
         };
-      (inserted, appendElementSeparatingSuperscripts(elements, element));
+
+      if (rollup != NotInserted || editMode == `None) {
+        (rollup, accum->MutableListBuilder.append(element));
+      } else if (!canInsert(context, newElement)) {
+        (InsertionFailed, accum->MutableListBuilder.append(element));
+      } else if (editMode == `Normal) {
+        (
+          Inserted,
+          accum
+          ->MutableListBuilder.append(newElement)
+          ->MutableListBuilder.append(element),
+        );
+      } else {
+        let (elementNoSuperscript, superscript) =
+          separateSuperscript(element)->Belt.Option.getExn;
+        let accum = accum->MutableListBuilder.append(elementNoSuperscript);
+        let accum =
+          switch (coalesceWithSuperscript(newElement, superscript)) {
+          | Some(newElement) => accum->MutableListBuilder.append(newElement)
+          | None =>
+            accum
+            ->MutableListBuilder.append(newElement)
+            ->MutableListBuilder.append(`Placeholder(superscript))
+          };
+        (Inserted, accum);
+      };
     };
 
     let (inserted, elements) =
@@ -320,7 +343,7 @@ let isEmpty = element =>
   | [`Placeholder([])] => true
   | _ => false
   };
-let shouldDeleteElement = (element: t): bool =>
+let elementDeletionMode = (element: t) =>
   switch (element) {
   | `Base(_)
   | `Operator(_)
@@ -331,40 +354,45 @@ let shouldDeleteElement = (element: t): bool =>
   | `Degree
   | `ArcMinute
   | `ArcSecond
-  | `Function(_) => true
+  | `Function(_) => `Delete
   | `Digit({atomNucleus: _, superscript})
   | `Variable({atomNucleus: _, superscript})
   | `Constant({constant: _, superscript})
   | `CustomAtom({customAtomValue: _, superscript})
   | `ImaginaryUnit(superscript)
   | `CloseBracket(superscript)
-  | `Rand(superscript) => superscript == []
-  | `Placeholder(superscript) => isEmpty(superscript)
-  | `Magnitude(exponent) => isEmpty(exponent)
-  | `NLog({nlogBase}) => isEmpty(nlogBase)
+  | `Rand(superscript) =>
+    superscript == [] ? `Delete : `Spread([`Placeholder(superscript)])
+  | `Placeholder(superscript) => isEmpty(superscript) ? `Delete : `Skip
+  | `Magnitude(exponent) => isEmpty(exponent) ? `Delete : `Skip
+  | `NLog({nlogBase}) => isEmpty(nlogBase) ? `Delete : `Skip
   | `Frac({fracNum, den, superscript}) =>
-    isEmpty(fracNum) && isEmpty(den) && isEmpty(superscript)
+    superscript == [] ? `Spread(Belt.List.concat(fracNum, den)) : `Skip
+  | `Sqrt({rootRadicand, superscript}) =>
+    superscript == [] ? `Spread(rootRadicand) : `Skip
   | `NRoot({nrootDegree, radicand, superscript}) =>
-    isEmpty(nrootDegree) && isEmpty(radicand) && isEmpty(superscript)
+    isEmpty(nrootDegree) && isEmpty(radicand) && isEmpty(superscript) ?
+      `Delete : `Skip
   | `RandInt({randIntA, b, superscript}) =>
-    isEmpty(randIntA) && isEmpty(b) && isEmpty(superscript)
+    isEmpty(randIntA) && isEmpty(b) && isEmpty(superscript) ?
+      `Delete : `Skip
   | `NPR({statN, r})
-  | `NCR({statN, r}) => isEmpty(statN) && isEmpty(r)
+  | `NCR({statN, r}) => isEmpty(statN) && isEmpty(r) ? `Delete : `Skip
   | `Differential({differentialX, body}) =>
-    isEmpty(differentialX) && isEmpty(body)
+    isEmpty(differentialX) && isEmpty(body) ? `Delete : `Skip
   | `Integral({integralA, b, body}) =>
-    isEmpty(integralA) && isEmpty(b) && isEmpty(body)
+    isEmpty(integralA) && isEmpty(b) && isEmpty(body) ? `Delete : `Skip
   | `Sum({rangeStart, rangeEnd})
   | `Product({rangeStart, rangeEnd}) =>
-    isEmpty(rangeStart) && isEmpty(rangeEnd)
-  | `Sqrt({rootRadicand: arg, superscript})
+    isEmpty(rangeStart) && isEmpty(rangeEnd) ? `Delete : `Skip
   | `Abs({unaryArg: arg, superscript})
   | `Floor({unaryArg: arg, superscript})
   | `Ceil({unaryArg: arg, superscript})
   | `Round({unaryArg: arg, superscript}) =>
-    isEmpty(arg) && isEmpty(superscript)
+    isEmpty(arg) && isEmpty(superscript) ? `Delete : `Skip
   | `Table({tableElements, superscript}) =>
-    tableElements->Belt.Array.every(isEmpty) && isEmpty(superscript)
+    tableElements->Belt.Array.every(isEmpty) && isEmpty(superscript) ?
+      `Delete : `Skip
   };
 
 let deleteIndex = (inputElements, index) => {
@@ -383,11 +411,14 @@ let deleteIndex = (inputElements, index) => {
           ->coalescePlaceholderSuperscripts
           ->normalizeRow,
         ),
-      ({Tree.accum, rollup: inserted, rangeStart: i}, element) =>
-        if (i == index && shouldDeleteElement(element)) {
-          (true, accum);
-        } else {
-          (inserted, appendElementSeparatingSuperscripts(accum, element));
+      ({Tree.accum, rollup, rangeStart}, element) =>
+        switch (index == rangeStart ? elementDeletionMode(element) : `Skip) {
+        | `Delete => (true, accum)
+        | `Spread(elements) => (
+            true,
+            elements->Belt.List.reduce(accum, MutableListBuilder.append),
+          )
+        | `Skip => (rollup, accum->MutableListBuilder.append(element))
         },
     );
 

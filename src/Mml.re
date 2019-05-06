@@ -18,25 +18,35 @@ let wrapSuperscript = (~attributes=?, superscript, element) =>
   | s => createElement(~attributes?, "msup", element ++ s)
   };
 
-let elementWithIndex = (~attributes=[], ~superscript="", element, i, i', body) => {
-  let attributes = [
-    ("id", string_of_int(i) ++ ":" ++ string_of_int(i')),
-    ...attributes,
-  ];
-  switch (superscript) {
-  | "" => createElement(~attributes, element, body)
-  | s => wrapSuperscript(~attributes, s, createElement(element, body))
-  };
-};
+type range = (int, int, int);
 
-let atomLikeWithIndex = (~superscript="", element, i, i', body) => {
-  let attributes = [("id", string_of_int(i) ++ ":" ++ string_of_int(i'))];
+let range = ({Tree.rangeStart: i, rangeEnd: i', superscriptIndex: s}) => (
+  i,
+  i',
+  s,
+);
+
+let elementWithIndex =
+    (~attributes=[], ~superscript="", element, (i, i', s), body) => {
   switch (superscript) {
-  | "" => createElement(~attributes, element, body)
-  | s =>
-    let atomAttributes = [("id", ":" ++ string_of_int(i + 1))];
-    createElement(~attributes=atomAttributes, element, body)
-    |> wrapSuperscript(~attributes, s);
+  | "" =>
+    let attributes = [
+      ("id", string_of_int(i) ++ ":" ++ string_of_int(i')),
+      ...attributes,
+    ];
+    createElement(~attributes, element, body);
+  | superscript =>
+    let base =
+      createElement(
+        ~attributes=[("id", ":" ++ string_of_int(s)), ...attributes],
+        element,
+        body,
+      );
+    createElement(
+      ~attributes=[("id", string_of_int(i) ++ ":" ++ string_of_int(i'))],
+      "msup",
+      base ++ superscript,
+    );
   };
 };
 
@@ -85,13 +95,11 @@ let xSetRow = value =>
     createElement("mi", "x") ++ createElement("mo", "=") ++ value,
   );
 
-type bracketGroup = {
-  i: int,
-  i': int,
+type accum = (string, list(bracketGroup))
+and bracketGroup = {
+  range,
   body: string,
 };
-type accum = (string, list(bracketGroup));
-
 let defaultAccum = ("", []);
 
 let append = (element, (level0Body, bracketGroup)) =>
@@ -102,19 +110,19 @@ let append = (element, (level0Body, bracketGroup)) =>
     )
   | [] => (level0Body ++ element, [])
   };
-let openBracket = (i, i', (level0Body, bracketGroup)) => (
+let openBracket = (arg, (level0Body, bracketGroup)) => (
   level0Body,
-  [{i, i', body: ""}, ...bracketGroup],
+  [{range: arg->range, body: ""}, ...bracketGroup],
 );
 
 let invalidClass = "invalid";
-let closeBracket = (i, i', superscript, (level0Body, bracketGroup)) =>
+let closeBracket = (superscript, arg, (level0Body, bracketGroup)) =>
   switch (bracketGroup) {
   | [closed, ...rest] =>
     let body =
-      elementWithIndex("mo", closed.i, closed.i', "(")
+      elementWithIndex("mo", closed.range, "(")
       ++ closed.body
-      ++ elementWithIndex(~superscript, "mo", i, i', ")")
+      ++ elementWithIndex(~superscript, "mo", arg->range, ")")
       |> createElement("mrow");
     switch (rest) {
     | [next, ...rest] => (
@@ -125,101 +133,92 @@ let closeBracket = (i, i', superscript, (level0Body, bracketGroup)) =>
     };
   | [] =>
     let attributes = [("class", invalidClass), ("stretchy", "false")];
-    let element = elementWithIndex(~attributes, "mo", i, i', ")");
+    let element =
+      elementWithIndex(~attributes, ~superscript, "mo", arg->range, ")");
     (level0Body ++ element, []);
   };
 let accumToString = ((level0Body, bracketGroup)) => {
   let attributes = [("class", invalidClass), ("stretchy", "false")];
   let closed =
     bracketGroup
-    ->Belt.List.map(({i, i', body}) =>
-        elementWithIndex(~attributes, "mo", i, i', "(") ++ body
+    ->Belt.List.map(({range, body}) =>
+        elementWithIndex(~attributes, "mo", range, "(") ++ body
       )
     ->Belt.List.reverse
     |> String.concat("");
   level0Body ++ closed;
 };
 
-let concatAccum = (element, accum) =>
-  switch (accum) {
-  | [current, ...rest] => [current ++ element, ...rest]
-  | _ => failwith("Empty")
-  };
 let mapValue = ({Tree.accum}): string =>
   switch (accumToString(accum)) {
   | "" as body => body
   | body => createElement("mrow", body)
   };
-let reduceFn = ({Tree.accum, rangeStart: i, rangeEnd: i'}, element) =>
+let reduceFn = ({Tree.accum} as arg, element) =>
   switch (element) {
-  | `OpenBracket => openBracket(i, i', accum)
-  | `CloseBracket(superscript) => closeBracket(i, i', superscript, accum)
+  | `OpenBracket => openBracket(arg, accum)
+  | `CloseBracket(superscript) => closeBracket(superscript, arg, accum)
   | `Placeholder(superscript) =>
     let attributes = [("class", "placeholder")];
-    elementWithIndex(~attributes, ~superscript, "mi", i, i', "&#x25a1;")
-    ->append(accum);
+    let body = elementWithIndex(~attributes, "mi", arg->range, "&#x25a1;");
+    /* It's done this way so the superscript doesn't have the placeholder class */
+    wrapSuperscript(superscript, body)->append(accum);
   | `Base(base) =>
-    (stringOfBase(base) |> elementWithIndex("mn", i, i'))->append(accum)
+    elementWithIndex("mn", arg->range, stringOfBase(base))->append(accum)
   | `Digit({atomNucleus, superscript}) =>
-    atomLikeWithIndex(~superscript, "mn", i, i', atomNucleus)->append(accum)
-  | `Degree => elementWithIndex("mn", i, i', "&deg;")->append(accum)
+    elementWithIndex(~superscript, "mn", arg->range, atomNucleus)
+    ->append(accum)
+  | `Degree => elementWithIndex("mn", arg->range, "&deg;")->append(accum)
   | `ArcMinute =>
     let superscript = createElement("mn", "&prime;");
-    elementWithIndex(~superscript, "mn", i, i', "")->append(accum);
+    elementWithIndex(~superscript, "mn", arg->range, "")->append(accum);
   | `ArcSecond =>
     let superscript = createElement("mn", "&#8243;");
-    elementWithIndex(~superscript, "mn", i, i', "")->append(accum);
+    elementWithIndex(~superscript, "mn", arg->range, "")->append(accum);
   | `Conj =>
     let superscript = createElement("mn", "*");
-    elementWithIndex(~superscript, "mn", i, i', "")->append(accum);
-  | `DecimalSeparator => append(elementWithIndex("mn", i, i', "."), accum)
+    elementWithIndex(~superscript, "mn", arg->range, "")->append(accum);
+  | `DecimalSeparator =>
+    elementWithIndex("mn", arg->range, ".")->append(accum)
   | `ImaginaryUnit(superscript) =>
-    atomLikeWithIndex(~superscript, "mi", i, i', "i")->append(accum)
+    elementWithIndex(~superscript, "mi", arg->range, "i")->append(accum)
   | `Magnitude(exponent) =>
-    append(
+    let body =
       createElement("mo", stringOfOperator(Mul))
-      ++ createElement("mn", "10")
-      |> elementWithIndex(~superscript=exponent, "mrow", i, i'),
-      accum,
-    )
+      ++ createElement("mn", "10");
+    elementWithIndex(~superscript=exponent, "mrow", arg->range, body)
+    ->append(accum);
   | `Variable({atomNucleus, superscript}) =>
-    atomLikeWithIndex(~superscript, "mi", i, i', atomNucleus)->append(accum)
-  | `Constant({constant, superscript}) =>
-    atomLikeWithIndex(~superscript, "mi", i, i', stringOfConstant(constant))
+    elementWithIndex(~superscript, "mi", arg->range, atomNucleus)
     ->append(accum)
+  | `Constant({constant, superscript}) =>
+    let body = stringOfConstant(constant);
+    elementWithIndex(~superscript, "mi", arg->range, body)->append(accum);
   | `CustomAtom({mml, superscript}) =>
-    atomLikeWithIndex(~superscript, "mrow", i, i', mml)->append(accum)
+    elementWithIndex(~superscript, "mrow", arg->range, mml)->append(accum)
   | `Function(Gamma) =>
     let attributes = [("mathvariant", "normal")];
-    elementWithIndex(~attributes, "mi", i, i', stringOfFunction(Gamma))
+    elementWithIndex(~attributes, "mi", arg->range, stringOfFunction(Gamma))
     ->append(accum);
   | `Function(f) =>
-    elementWithIndex("mi", i, i', stringOfFunction(f))->append(accum)
-  | `Factorial => elementWithIndex("mo", i, i', "!")->append(accum)
+    elementWithIndex("mi", arg->range, stringOfFunction(f))->append(accum)
+  | `Factorial => elementWithIndex("mo", arg->range, "!")->append(accum)
   | `Operator(v) =>
-    elementWithIndex("mo", i, i', stringOfOperator(v))->append(accum)
+    elementWithIndex("mo", arg->range, stringOfOperator(v))->append(accum)
   | `Frac({fracNum, den, superscript}) =>
-    elementWithIndex(~superscript, "mfrac", i, i', fracNum ++ den)
+    elementWithIndex(~superscript, "mfrac", arg->range, fracNum ++ den)
     ->append(accum)
   | `Sqrt({rootRadicand, superscript}) =>
-    elementWithIndex(~superscript, "msqrt", i, i', rootRadicand)
+    elementWithIndex(~superscript, "msqrt", arg->range, rootRadicand)
     ->append(accum)
   | `NRoot({nrootDegree, radicand, superscript}) =>
-    append(
-      radicand
-      ++ nrootDegree
-      |> elementWithIndex(~superscript, "mroot", i, i'),
-      accum,
-    )
+    let body = radicand ++ nrootDegree;
+    elementWithIndex(~superscript, "mroot", arg->range, body)->append(accum);
   | `NLog({nlogBase}) =>
-    append(
-      createElement("mi", "log")
-      ++ nlogBase
-      |> elementWithIndex("msub", i, i'),
-      accum,
-    )
-  | (`Abs(arg) | `Floor(arg) | `Ceil(arg) | `Round(arg)) as unary =>
-    let {unaryArg, superscript} = arg;
+    let body = createElement("mi", "log") ++ nlogBase;
+    elementWithIndex("msub", arg->range, body)->append(accum);
+  | (`Abs(fnArg) | `Floor(fnArg) | `Ceil(fnArg) | `Round(fnArg)) as unary =>
+    let {unaryArg, superscript} = fnArg;
     let (leftBracket, rightBracket) =
       switch (unary) {
       | `Abs(_) => ("|", "|")
@@ -231,9 +230,9 @@ let reduceFn = ({Tree.accum, rangeStart: i, rangeEnd: i'}, element) =>
       createElement("mo", leftBracket)
       ++ unaryArg
       ++ createElement("mo", rightBracket);
-    append(elementWithIndex(~superscript, "mrow", i, i', body), accum);
+    elementWithIndex(~superscript, "mrow", arg->range, body)->append(accum);
   | `Rand(superscript) =>
-    atomLikeWithIndex(~superscript, "mi", i, i', "Rand")->append(accum)
+    elementWithIndex(~superscript, "mi", arg->range, "Rand")->append(accum)
   | `RandInt({randIntA, b, superscript}) =>
     let body =
       createElement(
@@ -241,17 +240,17 @@ let reduceFn = ({Tree.accum, rangeStart: i, rangeEnd: i'}, element) =>
         createElement("mi", "Rand#")
         ++ createElement("mrow", randIntA ++ createElement("mo", ",") ++ b),
       );
-    atomLikeWithIndex(~superscript, "mrow", i, i', body)->append(accum);
-  | `NPR({statN, r}) =>
+    elementWithIndex(~superscript, "mrow", arg->range, body)->append(accum);
+  | (`NPR({statN, r}) | `NCR({statN, r})) as fnArg =>
+    let symbol =
+      switch (fnArg) {
+      | `NPR(_) => "P"
+      | `NCR(_) => "C"
+      };
     let nucleus =
-      createElement(~attributes=[("mathvariant", "bold")], "mi", "P");
+      createElement(~attributes=[("mathvariant", "bold")], "mi", symbol);
     let body = createElement("msubsup", nucleus ++ r ++ statN);
-    append(elementWithIndex("mrow", i, i', body), accum);
-  | `NCR({statN, r}) =>
-    let nucleus =
-      createElement(~attributes=[("mathvariant", "bold")], "mi", "C");
-    let body = createElement("msubsup", nucleus ++ r ++ statN);
-    append(elementWithIndex("mrow", i, i', body), accum);
+    elementWithIndex("mrow", arg->range, body)->append(accum);
   | `Differential({body, differentialX}) =>
     let pre =
       createElement(
@@ -265,31 +264,26 @@ let reduceFn = ({Tree.accum, rangeStart: i, rangeEnd: i'}, element) =>
         "munder",
         createElement("mo", "|") ++ xSetRow(differentialX),
       );
-    append(elementWithIndex("mrow", i, i', pre ++ body ++ post), accum);
+    elementWithIndex("mrow", arg->range, pre ++ body ++ post)->append(accum);
   | `Integral({integralA, b, body}) =>
     let pre =
-      createElement("mo", "&#x222B;")
-      ++ integralA
-      ++ b
-      |> createElement("msubsup");
+      createElement(
+        "msubsup",
+        createElement("mo", "&#x222B;") ++ integralA ++ b,
+      );
     let post = createElement("mi", "dx");
-    append(elementWithIndex("mrow", i, i', pre ++ body ++ post), accum);
-  | `Sum({rangeStart, rangeEnd}) =>
-    append(
-      elementWithIndex("mo", i, i', "&#x2211;")
+    elementWithIndex("mrow", arg->range, pre ++ body ++ post)->append(accum);
+  | (`Sum({rangeStart, rangeEnd}) | `Product({rangeStart, rangeEnd})) as fnArg =>
+    let atom =
+      switch (fnArg) {
+      | `Sum(_) => "&#x2211;"
+      | `Product(_) => "&#x220F;"
+      };
+    let body =
+      elementWithIndex("mo", arg->range, atom)
       ++ xSetRow(rangeStart)
-      ++ rangeEnd
-      |> createElement("munderover"),
-      accum,
-    )
-  | `Product({rangeStart, rangeEnd}) =>
-    append(
-      elementWithIndex("mo", i, i', "&#x220F;")
-      ++ xSetRow(rangeStart)
-      ++ rangeEnd
-      |> createElement("munderover"),
-      accum,
-    )
+      ++ rangeEnd;
+    createElement("munderover", body)->append(accum);
   | `Table({tableElements, superscript, numRows, numColumns}) =>
     let inner =
       Belt.List.makeBy(numRows, row =>
@@ -310,7 +304,7 @@ let reduceFn = ({Tree.accum, rangeStart: i, rangeEnd: i'}, element) =>
       ++ createElement("mo", "]")
       |> createElement("mrow")
       |> wrapSuperscript(superscript);
-    append(elementWithIndex("mrow", i, i', body), accum);
+    elementWithIndex("mrow", arg->range, body)->append(accum);
   };
 
 let create = elements =>

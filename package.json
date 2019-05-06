@@ -12,7 +12,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "bs-platform": "^4.0.18"
+    "bs-platform": "^4.0.18",
+    "esm": "^3.2.22"
   },
   "dependencies": {}
 }

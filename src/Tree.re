@@ -18,6 +18,7 @@ type iteration('accum, 'rollup, 'context) = {
   context: 'context,
   rangeStart: int,
   rangeEnd: int,
+  superscriptIndex: int,
 };
 
 let walkI =
@@ -44,123 +45,133 @@ let walkI =
         `ArcSecond
       ) as e =>
       let i = i + 1;
-      (i, rollup, e);
+      (i, (-1), rollup, e);
     | `Placeholder(superscript) =>
       /* Only allow selection after if there's a superscript */
       let i = superscript != [] ? i + 1 : i;
       let (i, rollup, superscript) =
         iterArgs(context, i, rollup, superscript, Superscript);
-      (i, rollup, `Placeholder(superscript));
+      (i, (-1), rollup, `Placeholder(superscript));
     | `ImaginaryUnit(superscript) =>
-      let (i, rollup, superscript) =
+      let (i, superscriptIndex, rollup, superscript) =
         iterAtomLike(context, i, rollup, superscript);
-      (i, rollup, `ImaginaryUnit(superscript));
+      (i, superscriptIndex, rollup, `ImaginaryUnit(superscript));
     | `Magnitude(exponent) =>
       let (i, rollup, exponent) =
         iterArgs1(context, i, rollup, exponent, Superscript);
-      (i, rollup, `Magnitude(exponent));
+      (i, (-1), rollup, `Magnitude(exponent));
     | `CloseBracket(superscript) =>
-      let (i, rollup, superscript) =
-        iterArgs1(context, i, rollup, superscript, Superscript);
-      (i, rollup, `CloseBracket(superscript));
+      let (i, superscriptIndex, rollup, superscript) =
+        iterAtomLike(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `CloseBracket(superscript));
     | `Rand(superscript) =>
-      let (i, rollup, superscript) =
+      let (i, superscriptIndex, rollup, superscript) =
         iterAtomLike(context, i, rollup, superscript);
-      (i, rollup, `Rand(superscript));
+      (i, superscriptIndex, rollup, `Rand(superscript));
     | `Digit({atomNucleus, superscript}) =>
-      let (i, rollup, superscript) =
+      let (i, superscriptIndex, rollup, superscript) =
         iterAtomLike(context, i, rollup, superscript);
-      (i, rollup, `Digit({atomNucleus, superscript}));
+      (i, superscriptIndex, rollup, `Digit({atomNucleus, superscript}));
     | `Variable({atomNucleus, superscript}) =>
-      let (i, rollup, superscript) =
+      let (i, superscriptIndex, rollup, superscript) =
         iterAtomLike(context, i, rollup, superscript);
-      (i, rollup, `Variable({atomNucleus, superscript}));
+      (i, superscriptIndex, rollup, `Variable({atomNucleus, superscript}));
     | `Constant({constant, superscript}) =>
-      let (i, rollup, superscript) =
+      let (i, superscriptIndex, rollup, superscript) =
         iterAtomLike(context, i, rollup, superscript);
-      (i, rollup, `Constant({constant, superscript}));
+      (i, superscriptIndex, rollup, `Constant({constant, superscript}));
     | `CustomAtom({customAtomValue, mml, superscript}) =>
-      let (i, rollup, superscript) =
+      let (i, superscriptIndex, rollup, superscript) =
         iterAtomLike(context, i, rollup, superscript);
-      (i, rollup, `CustomAtom({customAtomValue, mml, superscript}));
+      (i, superscriptIndex, rollup, `CustomAtom({customAtomValue, mml, superscript}));
     | `Frac({fracNum, den, superscript}) =>
-      let (i, rollup, fracNum, den, superscript) =
-        ((fracNum, FracNum), (den, FracDen), (superscript, Superscript))
-        ->iterArgs3(context, i, rollup);
-      (i, rollup, `Frac({fracNum, den, superscript}));
-    | `Sqrt({rootRadicand, superscript}) =>
-      let (i, rollup, rootRadicand, superscript) =
-        ((rootRadicand, RootRadicand), (superscript, Superscript))
+      let (i, rollup, fracNum, den) =
+        ((fracNum, FracNum), (den, FracDen))
         ->iterArgs2(context, i, rollup);
-      (i, rollup, `Sqrt({rootRadicand, superscript}));
+      let (i, superscriptIndex, rollup, superscript) =
+        iterSuperscript(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `Frac({fracNum, den, superscript}));
+    | `Sqrt({rootRadicand, superscript}) =>
+      let (i, rollup, rootRadicand) =
+        iterArgs1(context, i, rollup, rootRadicand, RootRadicand);
+      let (i, superscriptIndex, rollup, superscript) =
+        iterSuperscript(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `Sqrt({rootRadicand, superscript}));
     | `NRoot({nrootDegree, radicand, superscript}) =>
-      let (i, rollup, nrootDegree, radicand, superscript) =
+      let (i, rollup, nrootDegree, radicand) =
         (
           (nrootDegree, RootDegree),
           (radicand, RootRadicand),
-          (superscript, Subscript),
         )
-        ->iterArgs3(context, i, rollup);
-      (i, rollup, `NRoot({nrootDegree, radicand, superscript}));
+        ->iterArgs2(context, i, rollup);
+      let (i, superscriptIndex, rollup, superscript) =
+        iterSuperscript(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `NRoot({nrootDegree, radicand, superscript}));
     | `NLog({nlogBase}) =>
       let (i, rollup, nlogBase) =
         iterArgs1(context, i, rollup, nlogBase, Subscript);
-      (i, rollup, `NLog({nlogBase: nlogBase}));
+      (i, (-1), rollup, `NLog({nlogBase: nlogBase}));
     | `Abs({unaryArg, superscript}) =>
-      let (i, rollup, unaryArg, superscript) =
-        ((unaryArg, Inner), (superscript, Superscript))
-        ->iterArgs2(context, i, rollup);
-      (i, rollup, `Abs({unaryArg, superscript}));
+      let (i, rollup, unaryArg) =
+        iterArgs1(context, i, rollup, unaryArg, Inner)
+      let (i, superscriptIndex, rollup, superscript) =
+        iterSuperscript(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `Abs({unaryArg, superscript}));
     | `Floor({unaryArg, superscript}) =>
-      let (i, rollup, unaryArg, superscript) =
-        ((unaryArg, Inner), (superscript, Superscript))
-        ->iterArgs2(context, i, rollup);
-      (i, rollup, `Floor({unaryArg, superscript}));
+      let (i, rollup, unaryArg) =
+        iterArgs1(context, i, rollup, unaryArg, Inner)
+      let (i, superscriptIndex, rollup, superscript) =
+        iterSuperscript(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `Floor({unaryArg, superscript}));
     | `Ceil({unaryArg, superscript}) =>
-      let (i, rollup, unaryArg, superscript) =
-        ((unaryArg, Inner), (superscript, Superscript))
-        ->iterArgs2(context, i, rollup);
-      (i, rollup, `Ceil({unaryArg, superscript}));
+      let (i, rollup, unaryArg) =
+        iterArgs1(context, i, rollup, unaryArg, Inner)
+      let (i, superscriptIndex, rollup, superscript) =
+        iterSuperscript(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `Ceil({unaryArg, superscript}));
     | `Round({unaryArg, superscript}) =>
-      let (i, rollup, unaryArg, superscript) =
-        ((unaryArg, Inner), (superscript, Superscript))
-        ->iterArgs2(context, i, rollup);
-      (i, rollup, `Round({unaryArg, superscript}));
+      let (i, rollup, unaryArg) =
+        iterArgs1(context, i, rollup, unaryArg, Inner)
+      let (i, superscriptIndex, rollup, superscript) =
+        iterSuperscript(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `Round({unaryArg, superscript}));
     | `RandInt({randIntA, b, superscript}) =>
-      let (i, rollup, randIntA, b, superscript) =
-        ((randIntA, Subscript), (b, Subscript), (superscript, Subscript))
-        ->iterArgs3(context, i, rollup);
-      (i, rollup, `RandInt({randIntA, b, superscript}));
+      let (i, rollup, randIntA, b) =
+        ((randIntA, Subscript), (b, Subscript))
+        ->iterArgs2(context, i, rollup);
+      let (i, superscriptIndex, rollup, superscript) =
+        iterSuperscript(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `RandInt({randIntA, b, superscript}));
     | `NPR({statN, r}) =>
       let (i, rollup, statN, r) =
         ((statN, Superscript), (r, Subscript))
         ->iterArgs2(context, i, rollup);
-      (i, rollup, `NPR({statN, r}));
+      (i, (-1), rollup, `NPR({statN, r}));
     | `NCR({statN, r}) =>
       let (i, rollup, statN, r) =
         ((statN, Superscript), (r, Subscript))
         ->iterArgs2(context, i, rollup);
-      (i, rollup, `NCR({statN, r}));
+      (i, (-1), rollup, `NCR({statN, r}));
     | `Differential({body, differentialX}) =>
       let (i, rollup, body, differentialX) =
         ((body, Inner), (differentialX, Subscript))
         ->iterArgs2(context, i, rollup);
-      (i, rollup, `Differential({body, differentialX}));
+      (i, (-1), rollup, `Differential({body, differentialX}));
     | `Integral({integralA, b, body}) =>
       let (i, rollup, integralA, b, body) =
         ((integralA, Upper), (b, Lower), (body, Inner))
         ->iterArgs3(context, i, rollup);
-      (i, rollup, `Integral({integralA, b, body}));
+      (i, (-1), rollup, `Integral({integralA, b, body}));
     | `Sum({rangeStart, rangeEnd}) =>
       let (i, rollup, rangeStart, rangeEnd) =
         ((rangeStart, Lower), (rangeEnd, Upper))
         ->iterArgs2(context, i, rollup);
-      (i, rollup, `Sum({rangeStart, rangeEnd}));
+      (i, (-1), rollup, `Sum({rangeStart, rangeEnd}));
     | `Product({rangeStart, rangeEnd}) =>
       let (i, rollup, rangeStart, rangeEnd) =
         ((rangeStart, Lower), (rangeEnd, Upper))
         ->iterArgs2(context, i, rollup);
-      (i, rollup, `Product({rangeStart, rangeEnd}));
+      (i, (-1), rollup, `Product({rangeStart, rangeEnd}));
     | `Table({tableElements, superscript} as t) =>
       let i = i + 1;
       let ((i, rollup), tableElements) =
@@ -172,9 +183,9 @@ let walkI =
             ((i, rollup), a);
           },
         );
-      let (i, rollup, superscript) =
-        iterArgs(context, i, rollup, superscript, Superscript);
-      (i, rollup, `Table({...t, tableElements, superscript}));
+      let (i, superscriptIndex, rollup, superscript) =
+        iterSuperscript(context, i, rollup, superscript);
+      (i, superscriptIndex, rollup, `Table({...t, tableElements, superscript}));
     }
   and iter =
       (
@@ -183,15 +194,15 @@ let walkI =
         rollup: 'rollup,
         elements: list(t),
       ) => {
-    let reduceFn = ((i, rollup, accum), element: t) => {
-      let (i', rollup, element) =
-        recurseElement(context, i, rollup, element);
+    let reduceFn = ((rangeStart, rollup, accum), element: t) => {
+      let (rangeEnd, superscriptIndex, rollup, element) =
+        recurseElement(context, rangeStart, rollup, element);
       let (rollup, accum) =
         reduceFn(
-          {accum, rollup, rangeStart: i, rangeEnd: i', context},
+          {accum, rollup, context, rangeStart, rangeEnd, superscriptIndex},
           element,
         );
-      (i', rollup, accum);
+      (rangeEnd, rollup, accum);
     };
 
     let (rangeEnd, rollup, accum) =
@@ -200,7 +211,14 @@ let walkI =
         reduceFn,
       );
     let (rollup, accumulated) =
-      mapValue({accum, rollup, rangeStart, rangeEnd, context});
+      mapValue({
+        accum,
+        rollup,
+        context,
+        rangeStart,
+        rangeEnd,
+        superscriptIndex: (-1),
+      });
     (rangeEnd, rollup, accumulated);
   }
   and iterArgs =
@@ -242,10 +260,15 @@ let walkI =
     (i, rollup, a, b, c);
   }
   and iterAtomLike = (context, i, rollup, superscript) => {
+    let i = i + 1;
+    iterSuperscript(context, i, rollup, superscript);
+  }
+  and iterSuperscript = (context, i, rollup, superscript) => {
+    let superscriptIndex = superscript != [] ? i : (-1);
     let i = superscript != [] ? i + 1 : i;
     let (i, rollup, superscript) =
-      iterArgs1(context, i, rollup, superscript, Superscript);
-    (i, rollup, superscript);
+      iterArgs(context, i, rollup, superscript, Superscript);
+    (i, superscriptIndex, rollup, superscript);
   };
 
   iter(initialContext, 0, initialRollup, elements);
