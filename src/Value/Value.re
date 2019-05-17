@@ -56,7 +56,7 @@ let mapElement = (element: t('a), i) =>
     AST.pow(radicand, AST.div(AST.one, nrootDegree))
     ->withSuperscript(superscript)
     ->Resolved
-  | `Table({tableElements, superscript, numRows, numColumns}) =>
+  | `Table({tableElements, numRows, numColumns, superscript}) =>
     AST.matrix(numRows, numColumns, tableElements)
     ->withSuperscript(superscript)
     ->Resolved
