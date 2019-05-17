@@ -57,16 +57,18 @@ let mapElement = (element: t('a), i) =>
     ->withSuperscript(superscript)
     ->Resolved
   | `Table({tableElements, numRows, numColumns, superscript}) =>
-    AST.matrix(numRows, numColumns, tableElements)
-    ->withSuperscript(superscript)
-    ->Resolved
+    let element =
+      numColumns == 1
+        ? AST.vector(tableElements)
+        : AST.matrix(numRows, numColumns, tableElements);
+    element->withSuperscript(superscript)->Resolved;
   };
 
 let parse = (elements: array(AST_Types.t)) => {
   let error = ref(None);
 
   let reduce = (accum, element, (i, _, _)) =>
-    if (error^ != None) {
+    if (error^ == None) {
       switch (element) {
       | `Superscript(_) =>
         error := OptChain.add(error^, i);
@@ -80,7 +82,7 @@ let parse = (elements: array(AST_Types.t)) => {
     };
 
   let map = (accum, (i, _, _)): AST.t =>
-    if (error^ != None) {
+    if (error^ == None) {
       let elements = MutableListBuilder.toList(accum);
       let (root, e) = Value_Row.next(elements);
       switch (root) {

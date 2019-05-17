@@ -27,14 +27,14 @@ let append = (element, {elements, level0Body, bracketGroups}): t =>
     }
   };
 
-let openBracket = (range, {elements, level0Body, bracketGroups}): t => {
+let openBracket = ({elements, level0Body, bracketGroups}, range): t => {
   elements,
   level0Body,
   bracketGroups: [{range, body: ""}, ...bracketGroups],
 };
 
-let _invalidClass = "invalid";
-let closeBracket = (superscript, range, accum): t =>
+let _invalidAttributes = [("class", "invalid"), ("stretchy", "false")];
+let closeBracket = (accum, range, superscript): t =>
   switch (accum.bracketGroups) {
   | [closed, ...nextBracketGroups] =>
     let body =
@@ -44,13 +44,13 @@ let closeBracket = (superscript, range, accum): t =>
       |> createElement("mrow");
     append(body, {...accum, bracketGroups: nextBracketGroups});
   | [] =>
-    let attributes = [("class", _invalidClass), ("stretchy", "false")];
+    let attributes = _invalidAttributes;
     let body = elementWithIndex(~attributes, ~superscript, "mo", range, ")");
     append(body, accum);
   };
 
 let toString = ({elements, level0Body, bracketGroups}, range) => {
-  let attributes = [("class", _invalidClass), ("stretchy", "false")];
+  let attributes = _invalidAttributes;
   let closed =
     bracketGroups
     ->Belt.List.map(({range, body}) =>

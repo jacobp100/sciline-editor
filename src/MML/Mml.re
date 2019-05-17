@@ -5,9 +5,9 @@ let map = (accum, range) => MML_Accum.toString(accum, range);
 
 let reduce = (accum, element: t(string), range) =>
   switch (element) {
-  | `OpenBracket => MML_Accum.openBracket(range, accum)
+  | `OpenBracket => MML_Accum.openBracket(accum, range)
   | `CloseBracket(superscript) =>
-    MML_Accum.closeBracket(superscript, range, accum)
+    MML_Accum.closeBracket(accum, range, superscript)
   | `Superscript(superscript) =>
     /* It's done this way so the superscript doesn't have the placeholder class */
     wrapSuperscript(Some(superscript), MML_Util.placeholder(range))

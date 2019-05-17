@@ -12,7 +12,7 @@ let isDigit = x =>
   };
 
 let insertElement = (ast, element, index) => {
-  let (ast, elements) =
+  let (ast, elements, nextIndex) =
     switch (element) {
     | `Frac2S =>
       let s = count(ast, ~from=index - 1, ~step=-1, isDigit);
@@ -27,19 +27,19 @@ let insertElement = (ast, element, index) => {
           den,
           [|`Arg|],
         |]);
-      (ast, frac);
+      (ast, frac, index + 1);
     | `Sqrt1S =>
       let e = count(ast, ~from=index + 1, ~step=1, isDigit);
       let (ast, radicand) = ArrayUtil.splice(ast, ~offset=e - index, ~len=e);
       let elements =
         Belt.Array.concatMany([|[|element|], radicand, [|`Arg|]|]);
-      (ast, elements);
+      (ast, elements, index + 1);
     | `NRoot2S =>
       let e = count(ast, ~from=index + 1, ~step=1, isDigit);
       let (ast, radicand) = ArrayUtil.splice(ast, ~offset=e - index, ~len=e);
       let elements =
         Belt.Array.concatMany([|[|element|], radicand, [|`Arg|]|]);
-      (ast, elements);
+      (ast, elements, index + 1);
     | _ =>
       let elements =
         switch (AST_Types.argCountExn(element)) {
@@ -49,16 +49,31 @@ let insertElement = (ast, element, index) => {
           Belt.Array.setExn(elements, 0, element);
           elements;
         };
-      (ast, elements);
+      (ast, elements, index + 1);
     };
-  ArrayUtil.insertArray(ast, elements, index);
+  let ast = ArrayUtil.insertArray(ast, elements, index);
+  (ast, nextIndex);
 };
 
 let insertIndex = (ast: array(AST_Types.t), element: AST_Types.t, index: int) => {
   let ast = AST_Types.normalize(ast);
   if (AST_NormalizationContext.elementIsValid(ast, element, index)) {
-    insertElement(ast, element, index);
+    Some(insertElement(ast, element, index));
   } else {
-    ast;
+    None;
+  };
+};
+
+let insertArrayIndex = (ast, elements, index) => {
+  let valid =
+    Belt.Array.every(elements, element =>
+      AST_NormalizationContext.elementIsValid(ast, element, index)
+    );
+  if (valid) {
+    let ast = ArrayUtil.insertArray(ast, elements, index);
+    let nextIndex = index + Belt.Array.length(elements);
+    Some((ast, nextIndex));
+  } else {
+    None;
   };
 };

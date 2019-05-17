@@ -111,7 +111,7 @@ let reduceMap =
       ~initial: 'accum,
     )
     : 'value => {
-  let rec readNodeExn = i: (t('a), int, int) =>
+  let rec readNodeExn = (i): (t('a), int, int) =>
     switch (Belt.Array.getExn(input, i)) {
     | (
         `Base(_) | `Operator(_) | `OpenBracket | `DecimalSeparator | `Conj |
@@ -122,8 +122,8 @@ let reduceMap =
         `ArcSecond
       ) as v => (
         v,
-        (-1),
         i + 1,
+        (-1),
       )
     | `CloseBracketS =>
       let s = i + 1;

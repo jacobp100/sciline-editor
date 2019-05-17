@@ -34,7 +34,7 @@ let insertArray = (x, other, index) =>
     Belt.Array.concatMany([|
       Belt.Array.slice(x, ~offset=0, ~len=index),
       other,
-      Belt.Array.sliceToEnd(x, index + 1),
+      Belt.Array.sliceToEnd(x, index),
     |]);
   };
 

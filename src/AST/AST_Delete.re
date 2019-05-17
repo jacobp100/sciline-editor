@@ -4,7 +4,7 @@ let rec matchNEmptyArgs = (ast, ~index, ~count) =>
   } else if (ast->Belt.Array.get(index) != Some(`Arg)) {
     false;
   } else {
-    matchNEmptyArgs(ast, ~index=index + 1, ~count=count + 1);
+    matchNEmptyArgs(ast, ~index=index + 1, ~count=count - 1);
   };
 
 let nArgsSlice = (~skipInitial=0, ast, index) => {
@@ -75,13 +75,16 @@ let deleteEmptySuperscript = (ast, index) =>
   };
 
 let deleteIndex = (ast: array(AST_Types.t), index: int) => {
+  let index = index - 1;
   let ast = AST_Types.normalize(ast);
-  switch (deletionMode(ast, index)) {
-  | Keep => ast
-  | Delete => deleteAtIndexExn(ast, index)->deleteEmptySuperscript(index)
-  | Spread(elements) =>
-    deleteAtIndexExn(ast, index)
-    ->deleteEmptySuperscript(index)
-    ->ArrayUtil.insertArray(elements, index)
-  };
+  let ast =
+    switch (deletionMode(ast, index)) {
+    | Keep => ast
+    | Delete => deleteAtIndexExn(ast, index)->deleteEmptySuperscript(index)
+    | Spread(elements) =>
+      deleteAtIndexExn(ast, index)
+      ->deleteEmptySuperscript(index)
+      ->ArrayUtil.insertArray(elements, index)
+    };
+  (ast, index);
 };
