@@ -28,13 +28,17 @@ let rec reduce = (state, element) =>
     Some({...state, numBase: Some(numBase)})
   | (
       {numSup: None, imag: None, magSup: None},
-      `Digit({atomNucleus, superscript}),
+      `Digit({
+        atomNucleus,
+        superscript: (Some(Node(_)) | None) as superscript,
+      }),
     )
       when numberIsValidForBase(state.numBase, atomNucleus) =>
+    /* FIXME: Is this right? Almost certainly not */
     let numSup =
       switch (superscript) {
-      | Node(v) => Some(v)
-      | _ => None
+      | Some(Node(v)) => Some(v)
+      | None => None
       };
     Some({...state, numString: state.numString ++ atomNucleus, numSup});
   | (
@@ -45,12 +49,12 @@ let rec reduce = (state, element) =>
   /* Allow 3^2i, 3^2 i^2, but not 3i^2, because that's ambiguous */
   | (
       {numSup: Some(_) | None, magSup: None, imag: None},
-      `ImaginaryUnit(Empty),
+      `ImaginaryUnit(None),
     ) =>
     Some({...state, imag: Some(AST.i)})
   | (
       {numSup: None, magSup: None, imag: None},
-      `ImaginaryUnit(Node(imagSuperscript)),
+      `ImaginaryUnit(Some(Node(imagSuperscript))),
     ) =>
     Some({...state, imag: Some(AST.pow(AST.i, imagSuperscript))})
   | (_, `Magnitude({magnitudeBase: Node(magSuperscript)}))

@@ -1,5 +1,3 @@
-open MML_RowTypes;
-
 let createElement = (~attributes=[], element, body) => {
   let attributes =
     attributes->Belt.List.map(((p, v)) => p ++ "=\"" ++ v ++ "\"")
@@ -13,22 +11,21 @@ let createElement = (~attributes=[], element, body) => {
 };
 
 let wrapSuperscript = (~attributes=?, superscript, element) =>
-  switch (superscript.body) {
-  | "" => element
-  | s => createElement(~attributes?, "msup", element ++ s)
+  switch (superscript) {
+  | None => element
+  | Some(s) => createElement(~attributes?, "msup", element ++ s)
   };
 
 let elementWithIndex =
-    (~attributes=[], ~superscript=?, element, (i, i', s), body) =>
+    (~attributes=[], ~superscript=None, element, (i, i', s), body) =>
   switch (superscript) {
-  | None
-  | Some({body: ""}) =>
+  | None =>
     let attributes = [
       ("id", string_of_int(i) ++ ":" ++ string_of_int(i')),
       ...attributes,
     ];
     createElement(~attributes, element, body);
-  | Some({body: superscript}) =>
+  | Some(superscript) =>
     let base =
       createElement(
         ~attributes=[("id", ":" ++ string_of_int(s)), ...attributes],

@@ -16,11 +16,15 @@ let empty = {elements: 0, level0Body: "", bracketGroups: []};
 let append = (element, {elements, level0Body, bracketGroups}): t =>
   switch (bracketGroups) {
   | [{body} as bracketGroup, ...rest] => {
-      elements: elements + 1,
+      elements,
       level0Body,
       bracketGroups: [{...bracketGroup, body: body ++ element}, ...rest],
     }
-  | [] => {elements, level0Body: level0Body ++ element, bracketGroups: []}
+  | [] => {
+      elements: elements + 1,
+      level0Body: level0Body ++ element,
+      bracketGroups: [],
+    }
   };
 
 let openBracket = (range, {elements, level0Body, bracketGroups}): t => {
@@ -45,7 +49,7 @@ let closeBracket = (superscript, range, accum): t =>
     append(body, accum);
   };
 
-let toString = ({level0Body, bracketGroups}) => {
+let toString = ({elements, level0Body, bracketGroups}, range) => {
   let attributes = [("class", _invalidClass), ("stretchy", "false")];
   let closed =
     bracketGroups
@@ -54,5 +58,13 @@ let toString = ({level0Body, bracketGroups}) => {
       )
     ->Belt.List.reverse
     |> String.concat("");
-  level0Body ++ closed;
+  let body = level0Body ++ closed;
+
+  if (body == "") {
+    MML_Util.placeholder(range);
+  } else if (elements > 1) {
+    createElement("mrow", body);
+  } else {
+    body;
+  };
 };

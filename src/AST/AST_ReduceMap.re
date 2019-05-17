@@ -1,40 +1,40 @@
 type atom('a) = {
   atomNucleus: string,
-  superscript: 'a,
+  superscript: option('a),
 };
 type constantAtom('a) = {
   constant: AST_Types.constant,
-  superscript: 'a,
+  superscript: option('a),
 };
 type customAtom('a) = {
   customAtomValue: ScilineCalculator.Encoding.encoding,
   mml: string,
-  superscript: 'a,
+  superscript: option('a),
 };
 type frac('a) = {
   fracNum: 'a,
   den: 'a,
-  superscript: 'a,
+  superscript: option('a),
 };
 type root('a) = {
   rootRadicand: 'a,
-  superscript: 'a,
+  superscript: option('a),
 };
 type nroot('a) = {
   nrootDegree: 'a,
   radicand: 'a,
-  superscript: 'a,
+  superscript: option('a),
 };
 type magnitude('a) = {magnitudeBase: 'a};
 type nlog('a) = {nlogBase: 'a};
 type unary('a) = {
   unaryArg: 'a,
-  superscript: 'a,
+  superscript: option('a),
 };
 type randInt('a) = {
   randIntA: 'a,
   b: 'a,
-  superscript: 'a,
+  superscript: option('a),
 };
 type stat('a) = {
   statN: 'a,
@@ -55,9 +55,9 @@ type iteration('a) = {
 };
 type table('a) = {
   tableElements: array('a),
-  superscript: 'a,
   numRows: int,
   numColumns: int,
+  superscript: option('a),
 };
 
 type t('a) = [
@@ -66,7 +66,7 @@ type t('a) = [
   | `ArcSecond
   | `Base(AST_Types.base)
   | `Ceil(unary('a))
-  | `CloseBracket('a)
+  | `CloseBracket(option('a))
   | `Conj
   | `Constant(constantAtom('a))
   | `CustomAtom(customAtom('a))
@@ -78,7 +78,7 @@ type t('a) = [
   | `Floor(unary('a))
   | `Frac(frac('a))
   | `Function(AST_Types.func)
-  | `ImaginaryUnit('a)
+  | `ImaginaryUnit(option('a))
   | `Integral(integral('a))
   | `Magnitude(magnitude('a))
   | `NCR(stat('a))
@@ -89,7 +89,7 @@ type t('a) = [
   | `Operator(AST_Types.binaryOperator)
   | `Superscript('a)
   | `Product(iteration('a))
-  | `Rand('a)
+  | `Rand(option('a))
   | `RandInt(randInt('a))
   | `Round(unary('a))
   | `Sqrt(root('a))
@@ -251,8 +251,10 @@ let reduceMap =
   }
   and readSuperscript = i =>
     switch (Belt.Array.get(input, i)) {
-    | Some(`Superscript1) => readArg(i + 1)
-    | _ => (map(initial, (i, i, (-1))), i)
+    | Some(`Superscript1) =>
+      let (superscript, i') = readArg(i + 1);
+      (Some(superscript), i');
+    | _ => (None, i)
     };
 
   let rec readUntilEnd = (~accum=initial, i) =>

@@ -3,9 +3,9 @@ open Value_Types;
 
 let nodeWithSuperscript = (superscript, a) =>
   switch (superscript) {
-  | Node(superscript) => `Ok(AST.pow(a, superscript))
-  | Empty => `Ok(a)
-  | Error(i) => `Error(i)
+  | Some(Node(superscript)) => `Ok(AST.pow(a, superscript))
+  | Some(Error(i)) => `Error(i)
+  | None => `Ok(a)
   };
 let partialNodeWithSuperscript = (a, superscript) =>
   switch (nodeWithSuperscript(superscript, a)) {
