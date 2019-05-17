@@ -1,214 +1,6 @@
-open Types;
-module AST = ScilineCalculator.ASTTypes;
-
-type funcitionLike =
-  | GenericFunction(func)
-  | NLog(nlog(AST.t))
-  | Sum(range(AST.t))
-  | Product(range(AST.t));
-type finalState =
-  | Node(AST.t)
-  | Empty
-  | Error(int);
-type partialNode =
-  | Resolved(AST.t)
-  | Unresolved(node(finalState), int)
-  | UnresolvedFunction(funcitionLike, int);
-type reduceState =
-  | Row(MutableListBuilder.t(partialNode))
-  | ReduceError(int);
-
-let nodeWithSuperscript = (superscript, a) =>
-  switch (superscript) {
-  | Node(superscript) => `Ok(AST.pow(a, superscript))
-  | Empty => `Ok(a)
-  | Error(i) => `Error(i)
-  };
-let partialNodeWithSuperscript = (a, superscript) =>
-  switch (nodeWithSuperscript(superscript, a)) {
-  | `Ok(a) => `Ok(Resolved(a))
-  | `Error(_) as err => err
-  };
-
-let handleGenericFunction = (arg, fn) =>
-  switch (fn) {
-  | Sin => AST.sin(arg)
-  | Arcsin => AST.asin(arg)
-  | Sinh => AST.sinh(arg)
-  | Arcsinh => AST.asinh(arg)
-  | Cos => AST.cos(arg)
-  | Arccos => AST.acos(arg)
-  | Cosh => AST.cosh(arg)
-  | Arccosh => AST.acosh(arg)
-  | Tan => AST.tan(arg)
-  | Arctan => AST.atan(arg)
-  | Tanh => AST.tanh(arg)
-  | Arctanh => AST.atanh(arg)
-  | Log => AST.log(arg)
-  | Re => AST.re(arg)
-  | Im => AST.im(arg)
-  | Gamma => AST.gamma(arg)
-  };
-let handleFunction = (arg, fn) =>
-  switch (fn) {
-  | GenericFunction(fn) => handleGenericFunction(arg, fn)
-  | NLog({nlogBase}) => AST.div(AST.log(arg), AST.log(nlogBase))
-  | Sum({rangeStart, rangeEnd}) => AST.sum(rangeStart, rangeEnd, arg)
-  | Product({rangeStart, rangeEnd}) => AST.product(rangeStart, rangeEnd, arg)
-  };
-
-let overArg = (a, fn, i) =>
-  switch (a) {
-  | Node(a) => fn(a)
-  | Error(_) as e => e
-  | Empty => Error(i)
-  };
-let overArgs2 = (a, b, fn, i) =>
-  switch (a, b) {
-  | (Node(a), Node(b)) => fn(a, b)
-  | (Error(_) as e, _)
-  | (_, Error(_) as e) => e
-  | (Empty, _) => Error(i)
-  | (_, Empty) => Error(i)
-  };
-let handleOp = (op, a, b) =>
-  switch (op) {
-  | Add => Node(AST.add(a, b))
-  | Sub => Node(AST.sub(a, b))
-  | Mul => Node(AST.mul(a, b))
-  | Div => Node(AST.div(a, b))
-  | Dot => Node(AST.mul(a, b))
-  };
-
-let numberIsValidForBase = (base, atomNucleus) =>
-  switch (base, atomNucleus) {
-  | (_, "0" | "1")
-  | (None | Some(Oct | Hex), "2" | "3" | "4" | "5" | "6" | "7")
-  | (None | Some(Hex), "8" | "9")
-  | (Some(Hex), "A" | "B" | "C" | "D" | "E" | "F") => true
-  | _ => false
-  };
-
-type numState('a, 'b) = {
-  numBase: option(base),
-  numString: string,
-  numHasDecimal: bool,
-  numSup: option(AST.t),
-  imag: option(AST.t),
-  magSup: option(AST.t),
-  degree: option(AST.t),
-  arcMin: option(AST.t),
-  arcSec: option(AST.t),
-};
-
-let rec reduceNumberState = (state, element) =>
-  switch (state, element) {
-  | ({numString: "", numBase: None, imag: None}, `Base(numBase)) =>
-    Some({...state, numBase: Some(numBase)})
-  | (
-      {numSup: None, imag: None, magSup: None},
-      `Digit({atomNucleus, superscript}),
-    )
-      when numberIsValidForBase(state.numBase, atomNucleus) =>
-    let numSup =
-      switch (superscript) {
-      | Node(v) => Some(v)
-      | _ => None
-      };
-    Some({...state, numString: state.numString ++ atomNucleus, numSup});
-  | (
-      {numHasDecimal: false, numSup: None, imag: None, magSup: None},
-      `DecimalSeparator,
-    ) =>
-    Some({...state, numString: state.numString ++ ".", numHasDecimal: true})
-  /* Allow 3^2i, 3^2 i^2, but not 3i^2, because that's ambiguous */
-  | (
-      {numSup: Some(_) | None, magSup: None, imag: None},
-      `ImaginaryUnit(Empty),
-    ) =>
-    Some({...state, imag: Some(AST.i)})
-  | (
-      {numSup: None, magSup: None, imag: None},
-      `ImaginaryUnit(Node(imagSuperscript)),
-    ) =>
-    Some({...state, imag: Some(AST.pow(AST.i, imagSuperscript))})
-  | (_, `Magnitude(Node(magSuperscript))) when state.numString != "" =>
-    Some({...state, magSup: Some(magSuperscript)})
-  | (
-      {numSup: None, imag: None, degree: None, arcMin: None, arcSec: None},
-      `Degree,
-    ) =>
-    parseNumber(state)
-    ->Belt.Option.map(degree => {
-        let degree = degree->AST.mul(AST.div(AST.pi, AST.ofInt(180)))->Some;
-        {...initialNumberState, degree};
-      })
-  | ({numSup: None, imag: None, arcMin: None, arcSec: None}, `ArcMinute) =>
-    parseNumber(state)
-    ->Belt.Option.map(arcMin => {
-        let {degree} = state;
-        let arcMin =
-          arcMin->AST.mul(AST.div(AST.pi, AST.ofInt(10800)))->Some;
-        {...initialNumberState, degree, arcMin};
-      })
-  | ({numSup: None, imag: None, arcSec: None}, `ArcSecond) =>
-    parseNumber(state)
-    ->Belt.Option.map(arcSec => {
-        let {degree, arcMin} = state;
-        let arcSec =
-          arcSec->AST.mul(AST.div(AST.pi, AST.ofInt(648000)))->Some;
-        {...initialNumberState, degree, arcMin, arcSec};
-      })
-  | _ => None
-  }
-and parseNumber = ({numBase, numString, numSup, imag, magSup}) =>
-  if ((numBase == None || numString != "")
-      && (imag != None || numString != "")
-      && numString != ".") {
-    let base =
-      switch (numBase) {
-      | Some(Bin) => 2
-      | Some(Oct) => 8
-      | Some(Hex) => 16
-      | None => 10
-      };
-    let out = numString == "" ? AST.one : AST.ofStringBase(base, numString);
-    let out = numSup->Belt.Option.mapWithDefault(out, AST.pow(out));
-    let out =
-      magSup
-      ->Belt.Option.map(AST.pow(AST.ofInt(10)))
-      ->Belt.Option.mapWithDefault(out, AST.mul(out));
-    let out = imag->Belt.Option.mapWithDefault(out, AST.mul(out));
-    Some(out);
-  } else {
-    None;
-  }
-and numberForState = ({degree, arcMin, arcSec} as s) =>
-  if (degree == None && arcMin == None && arcSec == None) {
-    parseNumber(s);
-  } else if (s.numBase == None
-             && s.numString == ""
-             && s.imag == None
-             && s.magSup == None) {
-    let out = AST.zero;
-    let out = degree->Belt.Option.mapWithDefault(out, AST.add(out));
-    let out = arcMin->Belt.Option.mapWithDefault(out, AST.add(out));
-    let out = arcSec->Belt.Option.mapWithDefault(out, AST.add(out));
-    Some(out);
-  } else {
-    None;
-  }
-and initialNumberState = {
-  numBase: None,
-  numString: "",
-  numSup: None,
-  numHasDecimal: false,
-  imag: None,
-  magSup: None,
-  degree: None,
-  arcMin: None,
-  arcSec: None,
-};
+open AST_ReduceMap;
+open Value_Types;
+open Value_Builders;
 
 let rec parseRest = (~current=Empty, elements) =>
   switch (elements) {
@@ -241,19 +33,20 @@ let parseNumbers = elements => {
     let nextStateAfter =
       switch (rest) {
       | [Unresolved(element, _), ...after] =>
-        reduceNumberState(state, element)->Belt.Option.map(s => (s, after))
+        Value_NumberParser.reduce(state, element)
+        ->Belt.Option.map(s => (s, after))
       | _ => None
       };
     switch (nextStateAfter) {
     | Some((state, after)) => iter(state, after)
     | None =>
-      switch (numberForState(state)) {
+      switch (Value_NumberParser.get(state)) {
       | Some(number) => next([Resolved(number), ...rest])
       | None => next(elements)
       }
     };
   };
-  iter(initialNumberState, elements);
+  iter(Value_NumberParser.empty, elements);
 };
 let next = parseNumbers;
 
@@ -360,7 +153,7 @@ let rec handleBrackets = elements => {
 };
 let next = handleBrackets;
 
-let mapValue = ({Tree.accum}): finalState =>
+let map = (accum, _): finalState =>
   switch (accum) {
   | Row(nodes) => next(MutableListBuilder.toList(nodes))
   | ReduceError(i) => Error(i)
@@ -375,9 +168,9 @@ let toNode = element =>
   | Node(arg) => arg
   | _ => failwith("Not a node")
   };
-let mapElement = (element, i) =>
+let mapElement = (element: t('a), i) =>
   switch (element) {
-  | `Placeholder(_) => `Error(i)
+  | `Superscript(_) => `Error(i)
   | (
       `Base(_) | `Operator(_) | `OpenBracket | `DecimalSeparator | `Factorial |
       `Conj |
@@ -404,10 +197,16 @@ let mapElement = (element, i) =>
     `Ok(Resolved(AST.differential(differentialX, body)))
   | `Integral({integralA: Node(integralA), b: Node(b), body: Node(body)}) =>
     `Ok(Resolved(AST.integral(integralA, b, body)))
-  | `Sum({rangeStart: Node(rangeStart), rangeEnd: Node(rangeEnd)}) =>
-    `Ok(UnresolvedFunction(Sum({rangeStart, rangeEnd}), i))
-  | `Product({rangeStart: Node(rangeStart), rangeEnd: Node(rangeEnd)}) =>
-    `Ok(UnresolvedFunction(Product({rangeStart, rangeEnd}), i))
+  | `Sum({
+      iterationStart: Node(iterationStart),
+      iterationEnd: Node(iterationEnd),
+    }) =>
+    `Ok(UnresolvedFunction(Sum({iterationStart, iterationEnd}), i))
+  | `Product({
+      iterationStart: Node(iterationStart),
+      iterationEnd: Node(iterationEnd),
+    }) =>
+    `Ok(UnresolvedFunction(Product({iterationStart, iterationEnd}), i))
   | `Variable({atomNucleus, superscript}) =>
     AST.variable(atomNucleus)->partialNodeWithSuperscript(superscript)
   | `CustomAtom({customAtomValue, superscript}) =>
@@ -486,7 +285,7 @@ let mapElement = (element, i) =>
   | `RandInt(_)
   | `Table(_) => `Error(i)
   };
-let reduceFn = ({Tree.accum, rangeStart}, element) =>
+let reduce = (accum, element, (rangeStart, _, _)) =>
   switch (accum) {
   | ReduceError(_) as e => e
   | Row(list) =>
@@ -496,13 +295,13 @@ let reduceFn = ({Tree.accum, rangeStart}, element) =>
     }
   };
 
-let parse = (elements: list(Types.t)) => {
+let parse = (elements: array(AST_Types.t)) => {
   let out =
-    Tree.map(
+    reduceMap(
       elements,
-      Row(MutableListBuilder.empty),
-      mapValue,
-      reduceFn,
+      ~reduce,
+      ~map,
+      ~initial=Row(MutableListBuilder.empty),
     );
   switch (out) {
   | Node(v) => `Ok(v)
