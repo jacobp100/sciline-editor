@@ -62,9 +62,6 @@ let mapElement = (element: t('a), i) =>
     ->Resolved
   };
 
-let defaultOpt = (a, b) => a != None ? a : Some(b);
-let defaultOptFlat = (a, b) => a != None ? a : b;
-
 let parse = (elements: array(AST_Types.t)) => {
   let error = ref(None);
 
@@ -72,7 +69,7 @@ let parse = (elements: array(AST_Types.t)) => {
     if (error^ != None) {
       switch (element) {
       | `Superscript(_) =>
-        error := defaultOpt(error^, i);
+        error := OptChain.add(error^, i);
         accum;
       | _ =>
         let value = mapElement(element, i);
@@ -89,7 +86,7 @@ let parse = (elements: array(AST_Types.t)) => {
       switch (root) {
       | Some(root) => root
       | None =>
-        error := defaultOptFlat(error^, e)->defaultOpt(i);
+        error := OptChain.flatAdd(error^, e)->OptChain.add(i);
         AST.nan;
       };
     } else {

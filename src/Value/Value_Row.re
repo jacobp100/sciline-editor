@@ -1,9 +1,6 @@
 open Value_Types;
 open Value_Builders;
 
-let defaultOpt = (a, b) => a != None ? a : Some(b);
-let defaultOptFlat = (a, b) => a != None ? a : b;
-
 let rec parseRest = (~current=None, elements) =>
   switch (elements) {
   | [Resolved(next), ...rest] =>
@@ -61,7 +58,7 @@ let rec parseUnary = elements =>
     | Some(root) =>
       let root = op == Sub ? AST.neg(root) : root;
       (Some(root), None);
-    | None => (None, defaultOpt(error, i'))
+    | None => (None, OptChain.add(error, i'))
     };
   | _ => next(elements)
   };
@@ -77,7 +74,7 @@ let rec parseParenFreeFunctions = elements => {
         ListUtil.takeUpto(elements, i)
         ->Belt.List.concat([Resolved(handleFunction(arg, fn))])
         ->next
-      | None => (None, defaultOpt(error, i'))
+      | None => (None, OptChain.add(error, i'))
       };
     | [_, ...after] => iter(i + 1, after)
     | [] => next(elements)
@@ -92,13 +89,13 @@ let rec parseMulDiv = elements => {
     | [Unresolved(`Operator((Mul | Div | Dot) as op), i'), ...after] =>
       let (before, e1) = ListUtil.takeUpto(elements, i)->next;
       let (after, e2) = parseMulDiv(after);
-      let error = defaultOptFlat(e1, e2);
+      let error = OptChain.flatAdd(e1, e2);
       switch (before, after) {
       | (Some(before), Some(after)) => (
           Some(handleOp(op, before, after)),
           error,
         )
-      | _ => (None, defaultOpt(error, i'))
+      | _ => (None, OptChain.add(error, i'))
       };
     | [_, ...after] => iter(i + 1, after)
     | [] => next(elements)
@@ -117,7 +114,7 @@ let rec parseAddSub = elements => {
         let (after, error) = parseAddSub(after);
         switch (after) {
         | Some(after) => (Some(handleOp(op, before, after)), error)
-        | None => (None, defaultOpt(error, i'))
+        | None => (None, OptChain.add(error, i'))
         };
       | None =>
         /* Assume unary; handled later */
@@ -161,7 +158,7 @@ let rec handleBrackets = elements => {
         handleBrackets(
           Belt.List.concat(before, [Resolved(arg), ...after]),
         );
-      | None => (None, defaultOpt(error, i'))
+      | None => (None, OptChain.add(error, i'))
       };
     | (None, [Unresolved(`CloseBracket(_), _), ..._]) => (None, Some(i))
     | (_, [_, ...after]) => iter(openBracketState, i + 1, after)
