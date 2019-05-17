@@ -37,3 +37,16 @@ let insertArray = (x, other, index) =>
       Belt.Array.sliceToEnd(x, index + 1),
     |]);
   };
+
+let splice = (x, ~offset, ~len) =>
+  if (len <= 0) {
+    (x, [||]);
+  } else {
+    let out =
+      Belt.Array.concat(
+        Belt.Array.slice(x, ~offset=0, ~len=offset),
+        Belt.Array.sliceToEnd(x, offset + len),
+      );
+    let subarray = Belt.Array.slice(x, ~offset, ~len);
+    (out, subarray);
+  };

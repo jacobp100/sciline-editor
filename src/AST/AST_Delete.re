@@ -64,12 +64,24 @@ let deleteAtIndexExn = (ast, startIndex) => {
   };
 };
 
+let deleteEmptySuperscript = (ast, index) =>
+  switch (Belt.Array.get(ast, index), Belt.Array.get(ast, index + 1)) {
+  | (Some(`Superscript1), Some(`Arg)) =>
+    Belt.Array.concat(
+      Belt.Array.slice(ast, ~offset=0, ~len=index),
+      Belt.Array.sliceToEnd(ast, index + 2),
+    )
+  | _ => ast
+  };
+
 let deleteIndex = (ast: array(AST_Types.t), index: int) => {
   let ast = AST_Types.normalize(ast);
   switch (deletionMode(ast, index)) {
   | Keep => ast
-  | Delete => deleteAtIndexExn(ast, index)
+  | Delete => deleteAtIndexExn(ast, index)->deleteEmptySuperscript(index)
   | Spread(elements) =>
-    ast->deleteAtIndexExn(index)->ArrayUtil.insertArray(elements, index)
+    deleteAtIndexExn(ast, index)
+    ->deleteEmptySuperscript(index)
+    ->ArrayUtil.insertArray(elements, index)
   };
 };

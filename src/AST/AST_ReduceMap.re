@@ -100,6 +100,9 @@ type t('a) = [
 
 type range = (int, int, int);
 
+exception ExpectedArg;
+exception UnexpectedArg(int);
+
 let reduceMap =
     (
       input: array(AST_Types.t),
@@ -237,10 +240,10 @@ let reduceMap =
   and readArg = (~accum=initial, ~start=?, i) => {
     let start = Belt.Option.getWithDefault(start, i);
     switch (Belt.Array.get(input, i)) {
-    | None => failwith("Expected arg but end reached")
+    | None => raise(ExpectedArg)
     | Some(`Arg) =>
       let i' = i;
-      (map(accum, (start, i', (-1))), i');
+      (map(accum, (start, i', (-1))), i' + 1);
     | Some(_) =>
       let (node, i', s) = readNodeExn(i);
       readArg(~accum=reduce(accum, node, (i, i', s)), i');
@@ -255,7 +258,7 @@ let reduceMap =
   let rec readUntilEnd = (~accum=initial, i) =>
     switch (Belt.Array.get(input, i)) {
     | None => map(accum, (0, i, (-1)))
-    | Some(`Arg) => failwith("Unexpected arg at")
+    | Some(`Arg) => raise(UnexpectedArg(i))
     | Some(_) =>
       let (node, i', s) = readNodeExn(i);
       readUntilEnd(~accum=reduce(accum, node, (i, i', s)), i');

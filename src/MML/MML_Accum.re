@@ -6,50 +6,46 @@ type bracketGroup = {
   body: string,
 };
 type t = {
+  elements: int,
   level0Body: string,
   bracketGroups: list(bracketGroup),
 };
 
-let empty = {level0Body: "", bracketGroups: []};
+let empty = {elements: 0, level0Body: "", bracketGroups: []};
 
-let append = (element, {level0Body, bracketGroups}): t =>
+let append = (element, {elements, level0Body, bracketGroups}): t =>
   switch (bracketGroups) {
   | [{body} as bracketGroup, ...rest] => {
+      elements: elements + 1,
       level0Body,
       bracketGroups: [{...bracketGroup, body: body ++ element}, ...rest],
     }
-  | [] => {level0Body: level0Body ++ element, bracketGroups: []}
+  | [] => {elements, level0Body: level0Body ++ element, bracketGroups: []}
   };
 
-let openBracket = (range, {level0Body, bracketGroups}): t => {
+let openBracket = (range, {elements, level0Body, bracketGroups}): t => {
+  elements,
   level0Body,
   bracketGroups: [{range, body: ""}, ...bracketGroups],
 };
 
 let _invalidClass = "invalid";
-let closeBracket = (superscript, range, {level0Body, bracketGroups}): t =>
-  switch (bracketGroups) {
-  | [closed, ...rest] =>
+let closeBracket = (superscript, range, accum): t =>
+  switch (accum.bracketGroups) {
+  | [closed, ...nextBracketGroups] =>
     let body =
       elementWithIndex("mo", closed.range, "(")
       ++ closed.body
       ++ elementWithIndex(~superscript, "mo", range, ")")
       |> createElement("mrow");
-    switch (rest) {
-    | [next, ...rest] => {
-        level0Body,
-        bracketGroups: [{...next, body: next.body ++ body}, ...rest],
-      }
-    | [] => {level0Body: level0Body ++ body, bracketGroups: []}
-    };
+    append(body, {...accum, bracketGroups: nextBracketGroups});
   | [] =>
     let attributes = [("class", _invalidClass), ("stretchy", "false")];
-    let element =
-      elementWithIndex(~attributes, ~superscript, "mo", range, ")");
-    {level0Body: level0Body ++ element, bracketGroups: []};
+    let body = elementWithIndex(~attributes, ~superscript, "mo", range, ")");
+    append(body, accum);
   };
 
-let toString = ({level0Body, bracketGroups}, range) => {
+let toString = ({level0Body, bracketGroups}) => {
   let attributes = [("class", _invalidClass), ("stretchy", "false")];
   let closed =
     bracketGroups
@@ -58,6 +54,5 @@ let toString = ({level0Body, bracketGroups}, range) => {
       )
     ->Belt.List.reverse
     |> String.concat("");
-  let body = level0Body ++ closed;
-  body != "" ? createElement("mrow", body) : MML_Util.placeholder(range);
+  level0Body ++ closed;
 };
