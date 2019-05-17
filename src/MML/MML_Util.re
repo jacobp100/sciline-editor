@@ -1,8 +1,9 @@
+open AST_Types;
 open MML_Builders;
 
 let stringOfOperator = x =>
   switch (x) {
-  | AST_Types.Add => "+"
+  | Add => "+"
   | Sub => "-"
   | Mul => "&times;"
   | Div => "&div;"
@@ -11,18 +12,18 @@ let stringOfOperator = x =>
 
 let stringOfFunction = x =>
   switch (x) {
-  | AST_Types.Sin => "sin"
-  | Arcsin => "arcsin"
+  | Sin => "sin"
+  | Asin => "arcsin"
   | Sinh => "sinh"
-  | Arcsinh => "arcsinh"
+  | Asinh => "arcsinh"
   | Cos => "cos"
-  | Arccos => "arccos"
+  | Acos => "arccos"
   | Cosh => "cosh"
-  | Arccosh => "arccosh"
+  | Acosh => "arccosh"
   | Tan => "tan"
-  | Arctan => "arctan"
+  | Atan => "arctan"
   | Tanh => "tanh"
-  | Arctanh => "arctanh"
+  | Atanh => "arctanh"
   | Log => "log"
   | Re => "re"
   | Im => "im"
@@ -31,7 +32,7 @@ let stringOfFunction = x =>
 
 let stringOfBase = base =>
   switch (base) {
-  | AST_Types.Bin => "0b"
+  | Bin => "0b"
   | Oct => "0o"
   | Hex => "0x"
   };

@@ -10,17 +10,17 @@ type binaryOperator =
   | Dot;
 type func =
   | Sin
-  | Arcsin
+  | Asin
   | Sinh
-  | Arcsinh
+  | Asinh
   | Cos
-  | Arccos
+  | Acos
   | Cosh
-  | Arccosh
+  | Acosh
   | Tan
-  | Arctan
+  | Atan
   | Tanh
-  | Arctanh
+  | Atanh
   | Log
   | Re
   | Im

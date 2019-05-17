@@ -28,19 +28,14 @@ let rec reduce = (state, element) =>
     Some({...state, numBase: Some(numBase)})
   | (
       {numSup: None, imag: None, magSup: None},
-      `Digit({
-        atomNucleus,
-        superscript: (Some(Node(_)) | None) as superscript,
-      }),
+      `Digit({atomNucleus, superscript}),
     )
       when numberIsValidForBase(state.numBase, atomNucleus) =>
-    /* FIXME: Is this right? Almost certainly not */
-    let numSup =
-      switch (superscript) {
-      | Some(Node(v)) => Some(v)
-      | None => None
-      };
-    Some({...state, numString: state.numString ++ atomNucleus, numSup});
+    Some({
+      ...state,
+      numString: state.numString ++ atomNucleus,
+      numSup: superscript,
+    })
   | (
       {numHasDecimal: false, numSup: None, imag: None, magSup: None},
       `DecimalSeparator,
@@ -54,12 +49,11 @@ let rec reduce = (state, element) =>
     Some({...state, imag: Some(AST.i)})
   | (
       {numSup: None, magSup: None, imag: None},
-      `ImaginaryUnit(Some(Node(imagSuperscript))),
+      `ImaginaryUnit(Some(imagSuperscript)),
     ) =>
     Some({...state, imag: Some(AST.pow(AST.i, imagSuperscript))})
-  | (_, `Magnitude({magnitudeBase: Node(magSuperscript)}))
-      when state.numString != "" =>
-    Some({...state, magSup: Some(magSuperscript)})
+  | (_, `Magnitude({magnitudeBase})) when state.numString != "" =>
+    Some({...state, magSup: Some(magnitudeBase)})
   | (
       {numSup: None, imag: None, degree: None, arcMin: None, arcSec: None},
       `Degree,

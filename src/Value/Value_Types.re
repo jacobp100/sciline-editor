@@ -6,14 +6,7 @@ type funcitionLike =
   | NLog(nlog(AST.t))
   | Sum(iteration(AST.t))
   | Product(iteration(AST.t));
-type finalState =
-  | Node(AST.t)
-  | Empty
-  | Error(int);
 type partialNode =
   | Resolved(AST.t)
-  | Unresolved(t(finalState), int)
+  | Unresolved(t(AST.t), int)
   | UnresolvedFunction(funcitionLike, int);
-type reduceState =
-  | Row(MutableListBuilder.t(partialNode))
-  | ReduceError(int);
