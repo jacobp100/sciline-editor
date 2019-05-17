@@ -49,14 +49,10 @@ let reduce = (accum, element: t(string), range) =>
   | `CustomAtom({mml, superscript}) =>
     elementWithIndex(~superscript, "mrow", range, mml)
     ->MML_Accum.append(accum)
-  | `Function(AST_Types.Gamma) =>
-    let attributes = [("mathvariant", "normal")];
-    let body = MML_Util.stringOfFunction(Gamma);
-    elementWithIndex(~attributes, "mi", range, body)
-    ->MML_Accum.append(accum);
   | `Function(f) =>
-    elementWithIndex("mi", range, MML_Util.stringOfFunction(f))
-    ->MML_Accum.append(accum)
+    let attributes = f == AST_Types.Gamma ? [("mathvariant", "normal")] : [];
+    elementWithIndex(~attributes, "mi", range, MML_Util.stringOfFunction(f))
+    ->MML_Accum.append(accum);
   | `Factorial => elementWithIndex("mo", range, "!")->MML_Accum.append(accum)
   | `Operator(v) =>
     elementWithIndex("mo", range, MML_Util.stringOfOperator(v))
