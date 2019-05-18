@@ -1,5 +1,4 @@
 open AST_Types;
-open MML_Builders;
 
 let stringOfOperator = x =>
   switch (x) {
@@ -42,17 +41,3 @@ let stringOfConstant = constant =>
   | AST_Types.Pi => "&pi;"
   | E => "e"
   };
-
-let xSetRow = value =>
-  createElement(
-    "mrow",
-    createElement("mi", "x") ++ createElement("mo", "=") ++ value,
-  );
-
-let placeholder = range =>
-  elementWithIndex(
-    ~attributes=[("class", "placeholder")],
-    "mi",
-    range,
-    "&#x25a1;",
-  );

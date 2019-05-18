@@ -9,8 +9,7 @@ let reduce = (accum, element: t(string), range) =>
   | `CloseBracket(superscript) =>
     MML_Accum.closeBracket(accum, range, superscript)
   | `Superscript(superscript) =>
-    /* It's done this way so the superscript doesn't have the placeholder class */
-    wrapSuperscript(Some(superscript), MML_Util.placeholder(range))
+    placeholder(~superscript=Some(superscript), range)
     ->MML_Accum.append(accum)
   | `Base(base) =>
     elementWithIndex("mn", range, MML_Util.stringOfBase(base))
@@ -117,7 +116,7 @@ let reduce = (accum, element: t(string), range) =>
       createElement(
         ~attributes=[("align", "left")],
         "munder",
-        createElement("mo", "|") ++ MML_Util.xSetRow(differentialX),
+        createElement("mo", "|") ++ xSetRow(differentialX),
       );
     elementWithIndex("mrow", range, pre ++ body ++ post)
     ->MML_Accum.append(accum);
@@ -141,7 +140,7 @@ let reduce = (accum, element: t(string), range) =>
       };
     let body =
       elementWithIndex("mo", range, atom)
-      ++ MML_Util.xSetRow(iterationStart)
+      ++ xSetRow(iterationStart)
       ++ iterationEnd;
     createElement("munderover", body)->MML_Accum.append(accum);
   | `Table({tableElements, superscript, numRows, numColumns}) =>
@@ -158,13 +157,9 @@ let reduce = (accum, element: t(string), range) =>
       )
       |> String.concat("")
       |> createElement("mtable");
-    let body =
-      createElement("mo", "[")
-      ++ inner
-      ++ createElement("mo", "]")
-      |> createElement("mrow")
-      |> wrapSuperscript(superscript);
-    elementWithIndex("mrow", range, body)->MML_Accum.append(accum);
+    let body = createElement("mo", "[") ++ inner ++ createElement("mo", "]");
+    elementWithIndex(~superscript, "mrow", range, body)
+    ->MML_Accum.append(accum);
   };
 
 let create = elements => {

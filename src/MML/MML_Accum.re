@@ -61,7 +61,7 @@ let toString = ({elements, level0Body, bracketGroups}, range) => {
   let body = level0Body ++ closed;
 
   if (body == "") {
-    MML_Util.placeholder(range);
+    placeholder(range);
   } else if (elements > 1) {
     createElement("mrow", body);
   } else {

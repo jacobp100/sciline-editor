@@ -10,12 +10,6 @@ let createElement = (~attributes=[], element, body) => {
   head ++ body ++ "</" ++ element ++ ">";
 };
 
-let wrapSuperscript = (~attributes=?, superscript, element) =>
-  switch (superscript) {
-  | None => element
-  | Some(s) => createElement(~attributes?, "msup", element ++ s)
-  };
-
 let elementWithIndex =
     (~attributes=[], ~superscript=None, element, (i, i', s), body) =>
   switch (superscript) {
@@ -38,3 +32,18 @@ let elementWithIndex =
       base ++ superscript,
     );
   };
+
+let placeholder = (~superscript=?, range) =>
+  elementWithIndex(
+    ~superscript?,
+    ~attributes=[("class", "placeholder")],
+    "mi",
+    range,
+    "&#x25a1;",
+  );
+
+let xSetRow = value =>
+  createElement(
+    "mrow",
+    createElement("mi", "x") ++ createElement("mo", "=") ++ value,
+  );

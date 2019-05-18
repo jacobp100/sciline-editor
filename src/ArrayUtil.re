@@ -17,7 +17,7 @@ let foldMap = (arr, initialValue, fn) => {
 let foldMake = (n, initialValue, fn) => {
   let nextArr = Belt.Array.makeUninitializedUnsafe(n);
   let accum = ref(initialValue);
-  for (i in 0 to n) {
+  for (i in 0 to n - 1) {
     let (nextAccum, element) = fn(accum^, i);
     Belt.Array.setExn(nextArr, i, element);
     accum := nextAccum;

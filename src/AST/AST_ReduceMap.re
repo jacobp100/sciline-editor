@@ -234,7 +234,7 @@ let reduceMap =
           },
         );
       let (superscript, i') = readSuperscript(s);
-      (`Table({tableElements, superscript, numRows, numColumns}), i', s);
+      (`Table({tableElements, numRows, numColumns, superscript}), i', s);
     | `Arg => failwith("Arg")
     }
   and readArg = (~accum=initial, ~start=?, i) => {

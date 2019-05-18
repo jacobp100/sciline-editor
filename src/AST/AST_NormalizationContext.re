@@ -2,7 +2,7 @@ let noTableRanges = (ast: array(AST_Types.t)) => {
   let allowedTablesStack = ref([]);
   let range = ref(Ranges.empty);
 
-  for (i in 0 to Belt.Array.length(ast)) {
+  for (i in 0 to Belt.Array.length(ast) - 1) {
     switch (allowedTablesStack^) {
     | [false, ..._] => range := Ranges.addSequentialIndex(range^, i)
     | _ => ()
@@ -34,6 +34,6 @@ let noTableRanges = (ast: array(AST_Types.t)) => {
 
 let elementIsValid = (ast: array(AST_Types.t), element: AST_Types.t, index) =>
   switch (element) {
-  | `TableNS(_) => noTableRanges(ast)->Ranges.contains(index)
+  | `TableNS(_) => !noTableRanges(ast)->Ranges.contains(index)
   | _ => true
   };
