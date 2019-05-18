@@ -17,7 +17,6 @@ let insertElement = (ast, element, index) => {
   | `Frac2S =>
     let s = count(ast, ~from=index - 1, ~step=-1, isDigit);
     let e = count(ast, ~from=index, ~step=1, isDigit);
-    Js.log((s, e));
     let (ast, den) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
     let (ast, num) = ArrayUtil.splice(ast, ~offset=index - s, ~len=s);
     let frac =
