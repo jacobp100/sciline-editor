@@ -14,7 +14,7 @@ let nArgsSlice = (~skipInitial=0, ast, index) => {
 
   let next = ref(index + 1);
   for (i in 0 to count - 1) {
-    let offset = next^ + 1;
+    let offset = next^;
     next := AST_Types.argEndIndex(ast, offset);
     let len = next^ - offset - 1;
     if (i >= skipInitial) {
