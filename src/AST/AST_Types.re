@@ -146,6 +146,7 @@ let normalize = (ast: array(t)) =>
   switch (normalizationState(ast, 0, 0)) {
   | `Ok => ast
   | `GenericError =>
+    Js.log("Non-normalized ast (fixing)");
     let remaining = ref(0);
     let ast =
       Belt.Array.keep(ast, element =>
@@ -165,5 +166,6 @@ let normalize = (ast: array(t)) =>
       ast;
     };
   | `TooFewArgsError(remaining) =>
-    Belt.Array.concat(ast, Belt.Array.make(remaining, `Arg))
+    Js.log("Too few args in ast (fixing)");
+    Belt.Array.concat(ast, Belt.Array.make(remaining, `Arg));
   };
