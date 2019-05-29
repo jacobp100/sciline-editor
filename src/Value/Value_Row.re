@@ -122,44 +122,37 @@ let rec parseAddSub = elements => {
 };
 let next = parseAddSub;
 
-let rec handleBrackets = elements => {
-  let rec iter = (openBracketState, i, after) =>
-    switch (openBracketState, after) {
-    | (
-        _,
-        [UnresolvedFunction(fn, _), Unresolved(`OpenBracket, i'), ...after],
-      ) =>
-      iter(Some((Some(fn), i, i')), i + 2, after)
-    | (_, [Unresolved(`OpenBracket, i'), ...after]) =>
-      iter(Some((None, i, i')), i + 1, after)
-    | (
-        Some((fn, openIndex, _)),
-        [Unresolved(`CloseBracket(superscript), i'), ...after],
-      ) =>
-      let before = elements->ListUtil.takeUpto(i);
-      let (before, inner) =
-        before
-        ->Belt.List.splitAt(openIndex)
-        ->Belt.Option.getWithDefault((before, []));
-      let inner = Belt.List.tailExn(inner);
-      let inner = fn != None ? Belt.List.tailExn(inner) : inner;
-      switch (next(inner)) {
-      | `Ok(arg) =>
-        let arg =
-          fn
-          ->Belt.Option.mapWithDefault(arg, handleFunction(arg))
-          ->withSuperscript(superscript);
-        handleBrackets(
-          Belt.List.concat(before, [Resolved(arg), ...after]),
-        );
-      | `Error(_) as e => e
-      | `UnknownError => `Error(i')
-      };
-    | (None, [Unresolved(`CloseBracket(_), _), ..._]) => `Error(i)
-    | (_, [_, ...after]) => iter(openBracketState, i + 1, after)
-    | (Some((_, _, i')), []) => `Error(i')
-    | (None, []) => next(elements)
+let handleBrackets = elements => {
+  let rec iter = (accum, after) =>
+    switch (after) {
+    | [UnresolvedFunction(fn, _), Unresolved(`OpenBracket, i'), ...after] =>
+      iter(Value_BracketAccum.openBracket(accum, i', Some(fn)), after)
+    | [Unresolved(`OpenBracket, i'), ...after] =>
+      iter(Value_BracketAccum.openBracket(accum, i', None), after)
+    | [Unresolved(`CloseBracket(superscript), i'), ...after] =>
+      switch (Value_BracketAccum.closeBracket(accum)) {
+      | Some((accum, func, elements)) =>
+        switch (next(elements)) {
+        | `Ok(arg) =>
+          let node =
+            func
+            ->Belt.Option.mapWithDefault(arg, handleFunction(arg))
+            ->withSuperscript(superscript)
+            ->Resolved;
+          iter(Value_BracketAccum.append(accum, node), after);
+        | `Error(_) as e => e
+        | `UnknownError => `Error(i')
+        }
+      | None => `Error(i')
+      }
+    | [element, ...after] =>
+      iter(Value_BracketAccum.append(accum, element), after)
+    | [] =>
+      switch (Value_BracketAccum.toList(accum)) {
+      | `Ok(elements) => next(elements)
+      | `Error(i) => `Error(i)
+      }
     };
-  iter(None, 0, elements);
+  iter(Value_BracketAccum.empty, elements);
 };
 let next = handleBrackets;
