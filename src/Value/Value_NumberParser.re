@@ -103,7 +103,7 @@ and parseNumber = ({numBase, numString, numSup, imag, magSup}) =>
   } else {
     None;
   }
-and get = ({degree, arcMin, arcSec} as s) =>
+and toNode = ({degree, arcMin, arcSec} as s) =>
   if (degree == None && arcMin == None && arcSec == None) {
     parseNumber(s);
   } else if (s.numBase == None

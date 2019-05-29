@@ -43,7 +43,7 @@ let parseNumbers = elements => {
     | Some((state, after)) => iter(state, after)
     | None =>
       let nextElements =
-        switch (Value_NumberParser.get(state)) {
+        switch (Value_NumberParser.toNode(state)) {
         | Some(number) => [Resolved(number), ...rest]
         | None => elements
         };

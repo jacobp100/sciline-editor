@@ -9,13 +9,13 @@ let parse = (elements: array(AST_Types.t)) => {
       switch (element) {
       | `Superscript(_) =>
         error := Some(i);
-        accum;
+        MutableListBuilder.empty;
       | _ =>
         let value = Value_Element.map(element, i);
         MutableListBuilder.append(accum, value);
       };
     } else {
-      accum;
+      MutableListBuilder.empty;
     };
 
   let map = (accum, (i, _, _)): AST.t =>

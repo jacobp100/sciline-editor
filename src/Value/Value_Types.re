@@ -6,6 +6,7 @@ type funcitionLike =
   | NLog(nlog(AST.t))
   | Sum(iteration(AST.t))
   | Product(iteration(AST.t));
+
 type partialNode =
   | Resolved(AST.t)
   | Unresolved(t(AST.t), int)
