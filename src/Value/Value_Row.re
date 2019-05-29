@@ -11,8 +11,12 @@ let rec parseRest = (~current=None, elements) =>
       };
     parseRest(~current, rest);
   | [UnresolvedFunction(_, i'), ..._]
-  | [Unresolved(_, i'), ..._] => (None, Some(i'))
-  | [] => (current, None)
+  | [Unresolved(_, i'), ..._] => `Error(i')
+  | [] =>
+    switch (current) {
+    | Some(v) => `Ok(v)
+    | None => `UnknownError
+    }
   };
 let next = parseRest;
 
@@ -53,13 +57,13 @@ let next = parseNumbers;
 let rec parseUnary = elements =>
   switch (elements) {
   | [Unresolved(`Operator((Add | Sub) as op), i'), ...rest] =>
-    let (root, error) = parseUnary(rest);
-    switch (root) {
-    | Some(root) =>
+    switch (parseUnary(rest)) {
+    | `Ok(root) =>
       let root = op == Sub ? AST.neg(root) : root;
-      (Some(root), None);
-    | None => (None, OptChain.add(error, i'))
-    };
+      `Ok(root);
+    | `Error(_) as e => e
+    | `UnknownError => `Error(i')
+    }
   | _ => next(elements)
   };
 let next = parseUnary;
@@ -68,14 +72,14 @@ let rec parseParenFreeFunctions = elements => {
   let rec iter = (i, after) =>
     switch (after) {
     | [UnresolvedFunction(fn, i'), ...after] =>
-      let (arg, error) = parseParenFreeFunctions(after);
-      switch (arg) {
-      | Some(arg) =>
+      switch (parseParenFreeFunctions(after)) {
+      | `Ok(arg) =>
         ListUtil.takeUpto(elements, i)
         ->Belt.List.concat([Resolved(handleFunction(arg, fn))])
         ->next
-      | None => (None, OptChain.add(error, i'))
-      };
+      | `Error(_) as e => e
+      | `UnknownError => `Error(i')
+      }
     | [_, ...after] => iter(i + 1, after)
     | [] => next(elements)
     };
@@ -87,16 +91,13 @@ let rec parseMulDiv = elements => {
   let rec iter = (i, after) =>
     switch (after) {
     | [Unresolved(`Operator((Mul | Div | Dot) as op), i'), ...after] =>
-      let (before, e1) = ListUtil.takeUpto(elements, i)->next;
-      let (after, e2) = parseMulDiv(after);
-      let error = OptChain.flatAdd(e1, e2);
-      switch (before, after) {
-      | (Some(before), Some(after)) => (
-          Some(handleOp(op, before, after)),
-          error,
-        )
-      | _ => (None, OptChain.add(error, i'))
-      };
+      switch (ListUtil.takeUpto(elements, i)->next, parseMulDiv(after)) {
+      | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
+      | (`Error(_) as e, _)
+      | (_, `Error(_) as e) => e
+      | (`UnknownError, _)
+      | (_, `UnknownError) => `Error(i')
+      }
     | [_, ...after] => iter(i + 1, after)
     | [] => next(elements)
     };
@@ -107,19 +108,13 @@ let next = parseMulDiv;
 let rec parseAddSub = elements => {
   let rec iter = (i, after) =>
     switch (after) {
-    | [Unresolved(`Operator((Add | Sub) as op), i'), ...after] =>
-      let (before, _) = ListUtil.takeUpto(elements, i)->next;
-      switch (before) {
-      | Some(before) =>
-        let (after, error) = parseAddSub(after);
-        switch (after) {
-        | Some(after) => (Some(handleOp(op, before, after)), error)
-        | None => (None, OptChain.add(error, i'))
-        };
-      | None =>
-        /* Assume unary; handled later */
+    | [Unresolved(`Operator((Add | Sub) as op), _), ...after] =>
+      switch (ListUtil.takeUpto(elements, i)->next, parseAddSub(after)) {
+      | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
+      | _ =>
+        /* Assume this was unary operator. Ignore it and try to handle it later */
         iter(i + 1, after)
-      };
+      }
     | [_, ...after] => iter(i + 1, after)
     | [] => next(elements)
     };
@@ -148,9 +143,8 @@ let rec handleBrackets = elements => {
         ->Belt.Option.getWithDefault((before, []));
       let inner = Belt.List.tailExn(inner);
       let inner = fn != None ? Belt.List.tailExn(inner) : inner;
-      let (inner, error) = next(inner);
-      switch (inner) {
-      | Some(arg) =>
+      switch (next(inner)) {
+      | `Ok(arg) =>
         let arg =
           fn
           ->Belt.Option.mapWithDefault(arg, handleFunction(arg))
@@ -158,11 +152,12 @@ let rec handleBrackets = elements => {
         handleBrackets(
           Belt.List.concat(before, [Resolved(arg), ...after]),
         );
-      | None => (None, OptChain.add(error, i'))
+      | `Error(_) as e => e
+      | `UnknownError => `Error(i')
       };
-    | (None, [Unresolved(`CloseBracket(_), _), ..._]) => (None, Some(i))
+    | (None, [Unresolved(`CloseBracket(_), _), ..._]) => `Error(i)
     | (_, [_, ...after]) => iter(openBracketState, i + 1, after)
-    | (Some((_, _, i')), []) => (None, Some(i'))
+    | (Some((_, _, i')), []) => `Error(i')
     | (None, []) => next(elements)
     };
   iter(None, 0, elements);
