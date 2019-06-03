@@ -17,7 +17,7 @@ By convention, arguments that accept a number of arguments are prefixed with the
 For a summation is represented as,
 
 ```reasonml
-[|`Sum, `Arg, `Arg|]
+[|`Sum2, `Arg, `Arg|]
 ```
 
 There is additionally a superscript element, `` `Superscript1 ``, which accepts one argument. This is treated as its own element, and is rendered as a placeholder square with a superscript. However, in the case we are converting to MathML or a Sciline Calculator AST, and the superscript immediately precedes an element that accepts a superscript, they are merged together, much like ligatures in fonts. By convention, elements that accept a superscript are prefixed with an `S` after their argument indicator. For example, fractions accept two arguments (a numerator and denominator), and a superscript. A fraction of a half, raised to the power of 3 is represented as,
