@@ -45,11 +45,13 @@ type fold('accumulator, 'output) = (
   array(element),
   ~reduce: ('accumulator, node('output)) => 'accumulator,
   ~map: ('accumulator) => 'output,
-  ~initualAccumulator: 'accumulator
+  ~initialAccumulator: 'accumulator
 ) => 'output
 ```
 
-It's worth highlighting that nodes that contain child nodes are reduced with their child nodes already reduced. When converting the fraction example to MathML (where `'output` is a string), `fracNum` and `den` would also be strings, and `superscript` would be `option(string)`
+The initial accumulator is reset for every new list of elements. For the fraction example, `fracNum`, `den`, and `superscript` each start with a fresh value of `initialAccumulator`, and the list that contained the `Frac({ ... })` would also have a fresh value
+
+It's worth highlighting that nodes that contain child nodes are reduced with their child nodes already folded. When converting the fraction example to MathML (where `'output` is a string), `fracNum` and `den` would be strings, and `superscript` would be `option(string)`
 
 A side note is that we never fully construct a node-based AST, as the reduction can be done at the same time as we form the AST
 
