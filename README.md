@@ -21,7 +21,15 @@ By convention, arguments that accept a number of arguments are prefixed with the
 [|TableN({ numRows: 2, numColumns: 2}), `Arg, `Arg, `Arg, `Arg|]
 ```
 
-There is additionally a superscript element, `` `Superscript1 ``, which accepts one argument. This is treated as its own element, and is rendered as a placeholder square with a superscript. However, in the case we are converting to MathML or a Sciline Calculator AST, and the superscript immediately precedes an element that accepts a superscript, they are merged together, much like ligatures in fonts. By convention, elements that accept a superscript are prefixed with an `S` after their argument indicator. For example, fractions accept two arguments (a numerator and denominator), and a superscript. A fraction of a half, raised to the power of 3 is represented as,
+There is additionally a superscript element, `` `Superscript1 ``, which accepts one argument. This is treated as its own element, and is rendered as a placeholder square with a superscript. However, in the case we are converting to MathML or a Sciline Calculator AST, and the superscript immediately precedes an element that accepts a superscript, they are merged together, much like ligatures in fonts. If an element does not accept a superscript, it is left unaltered. E.g.
+
+1 &#x25a1;<sup>&#x25a1;</sup> &#x2192; 1<sup>&#x25a1;</sup>
+
+1 &#x25a1;<sup>2</sup> &#x2192; 1<sup>2</sup>
+
+sin &#x25a1;<sup>&#x25a1;</sup> &#x2192; sin &#x25a1;<sup>&#x25a1;</sup> (functions don't accept superscripts; no change)
+
+By convention, elements that accept a superscript are prefixed with an `S` after their argument indicator. For example, fractions accept two arguments (a numerator and denominator), and a superscript. A fraction of a half, raised to the power of 3 is represented as,
 
 ```reason
 [|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Superscript1, `DigitS("3"), `Arg|]
