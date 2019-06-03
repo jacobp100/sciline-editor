@@ -14,10 +14,10 @@ By convention, arguments that accept a number of arguments are prefixed with the
 /* Empty nlog */
 [|`NLog1, `Arg|]
 
-/* Empty summation */
-[|`Sum2, `Arg, `Arg|]
+/* Summation from 1 to 10 (almost, see below on superscript) */
+[|`Sum2, `Digit("1"), `Arg, `Digit("1"), `Digit("0"), `Arg|]
 
-/* Empty 2x2 matrix (almost, see below) */
+/* Empty 2x2 matrix (almost, see below again) */
 [|TableN({ numRows: 2, numColumns: 2}), `Arg, `Arg, `Arg, `Arg|]
 ```
 
