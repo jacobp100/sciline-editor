@@ -29,7 +29,7 @@ There is additionally a superscript element, `` `Superscript1 ``, which accepts 
 
 This does lead to it being possible to represent invalid ASTs, although this should not normally occur. In these cases, extraneous `` `Arg`` elements are dropped, and missing ones are appended to the end
 
-Insertion and deletion of elements is able to happen directly on the array. This is useful, as it is sometimes required to get the surrounding context
+Insertion and deletion of elements happen directly on the array without any pre-processing step. This is useful, as it is sometimes required to get the surrounding context
 
 ### Convertion to MathML and Sciline Calculator AST
 
