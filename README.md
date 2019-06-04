@@ -10,17 +10,17 @@ Because of this reason, the primary AST is represented as a a flat array of elem
 
 In reality, we quickly have to break this 'just a text input' analogy. For example, a fraction has a numerator and denominator, which are both editable, and affect both rendering and parsing. Elements that act in this way accept element arguments. These completely separate from the arguments of the polymorphic variant types, and we'll get into more detail later
 
-As well as element arguments, superscripts are handled in a special way
+As well as element arguments, optional superscripts are handled in a special way
 
-There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments is added as a suffix. If the number is dynamic, we suffix with an `N`. If they accept a superscript, the `S` suffix is added (after any element argument suffix). E.g.
+There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments is added as a suffix. If the number is dynamic, we suffix with an `N`. If they accept an optional superscript, the `S` suffix is added (after any element argument suffix). E.g.
 
 * `` `SomeElement `` - No element arguments, no superscript
 * `` `SomeElement1 `` - 1 element argument, no superscript
 * `` `SomeElement2 `` - 2 element arguments, no superscript
-* `` `SomeElementS `` - No element arguments, has a superscript
-* `` `SomeElement2S `` - 2 element arguments, has a superscript
-* `` `SomeElementNS `` - dynamic number of element arguments, has a superscript
-* `` `DigitS("1") `` - The digit `1`, which accepts no element arguments, and accepts a superscript
+* `` `SomeElementS `` - No element arguments, has an optional superscript
+* `` `SomeElement2S `` - 2 element arguments, has an optional superscript
+* `` `SomeElementNS `` - dynamic number of element arguments, has an optional superscript
+* `` `DigitS("1") `` - The digit `1`, which accepts no element arguments, has an optional superscript
 
 Putting this all together, and going back to our 'just a text input' analogy, we have can make the following inputs
 
