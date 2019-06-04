@@ -14,13 +14,13 @@ As well as element arguments, superscripts are handled in a special way
 
 There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments is added as a suffix. If the number is dynamic, we suffix with an `N`. If they accept a superscript, the `S` suffix is added (after any element argument suffix). E.g.
 
-* `SomeElement` - No element arguments, no superscript
-* `SomeElement1` - 1 element argument, no superscript
-* `SomeElement2` - 2 element arguments, no superscript
-* `SomeElementS` - No element arguments, has a superscript
-* `SomeElement2S` - 2 element arguments, has a superscript
-* `SomeElementNS` - dynamic number of element arguments, has a superscript
-* `DigitS("1")` - The digit `1`, which accepts no element arguments, and accepts a superscript
+* `` `SomeElement `` - No element arguments, no superscript
+* `` `SomeElement1 `` - 1 element argument, no superscript
+* `` `SomeElement2 `` - 2 element arguments, no superscript
+* `` `SomeElementS `` - No element arguments, has a superscript
+* `` `SomeElement2S `` - 2 element arguments, has a superscript
+* `` `SomeElementNS `` - dynamic number of element arguments, has a superscript
+* `` `DigitS("1") `` - The digit `1`, which accepts no element arguments, and accepts a superscript
 
 Putting this all together, and going back to our 'just a text input' analogy, we have can make the following inputs
 
