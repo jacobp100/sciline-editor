@@ -12,7 +12,7 @@ In reality, we quickly have to break this 'just a text input' analogy. For examp
 
 As well as element arguments, optional superscripts are handled in a special way
 
-There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments is added as a suffix. If the number is dynamic, we suffix with an `N`. If they accept an optional superscript, the `S` suffix is added (after any element argument suffix). E.g.
+There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments is added as a suffix. If the number is dynamic, we suffix with an `N`. If they accept an optional superscript, the `S` suffix is added (after any element argument suffix)
 
 * `` `SomeElement `` - No element arguments, no superscript
 * `` `SomeElement1 `` - 1 element argument, no superscript
@@ -113,7 +113,7 @@ The superscript encoding leads to a really natural eding experience. If you have
 
 ### Convertion to MathML and Sciline Calculator AST
 
-For converting to either MathML or a Sciline Calculator AST, we first do a transformation to a node-based AST. For example, The fraction example above transforms to,
+For converting to either MathML or a Sciline Calculator AST, we first do a transformation to a node-based AST. For example, The fraction example above transforms to
 
 ```reason
 type node('t) = `Frac({ fracNum: node('t), den: node('t), superscript: option(node('t)) })
@@ -121,7 +121,7 @@ type node('t) = `Frac({ fracNum: node('t), den: node('t), superscript: option(no
 
 The representation of the entire tree would be `type ast = node(list(ast))`
 
-From there, we reduce the tree using a fold function.
+From there, we reduce the tree using a fold function
 
 ```reason
 type fold('accumulator, 'output) = (
