@@ -2,10 +2,6 @@ type atom('a) = {
   atomNucleus: string,
   superscript: option('a),
 };
-type constantAtom('a) = {
-  constant: AST_Types.constant,
-  superscript: option('a),
-};
 type customAtom('a) = {
   customAtomValue: ScilineCalculator.Encoding.encoding,
   mml: string,
@@ -62,18 +58,22 @@ type table('a) = {
 
 type t('a) = [
   | `Abs(unary('a))
+  | `Add
   | `ArcMinute
   | `ArcSecond
   | `Base(AST_Types.base)
   | `Ceil(unary('a))
   | `CloseBracket(option('a))
+  | `ConstE(option('a))
+  | `ConstPi(option('a))
   | `Conj
-  | `Constant(constantAtom('a))
   | `CustomAtom(customAtom('a))
   | `DecimalSeparator
   | `Degree
   | `Differential(differential('a))
   | `Digit(atom('a))
+  | `Div
+  | `Dot
   | `Factorial
   | `Floor(unary('a))
   | `Frac(frac('a))
@@ -81,19 +81,20 @@ type t('a) = [
   | `ImaginaryUnit(option('a))
   | `Integral(integral('a))
   | `Magnitude(magnitude('a))
+  | `Mul
   | `NCR(stat('a))
   | `NLog(nlog('a))
   | `NPR(stat('a))
   | `NRoot(nroot('a))
   | `OpenBracket
-  | `Operator(AST_Types.binaryOperator)
-  | `Superscript('a)
   | `Product(iteration('a))
   | `Rand(option('a))
   | `RandInt(randInt('a))
   | `Round(unary('a))
   | `Sqrt(root('a))
+  | `Sub
   | `Sum(iteration('a))
+  | `Superscript('a)
   | `Table(table('a))
   | `Variable(atom('a))
 ];
@@ -111,10 +112,12 @@ let reduceMap =
       ~initial: 'accum,
     )
     : 'value => {
-  let rec readNodeExn = (i): (t('a), int, int) =>
+  let rec readNodeExn = i: (t('a), int, int) =>
     switch (Belt.Array.getExn(input, i)) {
     | (
-        `Base(_) | `Operator(_) | `OpenBracket | `DecimalSeparator | `Conj |
+        `Base(_) | `Add | `Sub | `Mul | `Div | `Dot | `OpenBracket |
+        `DecimalSeparator |
+        `Conj |
         `Factorial |
         `Function(_) |
         `Degree |
@@ -129,10 +132,14 @@ let reduceMap =
       let s = i + 1;
       let (superscript, i') = readSuperscript(s);
       (`CloseBracket(superscript), i', s);
-    | `ConstantS(constant) =>
+    | `ConstPiS =>
       let s = i + 1;
       let (superscript, i') = readSuperscript(s);
-      (`Constant({constant, superscript}), i', s);
+      (`ConstPi(superscript), i', s);
+    | `ConstES =>
+      let s = i + 1;
+      let (superscript, i') = readSuperscript(s);
+      (`ConstE(superscript), i', s);
     | `CustomAtomS({AST_Types.value: customAtomValue, mml}) =>
       let s = i + 1;
       let (superscript, i') = readSuperscript(s);

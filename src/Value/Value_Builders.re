@@ -7,12 +7,6 @@ let withSuperscript = (value, superscript) =>
   | None => value
   };
 
-let getConstant = c =>
-  switch (c) {
-  | Pi => AST.pi
-  | E => AST.e
-  };
-
 let handleGenericFunction = (arg, fn) =>
   switch (fn) {
   | Sin => AST.sin(arg)
@@ -45,9 +39,9 @@ let handleFunction = (arg, fn) =>
 
 let handleOp = (op, a, b) =>
   switch (op) {
-  | Add => AST.add(a, b)
-  | Sub => AST.sub(a, b)
-  | Mul => AST.mul(a, b)
-  | Div => AST.div(a, b)
-  | Dot => AST.mul(a, b)
+  | `Add => AST.add(a, b)
+  | `Sub => AST.sub(a, b)
+  | `Mul => AST.mul(a, b)
+  | `Div => AST.div(a, b)
+  | `Dot => AST.mul(a, b)
   };

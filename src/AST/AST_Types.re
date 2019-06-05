@@ -2,12 +2,6 @@ type base =
   | Bin
   | Oct
   | Hex;
-type binaryOperator =
-  | Add
-  | Sub
-  | Mul
-  | Div
-  | Dot;
 type func =
   | Sin
   | Asin
@@ -25,9 +19,6 @@ type func =
   | Re
   | Im
   | Gamma;
-type constant =
-  | Pi
-  | E;
 type customAtom = {
   value: ScilineCalculator.Encoding.encoding,
   mml: string,
@@ -39,18 +30,23 @@ type table = {
 
 type t = [
   | `Arg
+  | `Add
   | `ArcMinute
   | `ArcSecond
   | `Base(base)
   | `Conj
   | `DecimalSeparator
   | `Degree
+  | `Div
+  | `Dot
   | `Factorial
   | `Function(func)
+  | `Mul
   | `OpenBracket
-  | `Operator(binaryOperator)
+  | `Sub
   | `CloseBracketS
-  | `ConstantS(constant)
+  | `ConstES
+  | `ConstPiS
   | `CustomAtomS(customAtom)
   | `DigitS(string)
   | `ImaginaryUnitS
@@ -79,18 +75,23 @@ type t = [
 let argCountExn = (arg: t) =>
   switch (arg) {
   | `Arg => failwith("arg")
-  | `Function(_)
-  | `Base(_)
-  | `Operator(_)
-  | `OpenBracket
-  | `DecimalSeparator
-  | `Conj
-  | `Factorial
-  | `Degree
+  | `Add
   | `ArcMinute
   | `ArcSecond
+  | `Base(_)
+  | `Conj
+  | `DecimalSeparator
+  | `Degree
+  | `Div
+  | `Dot
+  | `Factorial
+  | `Function(_)
+  | `Mul
+  | `OpenBracket
+  | `Sub
   | `CloseBracketS
-  | `ConstantS(_)
+  | `ConstES
+  | `ConstPiS
   | `CustomAtomS(_)
   | `DigitS(_)
   | `ImaginaryUnitS

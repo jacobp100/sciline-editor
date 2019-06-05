@@ -6,7 +6,9 @@ let map = (element: t('a), i) =>
   switch (element) {
   | `Superscript(_) => failwith("superscript")
   | (
-      `Base(_) | `Operator(_) | `OpenBracket | `DecimalSeparator | `Factorial |
+      `Base(_) | `Add | `Sub | `Mul | `Div | `Dot | `OpenBracket |
+      `DecimalSeparator |
+      `Factorial |
       `Conj |
       `Degree |
       `ArcMinute |
@@ -36,10 +38,8 @@ let map = (element: t('a), i) =>
     Resolved(AST.variable(atomNucleus)->withSuperscript(superscript))
   | `CustomAtom({customAtomValue, superscript}) =>
     Resolved(AST.ofEncoded(customAtomValue)->withSuperscript(superscript))
-  | `Constant({constant, superscript}) =>
-    Value_Builders.getConstant(constant)
-    ->withSuperscript(superscript)
-    ->Resolved
+  | `ConstPi(superscript) => AST.pi->withSuperscript(superscript)->Resolved
+  | `ConstE(superscript) => AST.e->withSuperscript(superscript)->Resolved
   | `Frac({fracNum, den, superscript}) =>
     Resolved(AST.div(fracNum, den)->withSuperscript(superscript))
   | `Abs({unaryArg, superscript}) =>
