@@ -6,7 +6,7 @@ Represents a math AST that can be converted to both MathML and an AST for Scilin
 
 The main aim of the editor is to make editing as natural as possible. And I decided having it behave mostly like a text input is natural. For reason too, every other editor decided this as well!
 
-Because of this reason, the primary AST is represented as a a flat array of elements. An element can be anything from a digit, to an operator, to a function like `sin`. In text input analogy, each element is like a character. And in OCaml terms, each element are represented as polymorphic variant type. Some elements are just raw polymorphic variant tags that without take arguments, but where it makes parsing easier - or where required for other reasons - you can get a variant with an argument. E.g. `` `Operator(Mul) ``
+Because of this reason, the primary AST is represented as a a flat array of elements. An element can be anything from a digit, to an operator, to a function like `sin`. In text input analogy, each element is like a character. And in OCaml terms, each element are represented as polymorphic variant type. Some elements are just raw polymorphic variant tags that without take arguments, but where it makes parsing easier - or where required for other reasons - you can get a variant with an argument. E.g. `` `Digit("1") ``
 
 In reality, we quickly have to break this 'just a text input' analogy. For example, a fraction has a numerator and denominator, which are both editable, and affect both rendering and parsing. Elements that act in this way accept element arguments. These completely separate from the arguments of the polymorphic variant types, and we'll get into more detail later
 
@@ -26,10 +26,10 @@ Putting this all together, and going back to our 'just a text input' analogy, we
 
 ```reason
 /* 1 + 2 */
-[|`DigitS("1"), `Operator(Add), `DigitS("2")|]
+[|`DigitS("1"), `Add, `DigitS("2")|]
 
 /* 1 + 2 * 3 */
-[|`DigitS("1"), `Operator(Add), `DigitS("2"), `Operator(Mul), `DigitS("3")|]
+[|`DigitS("1"), `Add, `DigitS("2"), `Mul, `DigitS("3")|]
 
 /* sin 45 degrees */
 [|`Function(Sin), `DigitS("4"), `DigitS("5"), `Degree|]
