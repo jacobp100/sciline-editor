@@ -2,12 +2,6 @@ type base =
   | Bin
   | Oct
   | Hex;
-type binaryOperator =
-  | Add
-  | Sub
-  | Mul
-  | Div
-  | Dot;
 type func =
   | Sin
   | Asin
@@ -25,9 +19,6 @@ type func =
   | Re
   | Im
   | Gamma;
-type constant =
-  | Pi
-  | E;
 type customAtom = {
   value: ScilineCalculator.Encoding.encoding,
   mml: string,
@@ -39,19 +30,24 @@ type table = {
 
 type t = [
   | `Arg
+  | `Add
   | `ArcMinute
   | `ArcSecond
   | `Base(base)
   | `Conj
   | `DecimalSeparator
   | `Degree
+  | `Div
+  | `Dot
   | `Factorial
   | `Function(func)
+  | `Mul
   | `OpenBracket
-  | `Operator(binaryOperator)
   | `Percent
+  | `Sub
   | `CloseBracketS
-  | `ConstantS(constant)
+  | `ConstES
+  | `ConstPiS
   | `CustomAtomS(customAtom)
   | `DigitS(string)
   | `ImaginaryUnitS
@@ -80,19 +76,24 @@ type t = [
 let argCountExn = (arg: t) =>
   switch (arg) {
   | `Arg => failwith("arg")
+  | `Add
   | `ArcMinute
   | `ArcSecond
   | `Base(_)
   | `Conj
   | `DecimalSeparator
   | `Degree
+  | `Div
+  | `Dot
   | `Factorial
   | `Function(_)
+  | `Mul
   | `OpenBracket
-  | `Operator(_)
   | `Percent
+  | `Sub
   | `CloseBracketS
-  | `ConstantS(_)
+  | `ConstES
+  | `ConstPiS
   | `CustomAtomS(_)
   | `DigitS(_)
   | `ImaginaryUnitS
@@ -118,21 +119,20 @@ let argCountExn = (arg: t) =>
   | `TableNS({numRows, numColumns}) => numRows * numColumns
   };
 
-let rec argEndIndexAug = (~pending, ast: array(t), index) =>
-  switch (Belt.Array.get(ast, index)) {
-  | Some(`Arg) =>
-    if (pending == 0) {
-      index + 1;
-    } else {
-      argEndIndexAug(~pending=pending - 1, ast, index + 1);
-    }
-  | Some(v) =>
-    argEndIndexAug(~pending=pending + argCountExn(v), ast, index + 1)
-  | None => index
-  };
-
-let argEndIndex = (ast: array(t), index) =>
-  argEndIndexAug(~pending=0, ast, index);
+let argEndIndex = (ast: array(t), index) => {
+  let rec iter = (~pending, ast: array(t), index) =>
+    switch (Belt.Array.get(ast, index)) {
+    | Some(`Arg) =>
+      if (pending == 0) {
+        index + 1;
+      } else {
+        iter(~pending=pending - 1, ast, index + 1);
+      }
+    | Some(v) => iter(~pending=pending + argCountExn(v), ast, index + 1)
+    | None => index
+    };
+  iter(~pending=0, ast, index);
+};
 
 let rec normalizationState = (ast, remaining, i) =>
   switch (remaining, Belt.Array.get(ast, i)) {

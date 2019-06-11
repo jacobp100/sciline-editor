@@ -6,16 +6,19 @@ let map = (element: t('a), i) =>
   switch (element) {
   | `Superscript(_) => failwith("superscript")
   | (
-      `ArcMinute | `ArcSecond | `Base(_) | `CloseBracket(_) | `Conj |
+      `Add | `ArcMinute | `ArcSecond | `Base(_) | `CloseBracket(_) | `Conj |
       `DecimalSeparator |
       `Degree |
       `Digit(_) |
+      `Div |
+      `Dot |
       `Factorial |
       `ImaginaryUnit(_) |
       `Magnitude(_) |
+      `Mul |
       `OpenBracket |
-      `Operator(_) |
-      `Percent
+      `Percent |
+      `Sub
     ) as e =>
     Unresolved(e, i)
   | `Function(fn) => UnresolvedFunction(GenericFunction(fn), i)
@@ -37,10 +40,8 @@ let map = (element: t('a), i) =>
     Resolved(AST.variable(atomNucleus)->withSuperscript(superscript))
   | `CustomAtom({customAtomValue, superscript}) =>
     Resolved(AST.ofEncoded(customAtomValue)->withSuperscript(superscript))
-  | `Constant({constant, superscript}) =>
-    Value_Builders.getConstant(constant)
-    ->withSuperscript(superscript)
-    ->Resolved
+  | `ConstPi(superscript) => AST.pi->withSuperscript(superscript)->Resolved
+  | `ConstE(superscript) => AST.e->withSuperscript(superscript)->Resolved
   | `Frac({fracNum, den, superscript}) =>
     Resolved(AST.div(fracNum, den)->withSuperscript(superscript))
   | `Abs({unaryArg, superscript}) =>

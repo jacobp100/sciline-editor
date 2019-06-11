@@ -51,10 +51,10 @@ let next = parseNumbers;
 
 let rec parseUnary = elements =>
   switch (elements) {
-  | [Unresolved(`Operator((Add | Sub) as op), i'), ...rest] =>
+  | [Unresolved((`Add | `Sub) as op, i'), ...rest] =>
     switch (parseUnary(rest)) {
     | `Ok(root) =>
-      let root = op == Sub ? AST.neg(root) : root;
+      let root = op == `Sub ? AST.neg(root) : root;
       `Ok(root);
     | `Error(_) as e => e
     | `UnknownError => `Error(i')
@@ -85,7 +85,7 @@ let next = parseParenFreeFunctions;
 let rec parseMulDiv = elements => {
   let rec iter = (i, after) =>
     switch (after) {
-    | [Unresolved(`Operator((Mul | Div | Dot) as op), i'), ...after] =>
+    | [Unresolved((`Mul | `Div | `Dot) as op, i'), ...after] =>
       switch (ListUtil.takeUpto(elements, i)->next, parseMulDiv(after)) {
       | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
       | (`Error(_) as e, _)
@@ -103,7 +103,7 @@ let next = parseMulDiv;
 let rec parseAddSub = elements => {
   let rec iter = (i, after) =>
     switch (after) {
-    | [Unresolved(`Operator((Add | Sub) as op), _), ...after] =>
+    | [Unresolved((`Add | `Sub) as op, _), ...after] =>
       switch (ListUtil.takeUpto(elements, i)->next, parseAddSub(after)) {
       | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
       | _ =>

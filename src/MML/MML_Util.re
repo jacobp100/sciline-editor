@@ -2,11 +2,11 @@ open AST_Types;
 
 let stringOfOperator = x =>
   switch (x) {
-  | Add => "+"
-  | Sub => "-"
-  | Mul => "&times;"
-  | Div => "&div;"
-  | Dot => "&#xb7;"
+  | `Add => "+"
+  | `Sub => "-"
+  | `Mul => "&times;"
+  | `Div => "&div;"
+  | `Dot => "&#xb7;"
   };
 
 let stringOfFunction = x =>
@@ -34,10 +34,4 @@ let stringOfBase = base =>
   | Bin => "0b"
   | Oct => "0o"
   | Hex => "0x"
-  };
-
-let stringOfConstant = constant =>
-  switch (constant) {
-  | AST_Types.Pi => "&pi;"
-  | E => "e"
   };

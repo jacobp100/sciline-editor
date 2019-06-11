@@ -36,17 +36,18 @@ let reduce = (accum, element: t(string), range) =>
     elementWithIndex(~superscript, "mi", range, "i")->MML_Accum.append(accum)
   | `Magnitude({magnitudeBase}) =>
     let body =
-      createElement("mo", MML_Util.stringOfOperator(Mul))
+      createElement("mo", MML_Util.stringOfOperator(`Mul))
       ++ createElement("mn", "10");
     elementWithIndex(~superscript=Some(magnitudeBase), "mrow", range, body)
     ->MML_Accum.append(accum);
   | `Variable({atomNucleus, superscript}) =>
     elementWithIndex(~superscript, "mi", range, atomNucleus)
     ->MML_Accum.append(accum)
-  | `Constant({constant, superscript}) =>
-    let body = MML_Util.stringOfConstant(constant);
-    elementWithIndex(~superscript, "mi", range, body)
-    ->MML_Accum.append(accum);
+  | `ConstPi(superscript) =>
+    elementWithIndex(~superscript, "mi", range, "&pi;")
+    ->MML_Accum.append(accum)
+  | `ConstE(superscript) =>
+    elementWithIndex(~superscript, "mi", range, "e")->MML_Accum.append(accum)
   | `CustomAtom({mml, superscript}) =>
     elementWithIndex(~superscript, "mrow", range, mml)
     ->MML_Accum.append(accum)
@@ -55,7 +56,7 @@ let reduce = (accum, element: t(string), range) =>
     elementWithIndex(~attributes, "mi", range, MML_Util.stringOfFunction(f))
     ->MML_Accum.append(accum);
   | `Factorial => elementWithIndex("mo", range, "!")->MML_Accum.append(accum)
-  | `Operator(v) =>
+  | (`Add | `Sub | `Mul | `Div | `Dot) as v =>
     elementWithIndex("mo", range, MML_Util.stringOfOperator(v))
     ->MML_Accum.append(accum)
   | `Frac({fracNum, den, superscript}) =>
