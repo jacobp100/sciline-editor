@@ -49,6 +49,7 @@ type t = [
   | `Function(func)
   | `OpenBracket
   | `Operator(binaryOperator)
+  | `Percent
   | `CloseBracketS
   | `ConstantS(constant)
   | `CustomAtomS(customAtom)
@@ -79,16 +80,17 @@ type t = [
 let argCountExn = (arg: t) =>
   switch (arg) {
   | `Arg => failwith("arg")
-  | `Function(_)
-  | `Base(_)
-  | `Operator(_)
-  | `OpenBracket
-  | `DecimalSeparator
-  | `Conj
-  | `Factorial
-  | `Degree
   | `ArcMinute
   | `ArcSecond
+  | `Base(_)
+  | `Conj
+  | `DecimalSeparator
+  | `Degree
+  | `Factorial
+  | `Function(_)
+  | `OpenBracket
+  | `Operator(_)
+  | `Percent
   | `CloseBracketS
   | `ConstantS(_)
   | `CustomAtomS(_)
@@ -97,8 +99,8 @@ let argCountExn = (arg: t) =>
   | `RandS
   | `VariableS(_) => 0
   | `Magnitude1
-  | `Superscript1
   | `NLog1
+  | `Superscript1
   | `Abs1S
   | `Ceil1S
   | `Floor1S

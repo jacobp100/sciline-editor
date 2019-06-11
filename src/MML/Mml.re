@@ -17,6 +17,8 @@ let reduce = (accum, element: t(string), range) =>
   | `Digit({atomNucleus, superscript}) =>
     elementWithIndex(~superscript, "mn", range, atomNucleus)
     ->MML_Accum.append(accum)
+  | `Percent =>
+    elementWithIndex("mn", range, "&amp;")->MML_Accum.append(accum)
   | `Degree =>
     elementWithIndex("mn", range, "&deg;")->MML_Accum.append(accum)
   | `ArcMinute =>

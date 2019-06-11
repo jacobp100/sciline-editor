@@ -88,6 +88,7 @@ type t('a) = [
   | `OpenBracket
   | `Operator(AST_Types.binaryOperator)
   | `Superscript('a)
+  | `Percent
   | `Product(iteration('a))
   | `Rand(option('a))
   | `RandInt(randInt('a))
@@ -114,12 +115,12 @@ let reduceMap =
   let rec readNodeExn = (i): (t('a), int, int) =>
     switch (Belt.Array.getExn(input, i)) {
     | (
-        `Base(_) | `Operator(_) | `OpenBracket | `DecimalSeparator | `Conj |
+        `ArcMinute | `ArcSecond | `Base(_) | `Conj | `DecimalSeparator | `Degree |
         `Factorial |
         `Function(_) |
-        `Degree |
-        `ArcMinute |
-        `ArcSecond
+        `OpenBracket |
+        `Operator(_) |
+        `Percent
       ) as v => (
         v,
         i + 1,

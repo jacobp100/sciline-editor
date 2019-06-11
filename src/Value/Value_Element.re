@@ -6,15 +6,16 @@ let map = (element: t('a), i) =>
   switch (element) {
   | `Superscript(_) => failwith("superscript")
   | (
-      `Base(_) | `Operator(_) | `OpenBracket | `DecimalSeparator | `Factorial |
-      `Conj |
+      `ArcMinute | `ArcSecond | `Base(_) | `CloseBracket(_) | `Conj |
+      `DecimalSeparator |
       `Degree |
-      `ArcMinute |
-      `ArcSecond |
+      `Digit(_) |
+      `Factorial |
       `ImaginaryUnit(_) |
       `Magnitude(_) |
-      `CloseBracket(_) |
-      `Digit(_)
+      `OpenBracket |
+      `Operator(_) |
+      `Percent
     ) as e =>
     Unresolved(e, i)
   | `Function(fn) => UnresolvedFunction(GenericFunction(fn), i)
@@ -58,8 +59,8 @@ let map = (element: t('a), i) =>
     ->Resolved
   | `Table({tableElements, numRows, numColumns, superscript}) =>
     let element =
-      numColumns == 1 ?
-        AST.vector(tableElements) :
-        AST.matrix(numRows, numColumns, tableElements);
+      numColumns == 1
+        ? AST.vector(tableElements)
+        : AST.matrix(numRows, numColumns, tableElements);
     element->withSuperscript(superscript)->Resolved;
   };

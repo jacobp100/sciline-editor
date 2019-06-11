@@ -1,6 +1,8 @@
 open AST_Types;
 open Value_Types;
 
+module AST = ScilineCalculator.AST_Types;
+
 let withSuperscript = (value, superscript) =>
   switch (superscript) {
   | Some(superscript) => AST.pow(value, superscript)

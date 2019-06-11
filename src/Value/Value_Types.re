@@ -1,13 +1,14 @@
 open AST_ReduceMap;
-module AST = ScilineCalculator.ASTTypes;
+
+type node = ScilineCalculator.AST_Types.t;
 
 type funcitionLike =
   | GenericFunction(AST_Types.func)
-  | NLog(nlog(AST.t))
-  | Sum(iteration(AST.t))
-  | Product(iteration(AST.t));
+  | NLog(nlog(node))
+  | Sum(iteration(node))
+  | Product(iteration(node));
 
 type partialNode =
-  | Resolved(AST.t)
-  | Unresolved(t(AST.t), int)
+  | Resolved(node)
+  | Unresolved(t(node), int)
   | UnresolvedFunction(funcitionLike, int);

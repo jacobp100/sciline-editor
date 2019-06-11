@@ -1,6 +1,8 @@
 open AST_ReduceMap;
 open Value_Types;
 
+module AST = ScilineCalculator.AST_Types;
+
 let numberIsValidForBase = (base, atomNucleus) =>
   switch (base, atomNucleus) {
   | (_, "0" | "1")
@@ -14,12 +16,12 @@ type numState('a, 'b) = {
   numBase: option(AST_Types.base),
   numString: string,
   numHasDecimal: bool,
-  numSup: option(AST.t),
-  imag: option(AST.t),
-  magSup: option(AST.t),
-  degree: option(AST.t),
-  arcMin: option(AST.t),
-  arcSec: option(AST.t),
+  numSup: option(node),
+  imag: option(node),
+  magSup: option(node),
+  degree: option(node),
+  arcMin: option(node),
+  arcSec: option(node),
 };
 
 let rec reduce = (state, element) =>

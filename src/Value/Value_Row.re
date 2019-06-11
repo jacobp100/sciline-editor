@@ -2,21 +2,16 @@ open Value_Types;
 open Value_Builders;
 
 let rec parseRest = (~current=None, elements) =>
-  switch (elements) {
-  | [Resolved(next), ...rest] =>
-    let current =
-      switch (current) {
-      | Some(a) => Some(AST.mul(a, next))
-      | None => Some(next)
-      };
-    parseRest(~current, rest);
-  | [UnresolvedFunction(_, i'), ..._]
-  | [Unresolved(_, i'), ..._] => `Error(i')
-  | [] =>
-    switch (current) {
-    | Some(v) => `Ok(v)
-    | None => `UnknownError
-    }
+  switch (current, elements) {
+  | (Some(a), [Resolved(next), ...rest]) =>
+    parseRest(~current=Some(AST.mul(a, next)), rest)
+  | (None, [Resolved(next), ...rest]) =>
+    parseRest(~current=Some(next), rest)
+  | (Some(a), [Unresolved(`Percent, _)]) => `Ok(AST.percent(a))
+  | (_, [UnresolvedFunction(_, i'), ..._] | [Unresolved(_, i'), ..._]) =>
+    `Error(i')
+  | (Some(v), []) => `Ok(v)
+  | (None, []) => `UnknownError
   };
 let next = parseRest;
 
