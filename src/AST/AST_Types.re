@@ -28,8 +28,7 @@ type table = {
   numColumns: int,
 };
 
-type t = [
-  | `Arg
+type atom = [
   | `Add
   | `ArcMinute
   | `ArcSecond
@@ -45,6 +44,9 @@ type t = [
   | `OpenBracket
   | `Percent
   | `Sub
+];
+
+type atomS = [
   | `CloseBracketS
   | `ConstES
   | `ConstPiS
@@ -53,69 +55,37 @@ type t = [
   | `ImaginaryUnitS
   | `RandS
   | `VariableS(string)
-  | `Magnitude1
-  | `Superscript1
-  | `NLog1
-  | `Abs1S
-  | `Ceil1S
-  | `Floor1S
-  | `Round1S
-  | `Sqrt1S
-  | `Differential2
-  | `NCR2
-  | `NPR2
-  | `Product2
-  | `Sum2
-  | `Frac2S
-  | `NRoot2S
-  | `RandInt2S
-  | `Integral3
-  | `TableNS(table)
+];
+
+type atom1 = [ | `Magnitude1 | `NLog1 | `Superscript1];
+type atom1S = [ | `Abs1S | `Ceil1S | `Floor1S | `Round1S | `Sqrt1S];
+type atom2 = [ | `Differential2 | `NCR2 | `NPR2 | `Product2 | `Sum2];
+type atom2S = [ | `Frac2S | `NRoot2S | `RandInt2S];
+type atom3 = [ | `Integral3];
+type atomNS = [ | `TableNS(table)];
+
+type t = [
+  | `Arg
+  | atom
+  | atomS
+  | atom1
+  | atom1S
+  | atom2
+  | atom2S
+  | atom3
+  | atomNS
 ];
 
 let argCountExn = (arg: t) =>
   switch (arg) {
   | `Arg => failwith("arg")
-  | `Add
-  | `ArcMinute
-  | `ArcSecond
-  | `Base(_)
-  | `Conj
-  | `DecimalSeparator
-  | `Degree
-  | `Div
-  | `Dot
-  | `Factorial
-  | `Function(_)
-  | `Mul
-  | `OpenBracket
-  | `Percent
-  | `Sub
-  | `CloseBracketS
-  | `ConstES
-  | `ConstPiS
-  | `CustomAtomS(_)
-  | `DigitS(_)
-  | `ImaginaryUnitS
-  | `RandS
-  | `VariableS(_) => 0
-  | `Magnitude1
-  | `NLog1
-  | `Superscript1
-  | `Abs1S
-  | `Ceil1S
-  | `Floor1S
-  | `Round1S
-  | `Sqrt1S => 1
-  | `Differential2
-  | `NCR2
-  | `NPR2
-  | `Product2
-  | `Sum2
-  | `Frac2S
-  | `NRoot2S
-  | `RandInt2S => 2
-  | `Integral3 => 3
+  | #atom
+  | #atomS => 0
+  | #atom1
+  | #atom1S => 1
+  | #atom2
+  | #atom2S => 2
+  | #atom3 => 2
   | `TableNS({numRows, numColumns}) => numRows * numColumns
   };
 

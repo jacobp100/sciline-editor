@@ -5,23 +5,12 @@ open Value_Builders;
 let map = (element: t('a), i) =>
   switch (element) {
   | `Superscript(_) => failwith("superscript")
+  | `Function(fn) => UnresolvedFunction(GenericFunction(fn), i)
   | (
-      `Add | `ArcMinute | `ArcSecond | `Base(_) | `CloseBracket(_) | `Conj |
-      `DecimalSeparator |
-      `Degree |
-      `Digit(_) |
-      `Div |
-      `Dot |
-      `Factorial |
-      `ImaginaryUnit(_) |
-      `Magnitude(_) |
-      `Mul |
-      `OpenBracket |
-      `Percent |
-      `Sub
+      #AST_Types.atom | `CloseBracket(_) | `Digit(_) | `ImaginaryUnit(_) |
+      `Magnitude(_)
     ) as e =>
     Unresolved(e, i)
-  | `Function(fn) => UnresolvedFunction(GenericFunction(fn), i)
   | `NLog({nlogBase}) => UnresolvedFunction(NLog({nlogBase: nlogBase}), i)
   | `Sum({iterationStart, iterationEnd}) =>
     UnresolvedFunction(Sum({iterationStart, iterationEnd}), i)

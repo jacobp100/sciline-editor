@@ -116,22 +116,7 @@ let reduceMap =
     : 'value => {
   let rec readNodeExn = (i): (t('a), int, int) =>
     switch (Belt.Array.getExn(input, i)) {
-    | (
-        `Add | `ArcMinute | `ArcSecond | `Base(_) | `Conj | `DecimalSeparator |
-        `Degree |
-        `Div |
-        `Dot |
-        `Factorial |
-        `Function(_) |
-        `Mul |
-        `OpenBracket |
-        `Percent |
-        `Sub
-      ) as v => (
-        v,
-        i + 1,
-        (-1),
-      )
+    | #AST_Types.atom as v => (v, i + 1, (-1))
     | `CloseBracketS =>
       let s = i + 1;
       let (superscript, i') = readSuperscript(s);
