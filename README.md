@@ -64,7 +64,7 @@ There is an analogy to function calls here - if you had a call to `frac(num, den
 [|`Sum2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg|]
 
 /* Empty 2x2 matrix */
-[|TableNS({ numRows: 2, numColumns: 2}), `Arg, `Arg, `Arg, `Arg|]
+[|TableNS({ numRows: 2, numColumns: 2 }), `Arg, `Arg, `Arg, `Arg|]
 ```
 
 It is possible to nest elements accepting arguments. An `` `Arg `` element corresponds to the most recent element accepting element arguments, until it has received all its arguments. Then it goes to the second most recent, and so forth
