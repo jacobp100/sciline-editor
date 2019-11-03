@@ -19,6 +19,10 @@ type func =
   | Re
   | Im
   | Gamma;
+type unitConversion = {
+  fromUnits: ScilineCalculator.Unit_Types.units,
+  toUnits: ScilineCalculator.Unit_Types.units,
+};
 type customAtom = {
   value: ScilineCalculator.Encoding.encoding,
   mml: string,
@@ -44,6 +48,7 @@ type atom = [
   | `OpenBracket
   | `Percent
   | `Sub
+  | `UnitConversion(unitConversion)
 ];
 
 type atomS = [

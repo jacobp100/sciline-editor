@@ -98,6 +98,7 @@ type t('a) = [
   | `Sum(iteration('a))
   | `Superscript('a)
   | `Table(table('a))
+  | `UnitConversion(AST_Types.unitConversion)
   | `Variable(atom('a))
 ];
 

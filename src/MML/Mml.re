@@ -162,6 +162,12 @@ let reduce = (accum, element: t(string), range) =>
     let body = createElement("mo", "[") ++ inner ++ createElement("mo", "]");
     elementWithIndex(~superscript, "mrow", range, body)
     ->MML_Accum.append(accum);
+  | `UnitConversion({fromUnits, toUnits}) =>
+    let body =
+      MML_Units.unitsMml(fromUnits)
+      ++ "<mo>&RightArrow;</mo>"
+      ++ MML_Units.unitsMml(toUnits);
+    elementWithIndex("mrow", range, body)->MML_Accum.append(accum);
   };
 
 let create = elements => {

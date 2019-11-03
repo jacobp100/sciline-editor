@@ -15,15 +15,24 @@ let rec parseRest = (~current=None, elements) =>
   };
 let next = parseRest;
 
-let rec parseFactorials = elements =>
+let rec parsePostfixes = elements =>
   switch (elements) {
+  | [
+      Resolved(next),
+      Unresolved(`UnitConversion({fromUnits, toUnits}), _),
+      ...rest,
+    ] =>
+    parsePostfixes([
+      Resolved(AST.convert(next, fromUnits, toUnits)),
+      ...rest,
+    ])
   | [Resolved(next), Unresolved(`Factorial, _), ...rest] =>
-    parseFactorials([Resolved(AST.factorial(next)), ...rest])
+    parsePostfixes([Resolved(AST.factorial(next)), ...rest])
   | [Resolved(next), Unresolved(`Conj, _), ...rest] =>
-    parseFactorials([Resolved(AST.conj(next)), ...rest])
+    parsePostfixes([Resolved(AST.conj(next)), ...rest])
   | _ => next(elements)
   };
-let next = parseFactorials;
+let next = parsePostfixes;
 
 let parseNumbers = elements => {
   let rec iter = (state, rest) => {
