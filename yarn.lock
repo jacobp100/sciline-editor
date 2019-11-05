@@ -19,6 +19,6 @@ esm@^3.2.22:
 
 "sciline-calculator@https://github.com/jacobp100/sciline-calculator":
   version "0.1.0"
-  resolved "https://github.com/jacobp100/sciline-calculator#434ecd87afb148187da16e320c1255f390210721"
+  resolved "https://github.com/jacobp100/sciline-calculator#353ba44d6b8285790483dda9addd1261b6853901"
   dependencies:
     decimal.js "^10.2.0"

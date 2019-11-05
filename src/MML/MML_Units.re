@@ -124,19 +124,18 @@ let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Fahrenheit => "&deg;F"
   };
 
+let unitPowerMml = ((unit, power): ScilineCalculator.Unit_Types.unitPower) =>
+  switch (power) {
+  | 1 => "<mi>" ++ unitMml(unit) ++ "</mi>"
+  | _ =>
+    "<msup><mi>"
+    ++ unitMml(unit)
+    ++ "</mi><mn>"
+    ++ string_of_int(power)
+    ++ "</mn></msup>"
+  };
+
 let unitsMml = (units: ScilineCalculator.Unit_Types.units) => {
-  let unitsMml =
-    Belt.List.map(
-      units, ((unit, power): ScilineCalculator.Unit_Types.unitPower) =>
-      switch (power) {
-      | 1 => "<mi>" ++ unitMml(unit) ++ "</mi>"
-      | _ =>
-        "<msup><mi>"
-        ++ unitMml(unit)
-        ++ "</mi><mn>"
-        ++ string_of_int(power)
-        ++ "</mn></msup>"
-      }
-    );
-  String.concat("<mo>&middot;</mo>", unitsMml);
+  let unitsMmlList = Belt.Array.map(units, unitPowerMml)->Belt.List.fromArray;
+  String.concat("<mo>&middot;</mo>", unitsMmlList);
 };
