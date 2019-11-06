@@ -1,4 +1,4 @@
-let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
+let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   switch (unit) {
   /* Time */
   | Second => "s"
@@ -13,7 +13,7 @@ let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Femtosecond => "fs"
   | Picosecond => "ps"
   | Nanosecond => "ns"
-  | Microsecond => "μ"
+  | Microsecond => "&mu;s"
   | Millisecond => "ms"
   /* Length */
   | Meter => "m"
@@ -27,7 +27,7 @@ let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Femtometer => "fm"
   | Picometer => "pm"
   | Nanometer => "nm"
-  | Micrometer => "μm"
+  | Micrometer => "&mu;m"
   | Millimeter => "mm"
   | Centimeter => "m"
   | Kilometer => "km"
@@ -44,7 +44,7 @@ let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Femtogram => "fg"
   | Picogram => "pg"
   | Nanogram => "ng"
-  | Microgram => "μg"
+  | Microgram => "&mu;g"
   | Milligram => "mg"
   | Kilogram => "kg"
   | Megagram => "Mg"
@@ -75,7 +75,7 @@ let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Femtojoule => "fj"
   | Picojoule => "pj"
   | Nanojoule => "nj"
-  | Microjoule => "μj"
+  | Microjoule => "&mu;j"
   | Millijoule => "mj"
   | Centijoule => "j"
   | Kilojoule => "kj"
@@ -88,7 +88,7 @@ let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Femtowatt => "fW"
   | Picowatt => "pW"
   | Nanowatt => "nW"
-  | Microwatt => "μW"
+  | Microwatt => "&mu;W"
   | Milliwatt => "mW"
   | Kilowatt => "kW"
   | Megawatt => "MW"
@@ -124,15 +124,14 @@ let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Fahrenheit => "&deg;F"
   };
 
+let unitMml = unit => "<mi>" ++ unitMmlSymbol(unit) ++ "</mi>";
+
 let unitPowerMml = ((unit, power): ScilineCalculator.Unit_Types.unitPower) =>
   switch (power) {
-  | 1 => "<mi>" ++ unitMml(unit) ++ "</mi>"
+  | 1 => unitMml(unit)
   | _ =>
-    "<msup><mi>"
-    ++ unitMml(unit)
-    ++ "</mi><mn>"
-    ++ string_of_int(power)
-    ++ "</mn></msup>"
+    let powerMml = "<mn>" ++ string_of_int(power) ++ "</mn>";
+    "<msup>" ++ unitMml(unit) ++ powerMml ++ "</msup>";
   };
 
 let unitsMml = (units: ScilineCalculator.Unit_Types.units) => {
