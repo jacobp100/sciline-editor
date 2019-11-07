@@ -2,9 +2,9 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   switch (unit) {
   /* Time */
   | Second => "s"
-  | Minute => "m"
+  | Minute => "min"
   | Hour => "h"
-  | Day => "day"
+  | Day => "d"
   | Week => "week"
   | Month => "month"
   | Year => "year"
@@ -13,7 +13,7 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Femtosecond => "fs"
   | Picosecond => "ps"
   | Nanosecond => "ns"
-  | Microsecond => "&mu;s"
+  | Microsecond => "&#x3BC;s"
   | Millisecond => "ms"
   /* Length */
   | Meter => "m"
@@ -23,11 +23,11 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Mile => "mi"
   | LightYear => "ly"
   | Parsec => "pc"
-  | Angstrom => "Å"
+  | Angstrom => "&#x212B;"
   | Femtometer => "fm"
   | Picometer => "pm"
   | Nanometer => "nm"
-  | Micrometer => "&mu;m"
+  | Micrometer => "&#x3BC;m"
   | Millimeter => "mm"
   | Centimeter => "m"
   | Kilometer => "km"
@@ -44,7 +44,7 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Femtogram => "fg"
   | Picogram => "pg"
   | Nanogram => "ng"
-  | Microgram => "&mu;g"
+  | Microgram => "&#x3BC;g"
   | Milligram => "mg"
   | Kilogram => "kg"
   | Megagram => "Mg"
@@ -53,11 +53,11 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Petagram => "Pg"
   /* Area */
   | Acre => "acre"
-  | Hectare => "hectare"
+  | Hectare => "ha"
   /* Volume */
   | Liter => "l"
-  | Gallon => "gal"
-  | USGallon => "US gal"
+  | Gallon => "Gal"
+  | USGallon => "US Gal"
   | Quart => "qt"
   | Cup => "cup"
   | USCup => "US cup"
@@ -75,7 +75,7 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Femtojoule => "fj"
   | Picojoule => "pj"
   | Nanojoule => "nj"
-  | Microjoule => "&mu;j"
+  | Microjoule => "&#x3BC;j"
   | Millijoule => "mj"
   | Centijoule => "j"
   | Kilojoule => "kj"
@@ -88,7 +88,7 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Femtowatt => "fW"
   | Picowatt => "pW"
   | Nanowatt => "nW"
-  | Microwatt => "&mu;W"
+  | Microwatt => "&#x3BC;W"
   | Milliwatt => "mW"
   | Kilowatt => "kW"
   | Megawatt => "MW"
@@ -124,7 +124,8 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Fahrenheit => "&deg;F"
   };
 
-let unitMml = unit => "<mi>" ++ unitMmlSymbol(unit) ++ "</mi>";
+let unitMml = unit =>
+  "<mi mathvariant=\"normal\">" ++ unitMmlSymbol(unit) ++ "</mi>";
 
 let unitPowerMml = ((unit, power): ScilineCalculator.Unit_Types.unitPower) =>
   switch (power) {
@@ -136,5 +137,5 @@ let unitPowerMml = ((unit, power): ScilineCalculator.Unit_Types.unitPower) =>
 
 let unitsMml = (units: ScilineCalculator.Unit_Types.units) => {
   let unitsMmlList = Belt.Array.map(units, unitPowerMml)->Belt.List.fromArray;
-  String.concat("<mo>&middot;</mo>", unitsMmlList);
+  String.concat("<mspace width=\"0.1em\" />", unitsMmlList);
 };
