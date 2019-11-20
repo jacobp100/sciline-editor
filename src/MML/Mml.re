@@ -19,9 +19,9 @@ let reduce = (accum, element: t(string), range) =>
     ->MML_Accum.append(accum)
   | `Percent => elementWithIndex("mn", range, "%")->MML_Accum.append(accum)
   | `Degree =>
-    elementWithIndex("mn", range, "&deg;")->MML_Accum.append(accum)
+    elementWithIndex("mn", range, "&#x00B0;")->MML_Accum.append(accum)
   | `ArcMinute =>
-    let body = "<mn />" ++ createElement("mn", "&prime;");
+    let body = "<mn />" ++ createElement("mn", "&#x2032;");
     elementWithIndex("msup", range, body)->MML_Accum.append(accum);
   | `ArcSecond =>
     let body = "<mn />" ++ createElement("mn", "&#8243;");
@@ -43,7 +43,7 @@ let reduce = (accum, element: t(string), range) =>
     elementWithIndex(~superscript, "mi", range, atomNucleus)
     ->MML_Accum.append(accum)
   | `ConstPi(superscript) =>
-    elementWithIndex(~superscript, "mi", range, "&pi;")
+    elementWithIndex(~superscript, "mi", range, "&#x03C0;")
     ->MML_Accum.append(accum)
   | `ConstE(superscript) =>
     elementWithIndex(~superscript, "mi", range, "e")->MML_Accum.append(accum)
@@ -75,9 +75,9 @@ let reduce = (accum, element: t(string), range) =>
     let (leftBracket, rightBracket) =
       switch (unary) {
       | `Abs(_) => ("|", "|")
-      | `Floor(_) => ("&lfloor;", "&rfloor;")
-      | `Ceil(_) => ("&lceil;", "&rceil;")
-      | `Round(_) => ("&lfloorl;", "&rceil;")
+      | `Floor(_) => ("&#x230A;", "&#x230B;")
+      | `Ceil(_) => ("&#x2308;", "&#x2309;")
+      | `Round(_) => ("&#x230A;", "&#x2309;")
       };
     let body =
       createElement("mo", leftBracket)

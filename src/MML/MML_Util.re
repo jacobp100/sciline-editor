@@ -4,8 +4,8 @@ let stringOfOperator = x =>
   switch (x) {
   | `Add => "+"
   | `Sub => "-"
-  | `Mul => "&times;"
-  | `Div => "&div;"
+  | `Mul => "&#x00D7;"
+  | `Div => "&#x00F7;"
   | `Dot => "&#xb7;"
   };
 
@@ -26,7 +26,7 @@ let stringOfFunction = x =>
   | Log => "log"
   | Re => "re"
   | Im => "im"
-  | Gamma => "&Gamma;"
+  | Gamma => "&#x0393;"
   };
 
 let stringOfBase = base =>

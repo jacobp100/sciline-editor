@@ -120,8 +120,8 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Pebibyte => "PiB"
   /* Temperature */
   | Kelvin => "K"
-  | Celsius => "&deg;C"
-  | Fahrenheit => "&deg;F"
+  | Celsius => "&#x00B0;C"
+  | Fahrenheit => "&#x00B0;F"
   };
 
 let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
