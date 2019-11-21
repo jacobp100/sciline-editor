@@ -126,13 +126,8 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
 
 let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
   switch (unit) {
-  /* Work arounds until MathJax supports upright greek characters */
-  | Microsecond => "<mrow><mi>&#x3BC;</mi><mi mathvariant=\"normal\">s</mi></mrow>"
+  /* Work around :( */
   | Angstrom => "<mi mathvariant=\"normal\">A</mi>"
-  | Micrometer => "<mrow><mi>&#x3BC;</mi><mi mathvariant=\"normal\">m</mi></mrow>"
-  | Microgram => "<mrow><mi>&#x3BC;</mi><mi mathvariant=\"normal\">g</mi></mrow>"
-  | Microjoule => "<mrow><mi>&#x3BC;</mi><mi mathvariant=\"normal\">j</mi></mrow>"
-  | Microwatt => "<mrow><mi>&#x3BC;</mi><mi mathvariant=\"normal\">W</mi></mrow>"
   | _ => "<mi mathvariant=\"normal\">" ++ unitMmlSymbol(unit) ++ "</mi>"
   };
 
