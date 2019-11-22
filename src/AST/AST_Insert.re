@@ -1,22 +1,64 @@
-let rec count = (~current=0, x, ~from, ~step=1, fn) =>
-  switch (Belt.Array.get(x, from)) {
-  | Some(v) when fn(v) =>
-    count(~current=current + 1, x, ~from=from + step, ~step, fn)
-  | _ => current
-  };
+type countDirection =
+  | Forwards
+  | Backwards;
 
-let isDigit = x =>
-  switch (x) {
-  | `DigitS(_)
-  | `DecimalSeparator => true
-  | _ => false
-  };
+let countInsertables = (x: array(AST_Types.t), ~from, ~direction) => {
+  let step = direction == Forwards ? 1 : (-1);
+  let rec iter = (~current, ~bracketLevel, ~argLevel, ~from) =>
+    switch (Belt.Array.get(x, from)) {
+    | None => current
+    | Some(#AST_Types.operatorAtom) when bracketLevel == 0 && argLevel == 0 => current
+    | Some(v) =>
+      let bracketLevel =
+        switch (v) {
+        | `OpenBracket => bracketLevel + 1
+        | `CloseBracketS => bracketLevel - 1
+        | _ => bracketLevel
+        };
+      let argLevel =
+        switch (v) {
+        | `Arg => argLevel - 1
+        | _ => argLevel + AST_Types.argCountExn(v)
+        };
+      let shouldBreak =
+        switch (direction) {
+        | Forwards => argLevel < 0 || bracketLevel < 0
+        | Backwards => argLevel > 0 || bracketLevel > 0
+        };
+      if (shouldBreak) {
+        current;
+      } else {
+        iter(
+          ~current=current + 1,
+          ~bracketLevel,
+          ~argLevel,
+          ~from=from + step,
+        );
+      };
+    };
+  iter(~current=0, ~bracketLevel=0, ~argLevel=0, ~from);
+};
 
 let insertElement = (ast, element, index) => {
   switch (element) {
+  | `Superscript1
+  | `Sqrt1S =>
+    let e = countInsertables(ast, ~from=index, ~direction=Forwards);
+    let (ast, arg) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
+    let combined = Belt.Array.concatMany([|[|element|], arg, [|`Arg|]|]);
+    let ast = ArrayUtil.insertArray(ast, combined, index);
+    (ast, index + 1);
+  | `NRoot2S =>
+    let e = countInsertables(ast, ~from=index, ~direction=Forwards);
+    let (ast, radicand) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
+    let combined =
+      Belt.Array.concatMany([|[|element, `Arg|], radicand, [|`Arg|]|]);
+    let ast = ArrayUtil.insertArray(ast, combined, index);
+    (ast, index + 1);
   | `Frac2S =>
-    let s = count(ast, ~from=index - 1, ~step=-1, isDigit);
-    let e = count(ast, ~from=index, ~step=1, isDigit);
+    let s = countInsertables(ast, ~from=index - 1, ~direction=Backwards);
+    let e = countInsertables(ast, ~from=index, ~direction=Forwards);
+    Js.log((s, e));
     let (ast, den) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
     let (ast, num) = ArrayUtil.splice(ast, ~offset=index - s, ~len=s);
     let frac =
@@ -24,18 +66,6 @@ let insertElement = (ast, element, index) => {
     let ast = ArrayUtil.insertArray(ast, frac, index - s);
     let nextIndex = s > 0 ? index + 2 : index + 1;
     (ast, nextIndex);
-  | `Sqrt1S =>
-    let e = count(ast, ~from=index, ~step=1, isDigit);
-    let (ast, radicand) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
-    let sqrt = Belt.Array.concatMany([|[|element|], radicand, [|`Arg|]|]);
-    let ast = ArrayUtil.insertArray(ast, sqrt, index);
-    (ast, index + 1);
-  | `NRoot2S =>
-    let e = count(ast, ~from=index, ~step=1, isDigit);
-    let (ast, radicand) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
-    let nroot = Belt.Array.concatMany([|[|element|], radicand, [|`Arg|]|]);
-    let ast = ArrayUtil.insertArray(ast, nroot, index);
-    (ast, index + 1);
   | _ =>
     let elements =
       switch (AST_Types.argCountExn(element)) {

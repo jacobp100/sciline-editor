@@ -32,22 +32,20 @@ type table = {
   numColumns: int,
 };
 
+type operatorAtom = [ | `Add | `Div | `Dot | `Mul | `Sub];
+
 type atom = [
-  | `Add
+  operatorAtom
   | `ArcMinute
   | `ArcSecond
   | `Base(base)
   | `Conj
   | `DecimalSeparator
   | `Degree
-  | `Div
-  | `Dot
   | `Factorial
   | `Function(func)
-  | `Mul
   | `OpenBracket
   | `Percent
-  | `Sub
   | `UnitConversion(unitConversion)
 ];
 

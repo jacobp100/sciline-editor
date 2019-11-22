@@ -62,7 +62,7 @@ let toString = ({elements, level0Body, bracketGroups}, range) => {
 
   if (body == "") {
     placeholder(range);
-  } else if (elements > 1) {
+  } else if (elements > 1 || bracketGroups != []) {
     createElement("mrow", body);
   } else {
     body;

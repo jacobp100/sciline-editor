@@ -34,8 +34,8 @@ type deletionMode =
 let deletionMode = (ast, index) =>
   switch (Belt.Array.get(ast, index)) {
   | Some(`Arg) => Keep
-  | Some(`Frac2S) => Spread(nArgsSlice(ast, index))
-  | Some(`Sqrt1S) => Spread(nArgsSlice(ast, index))
+  | Some(`Superscript1 | `Sqrt1S | `Frac2S) =>
+    Spread(nArgsSlice(ast, index))
   | Some(`NRoot2S) =>
     let degreeIsEmpty = matchNEmptyArgs(ast, ~index=index + 1, ~count=1);
     degreeIsEmpty ? Spread(nArgsSlice(ast, index, ~skipInitial=1)) : Keep;
