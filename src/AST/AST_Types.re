@@ -88,7 +88,7 @@ let argCountExn = (arg: t) =>
   | #atom1S => 1
   | #atom2
   | #atom2S => 2
-  | #atom3 => 2
+  | #atom3 => 3
   | `TableNS({numRows, numColumns}) => numRows * numColumns
   };
 
