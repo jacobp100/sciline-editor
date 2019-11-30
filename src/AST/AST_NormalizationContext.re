@@ -1,39 +1,50 @@
-let noTableRanges = (ast: array(AST_Types.t)) => {
-  let allowedTablesStack = ref([]);
-  let range = ref(Ranges.empty);
+type iterators = [ | `Sum2 | `Product2 | `Differential2 | `Integral3];
 
-  for (i in 0 to Belt.Array.length(ast) - 1) {
-    switch (allowedTablesStack^) {
-    | [false, ..._] => range := Ranges.addSequentialIndex(range^, i)
-    | _ => ()
-    };
+let validityStackReducer = prependValidityStack => {
+  let reducerFn = ((range, validityStack), element, i) => {
+    let range =
+      switch (validityStack) {
+      | [false, ..._] => Ranges.addSequentialIndex(range, i)
+      | _ => range
+      };
+    let validityStack =
+      switch (element) {
+      | `Arg =>
+        Belt.List.tail(validityStack)
+        ->Belt.Option.getWithDefault(validityStack)
+      | e => prependValidityStack(validityStack, e)
+      };
+    (range, validityStack);
+  };
+  ast => Belt.Array.reduceWithIndex(ast, (Ranges.empty, []), reducerFn)->fst;
+};
 
-    let element = Belt.Array.getExn(ast, i);
+let noTableRanges =
+  validityStackReducer((validityStack, element) =>
     switch (element) {
-    | `Arg =>
-      switch (Belt.List.tail(allowedTablesStack^)) {
-      | Some(tail) => allowedTablesStack := tail
-      | None => ()
-      }
-    | `Frac2S =>
-      allowedTablesStack :=
-        [/* num */ true, /* den */ false, ...allowedTablesStack^]
+    | `Frac2S => [/* num */ true, /* den */ false, ...validityStack]
     | `Abs1S
     | `Floor1S
     | `Ceil1S
-    | `Round1S => allowedTablesStack := [true, ...allowedTablesStack^]
+    | `Round1S => [true, ...validityStack]
     | _ =>
-      for (_ in 1 to AST_Types.argCountExn(element)) {
-        allowedTablesStack := [false, ...allowedTablesStack^];
-      }
-    };
-  };
+      let argCount = AST_Types.argCountExn(element);
+      validityStack->ListUtil.prependMany(argCount, false);
+    }
+  );
 
-  range^;
-};
+let noIterationRanges =
+  validityStackReducer((validityStack, element) => {
+    let argCount = AST_Types.argCountExn(element);
+    switch (element) {
+    | #iterators => validityStack->ListUtil.prependMany(argCount, false)
+    | _ => validityStack->ListUtil.prependMany(argCount, true)
+    };
+  });
 
 let elementIsValid = (ast: array(AST_Types.t), element: AST_Types.t, index) =>
   switch (element) {
+  | #iterators => !noIterationRanges(ast)->Ranges.contains(index)
   | `TableNS(_) => !noTableRanges(ast)->Ranges.contains(index)
   | _ => true
   };
