@@ -31,10 +31,6 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Millimeter => "mm"
   | Centimeter => "m"
   | Kilometer => "km"
-  | Megameter => "Mm"
-  | Gigameter => "Gm"
-  | Terameter => "Tm"
-  | Petameter => "Pm"
   /* Mass */
   | Gram => "g"
   | Tonne => "T"
@@ -47,10 +43,6 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Microgram => "&#x3BC;g"
   | Milligram => "mg"
   | Kilogram => "kg"
-  | Megagram => "Mg"
-  | Gigagram => "Gg"
-  | Teragram => "Tg"
-  | Petagram => "Pg"
   /* Area */
   | Acre => "acre"
   | Hectare => "ha"
@@ -85,6 +77,8 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Petajoule => "PJ"
   /* Power */
   | Watt => "W"
+  | Horsepower => "hp"
+  | MetricHorsepower => "PS"
   | Femtowatt => "fW"
   | Picowatt => "pW"
   | Nanowatt => "nW"

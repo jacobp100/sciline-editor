@@ -12,7 +12,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "bs-platform": "6",
+    "bs-platform": "7",
     "esm": "^3.2.22",
     "sciline-calculator": "https://github.com/jacobp100/sciline-calculator"
   },
