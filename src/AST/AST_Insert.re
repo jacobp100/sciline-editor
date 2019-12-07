@@ -58,7 +58,6 @@ let insertElement = (ast, element, index) => {
   | `Frac2S =>
     let s = countInsertables(ast, ~from=index - 1, ~direction=Backwards);
     let e = countInsertables(ast, ~from=index, ~direction=Forwards);
-    Js.log((s, e));
     let (ast, den) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
     let (ast, num) = ArrayUtil.splice(ast, ~offset=index - s, ~len=s);
     let frac =
