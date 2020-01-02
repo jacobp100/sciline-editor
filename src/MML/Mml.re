@@ -24,10 +24,10 @@ let reduce = (accum, element: t(string), range) =>
     let body = "<mn />" ++ createElement("mn", "&#x2032;");
     elementWithIndex("msup", range, body)->MML_Accum.append(accum);
   | `ArcSecond =>
-    let body = "<mn />" ++ createElement("mn", "&#8243;");
+    let body = "<mn />" ++ createElement("mn", "&#x2033;");
     elementWithIndex("msup", range, body)->MML_Accum.append(accum);
   | `Conj =>
-    let body = "<mn />" ++ createElement("mn", "*");
+    let body = "<mn />" ++ createElement("mn", "&#x2a;");
     elementWithIndex("msup", range, body)->MML_Accum.append(accum);
   | `DecimalSeparator =>
     elementWithIndex("mn", range, ".")->MML_Accum.append(accum)
