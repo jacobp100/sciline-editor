@@ -19,20 +19,22 @@ let reduce = (accum, element: t(string), range) =>
     ->MML_Accum.append(accum)
   | `Percent => elementWithIndex("mn", range, "%")->MML_Accum.append(accum)
   | `Degree =>
-    elementWithIndex("mn", range, "&#x00B0;")->MML_Accum.append(accum)
+    elementWithIndex("mo", range, "&#x00B0;")->MML_Accum.append(accum)
   | `ArcMinute =>
-    let body = "<mn />" ++ createElement("mn", "&#x2032;");
-    elementWithIndex("msup", range, body)->MML_Accum.append(accum);
+    let body = "<mo />" ++ createElement("mo", "&#x2032;");
+    ignore(elementWithIndex("msup", range, body)->MML_Accum.append(accum));
+    // FIXME - superscript
+    elementWithIndex("mo", range, "&#x2032;")->MML_Accum.append(accum);
   | `ArcSecond =>
-    let body = "<mn />" ++ createElement("mn", "&#x2033;");
-    elementWithIndex("msup", range, body)->MML_Accum.append(accum);
-  | `Conj =>
-    let body = "<mn />" ++ createElement("mn", "&#x2a;");
-    elementWithIndex("msup", range, body)->MML_Accum.append(accum);
+    let body = "<mo />" ++ createElement("mo", "&#x2033;");
+    ignore(elementWithIndex("msup", range, body)->MML_Accum.append(accum));
+    // FIXME - superscript
+    elementWithIndex("mo", range, "&#x2033;")->MML_Accum.append(accum);
   | `DecimalSeparator =>
     elementWithIndex("mn", range, ".")->MML_Accum.append(accum)
   | `ImaginaryUnit(superscript) =>
     elementWithIndex(~superscript, "mi", range, "i")->MML_Accum.append(accum)
+  | `Conj => elementWithIndex("mo", range, "&#x2a;")->MML_Accum.append(accum)
   | `Magnitude({magnitudeBase}) =>
     let body =
       createElement("mo", MML_Util.stringOfOperator(`Mul))
