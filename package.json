@@ -4,7 +4,8 @@
   "scripts": {
     "clean": "bsb -clean-world",
     "build": "bsb -make-world",
-    "watch": "bsb -make-world -w"
+    "watch": "bsb -make-world -w",
+    "test": "jest"
   },
   "keywords": [
     "BuckleScript"
@@ -12,8 +13,12 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.8.0",
+    "@babel/preset-env": "^7.8.0",
+    "babel-jest": "^24.9.0",
     "bs-platform": "7",
     "esm": "^3.2.22",
+    "jest": "^24.9.0",
     "sciline-calculator": "https://github.com/jacobp100/sciline-calculator"
   },
   "dependencies": {}

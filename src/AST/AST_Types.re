@@ -93,18 +93,18 @@ let argCountExn = (arg: t) =>
   };
 
 let argEndIndex = (ast: array(t), index) => {
-  let rec iter = (~pending, ast: array(t), index) =>
+  let rec iter = (~pending, index) =>
     switch (Belt.Array.get(ast, index)) {
     | Some(`Arg) =>
       if (pending == 0) {
         index + 1;
       } else {
-        iter(~pending=pending - 1, ast, index + 1);
+        iter(~pending=pending - 1, index + 1);
       }
-    | Some(v) => iter(~pending=pending + argCountExn(v), ast, index + 1)
+    | Some(v) => iter(~pending=pending + argCountExn(v), index + 1)
     | None => index
     };
-  iter(~pending=0, ast, index);
+  iter(~pending=0, index);
 };
 
 let rec normalizationState = (ast, remaining, i) =>

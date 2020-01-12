@@ -6,11 +6,11 @@ let map = (element: t('a), i) =>
   switch (element) {
   | `Superscript(_) => failwith("superscript")
   | `Function(fn) => UnresolvedFunction(GenericFunction(fn), i)
-  | (
-      #AST_Types.atom | `CloseBracket(_) | `Digit(_) | `ImaginaryUnit(_) |
-      `Magnitude(_)
-    ) as e =>
+  | (#AST_Types.atom | `CloseBracket(_) | `Digit(_) | `Magnitude(_)) as e =>
     Unresolved(e, i)
+  | `ImaginaryUnit(superscript) =>
+    let superscript = Belt.Option.getWithDefault(superscript, AST.one);
+    Resolved(AST.pow(AST.i, superscript));
   | `NLog({nlogBase}) => UnresolvedFunction(NLog({nlogBase: nlogBase}), i)
   | `Sum({iterationStart, iterationEnd}) =>
     UnresolvedFunction(Sum({iterationStart, iterationEnd}), i)

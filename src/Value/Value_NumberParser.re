@@ -12,81 +12,87 @@ let numberIsValidForBase = (base, atomNucleus) =>
   | _ => false
   };
 
-type numState('a, 'b) = {
-  numBase: option(AST_Types.base),
-  numString: string,
-  numHasDecimal: bool,
-  numSup: option(node),
-  imag: option(node),
-  magSup: option(node),
+type angle = {
   degree: option(node),
   arcMin: option(node),
   arcSec: option(node),
 };
 
+type numState = {
+  numBase: option(AST_Types.base),
+  numString: string,
+  numHasDecimal: bool,
+  numSup: option(node),
+  magSup: option(node),
+  angle: option(angle),
+};
+
 let rec reduce = (state, element) =>
   switch (state, element) {
-  | ({numString: "", numBase: None, imag: None}, `Base(numBase)) =>
+  | ({numBase: None, numString: ""}, `Base(numBase)) =>
     Some({...state, numBase: Some(numBase)})
-  | (
-      {numSup: None, imag: None, magSup: None},
-      `Digit({atomNucleus, superscript}),
-    )
+  | ({numSup: None, magSup: None}, `Digit({atomNucleus, superscript}))
       when numberIsValidForBase(state.numBase, atomNucleus) =>
     Some({
       ...state,
       numString: state.numString ++ atomNucleus,
       numSup: superscript,
     })
-  | (
-      {numHasDecimal: false, numSup: None, imag: None, magSup: None},
-      `DecimalSeparator,
-    ) =>
+  | ({numHasDecimal: false, numSup: None, magSup: None}, `DecimalSeparator) =>
     Some({...state, numString: state.numString ++ ".", numHasDecimal: true})
-  /* Allow 3^2i, 3^2 i^2, but not 3i^2, because that's ambiguous */
-  | (
-      {numSup: Some(_) | None, magSup: None, imag: None},
-      `ImaginaryUnit(None),
-    ) =>
-    Some({...state, imag: Some(AST.i)})
-  | (
-      {numSup: None, magSup: None, imag: None},
-      `ImaginaryUnit(Some(imagSuperscript)),
-    ) =>
-    Some({...state, imag: Some(AST.pow(AST.i, imagSuperscript))})
-  | (_, `Magnitude({magnitudeBase})) when state.numString != "" =>
+  | ({magSup: None, angle: None}, `Magnitude({magnitudeBase}))
+      when state.numString != "" =>
     Some({...state, magSup: Some(magnitudeBase)})
   | (
-      {numSup: None, imag: None, degree: None, arcMin: None, arcSec: None},
+      {
+        numBase: None,
+        numSup: None,
+        angle: None | Some({degree: None, arcMin: None, arcSec: None}),
+      },
       `Degree,
     ) =>
     parseNumber(state)
     ->Belt.Option.map(degree => {
         let degree = degree->AST.mul(AST.div(AST.pi, AST.ofInt(180)))->Some;
-        {...empty, degree};
+        let angle = Some({degree, arcMin: None, arcSec: None});
+        {...empty, angle};
       })
-  | ({numSup: None, imag: None, arcMin: None, arcSec: None}, `ArcMinute) =>
+  | (
+      {
+        numBase: None,
+        numSup: None,
+        angle: None | Some({arcMin: None, arcSec: None}),
+      },
+      `ArcMinute,
+    ) =>
     parseNumber(state)
     ->Belt.Option.map(arcMin => {
-        let {degree} = state;
+        let degree = Belt.Option.flatMap(state.angle, s => s.degree);
         let arcMin =
           arcMin->AST.mul(AST.div(AST.pi, AST.ofInt(10800)))->Some;
-        {...empty, degree, arcMin};
+        let angle = Some({degree, arcMin, arcSec: None});
+        {...empty, angle};
       })
-  | ({numSup: None, imag: None, arcSec: None}, `ArcSecond) =>
+  | (
+      {numBase: None, numSup: None, angle: None | Some({arcSec: None})},
+      `ArcSecond,
+    ) =>
     parseNumber(state)
     ->Belt.Option.map(arcSec => {
-        let {degree, arcMin} = state;
+        let degree = Belt.Option.flatMap(state.angle, s => s.degree);
+        let arcMin = Belt.Option.flatMap(state.angle, s => s.arcMin);
         let arcSec =
           arcSec->AST.mul(AST.div(AST.pi, AST.ofInt(648000)))->Some;
-        {...empty, degree, arcMin, arcSec};
+        let angle = Some({degree, arcMin, arcSec});
+        {...empty, angle};
       })
   | _ => None
   }
-and parseNumber = ({numBase, numString, numSup, imag, magSup}) =>
-  if ((numBase == None || numString != "")
-      && (imag != None || numString != "")
-      && numString != ".") {
+and parseNumber = state =>
+  switch (state) {
+  | {numBase: Some(_), numString: ""}
+  | {numString: "."} => None
+  | {numBase, numString, numSup, magSup} =>
     let base =
       switch (numBase) {
       | Some(Bin) => 2
@@ -100,34 +106,25 @@ and parseNumber = ({numBase, numString, numSup, imag, magSup}) =>
       magSup
       ->Belt.Option.map(AST.pow(AST.ofInt(10)))
       ->Belt.Option.mapWithDefault(out, AST.mul(out));
-    let out = imag->Belt.Option.mapWithDefault(out, AST.mul(out));
     Some(out);
-  } else {
-    None;
   }
-and toNode = ({degree, arcMin, arcSec} as s) =>
-  if (degree == None && arcMin == None && arcSec == None) {
-    parseNumber(s);
-  } else if (s.numBase == None
-             && s.numString == ""
-             && s.imag == None
-             && s.magSup == None) {
+and toNode = state =>
+  switch (state) {
+  /* Angles */
+  | {numString: "", angle: Some({degree, arcMin, arcSec})} =>
     let out = AST.zero;
     let out = degree->Belt.Option.mapWithDefault(out, AST.add(out));
     let out = arcMin->Belt.Option.mapWithDefault(out, AST.add(out));
     let out = arcSec->Belt.Option.mapWithDefault(out, AST.add(out));
     Some(out);
-  } else {
-    None;
+  /* Normal parsing */
+  | _ => parseNumber(state)
   }
 and empty = {
   numBase: None,
   numString: "",
-  numSup: None,
   numHasDecimal: false,
-  imag: None,
+  numSup: None,
   magSup: None,
-  degree: None,
-  arcMin: None,
-  arcSec: None,
+  angle: None,
 };

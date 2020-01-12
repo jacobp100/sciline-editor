@@ -73,7 +73,7 @@ let rec parseUnary = elements =>
 let next = parseUnary;
 
 let rec parseParenFreeFunctions = elements => {
-  let rec iter = (i, after) =>
+  let rec iter = (after, i) =>
     switch (after) {
     | [UnresolvedFunction(fn, i'), ...after] =>
       switch (parseParenFreeFunctions(after)) {
@@ -84,45 +84,53 @@ let rec parseParenFreeFunctions = elements => {
       | `Error(_) as e => e
       | `UnknownError => `Error(i')
       }
-    | [_, ...after] => iter(i + 1, after)
+    | [_, ...after] => iter(after, i + 1)
     | [] => next(elements)
     };
-  iter(0, elements);
+  iter(elements, 0);
 };
 let next = parseParenFreeFunctions;
 
 let rec parseMulDiv = elements => {
-  let rec iter = (i, after) =>
+  let rec iter = (current, after, i) =>
     switch (after) {
     | [Unresolved((`Mul | `Div | `Dot) as op, i'), ...after] =>
-      switch (ListUtil.takeUpto(elements, i)->next, parseMulDiv(after)) {
-      | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
-      | (`Error(_) as e, _)
-      | (_, `Error(_) as e) => e
-      | (`UnknownError, _)
-      | (_, `UnknownError) => `Error(i')
-      }
-    | [_, ...after] => iter(i + 1, after)
-    | [] => next(elements)
+      iter(Some((op, after, i, i')), after, i + 1)
+    | [_, ...after] => iter(current, after, i + 1)
+    | [] => current
     };
-  iter(0, elements);
+  switch (iter(None, elements, 0)) {
+  | Some((op, after, i, i')) =>
+    switch (ListUtil.takeUpto(elements, i)->parseMulDiv, next(after)) {
+    | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
+    | (`Error(_) as e, _)
+    | (_, `Error(_) as e) => e
+    | (`UnknownError, _)
+    | (_, `UnknownError) => `Error(i')
+    }
+  | None => next(elements)
+  };
 };
 let next = parseMulDiv;
 
 let rec parseAddSub = elements => {
-  let rec iter = (i, after) =>
+  let rec iter = (current, after, i) =>
     switch (after) {
     | [Unresolved((`Add | `Sub) as op, _), ...after] =>
-      switch (ListUtil.takeUpto(elements, i)->next, parseAddSub(after)) {
-      | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
-      | _ =>
-        /* Assume this was unary operator. Ignore it and try to handle it later */
-        iter(i + 1, after)
-      }
-    | [_, ...after] => iter(i + 1, after)
-    | [] => next(elements)
+      iter(Some((op, after, i)), after, i + 1)
+    | [_, ...after] => iter(current, after, i + 1)
+    | [] => current
     };
-  iter(0, elements);
+  switch (iter(None, elements, 0)) {
+  | Some((op, after, i)) =>
+    switch (ListUtil.takeUpto(elements, i)->parseAddSub, next(after)) {
+    | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
+    | _ =>
+      /* Assume this was unary operator. Ignore it and try to handle it later */
+      next(elements)
+    }
+  | None => next(elements)
+  };
 };
 let next = parseAddSub;
 
