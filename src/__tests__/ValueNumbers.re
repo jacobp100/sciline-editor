@@ -154,19 +154,41 @@ test("Parses imaginary units", (.) => {
 });
 
 test("Angles", (.) => {
-  let piOver = ScilineCalculator.Value.(div(pi));
+  let pi = ScilineCalculator.Value.pi;
+  let mul = ScilineCalculator.Value.mul;
+  let div = ScilineCalculator.Value.div;
 
   parseEval([|`DigitS("1"), `Degree|])
   ->expect
-  ->toEqual(Some(piOver(ofInt(180))));
+  ->toEqual(Some(div(pi, ofInt(180))));
 
   parseEval([|`DigitS("1"), `ArcMinute|])
   ->expect
-  ->toEqual(Some(piOver(ofInt(180 * 60))));
+  ->toEqual(Some(div(pi, ofInt(180 * 60))));
 
   parseEval([|`DigitS("1"), `ArcSecond|])
   ->expect
-  ->toEqual(Some(piOver(ofInt(180 * 60 * 60))));
+  ->toEqual(Some(div(pi, ofInt(180 * 60 * 60))));
+
+  parseEval([|`DigitS("1"), `Degree|])
+  ->expect
+  ->toEqual(Some(div(pi, ofInt(180))));
+
+  parseEval([|`DigitS("1"), `Degree, `DigitS("1"), `ArcMinute|])
+  ->expect
+  ->toEqual(Some(div(mul(ofInt(61), pi), ofInt(180 * 60))));
+
+  parseEval([|`DigitS("1"), `ArcMinute, `DigitS("1"), `Degree|])
+  ->expect
+  ->toEqual(None);
+
+  parseEval([|`DigitS("1"), `Degree, `DigitS("1"), `Degree|])
+  ->expect
+  ->toEqual(None);
+
+  parseEval([|`DigitS("1"), `Degree, `DigitS("1")|])
+  ->expect
+  ->toEqual(None);
 
   Js.undefined;
 });

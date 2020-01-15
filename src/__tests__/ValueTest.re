@@ -21,6 +21,22 @@ test("Parses with bodmas", (.) => {
   Js.undefined;
 });
 
+test("Parses unary operators", (.) => {
+  parseEval([|`Sub, `DigitS("2")|])
+  ->expect
+  ->toEqual(Some(ofString("-2")));
+
+  parseEval([|`Sub, `Sub, `Sub, `DigitS("2")|])
+  ->expect
+  ->toEqual(Some(ofString("-2")));
+
+  parseEval([|`DigitS("1"), `Sub, `Sub, `Sub, `DigitS("2")|])
+  ->expect
+  ->toEqual(Some(ofString("-1")));
+
+  Js.undefined;
+});
+
 test("Parses brackets", (.) => {
   parseEval([|
     `DigitS("2"),

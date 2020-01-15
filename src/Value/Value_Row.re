@@ -35,26 +35,48 @@ let rec parsePostfixes = elements =>
 let next = parsePostfixes;
 
 let parseNumbers = elements => {
-  let rec iter = (state, rest) => {
-    let nextStateAfter =
-      switch (rest) {
-      | [Unresolved(element, _), ...after] =>
-        Value_NumberParser.reduce(state, element)
-        ->Belt.Option.map(s => (s, after))
-      | _ => None
-      };
-    switch (nextStateAfter) {
-    | Some((state, after)) => iter(state, after)
-    | None =>
-      let nextElements =
-        switch (Value_NumberParser.toNode(state)) {
-        | Some(number) => [Resolved(number), ...rest]
-        | None => elements
-        };
-      next(nextElements);
+  let next' = (numberState, angleState, rest) => {
+    switch (Value_NumberParser.toNode(numberState), angleState) {
+    | (None, Some((angleAccum, _))) =>
+      next([Resolved(angleAccum), ...rest])
+    | (Some(number), None) => next([Resolved(number), ...rest])
+    | _ => next(elements)
     };
   };
-  iter(Value_NumberParser.empty, elements);
+  let rec iter = (numberState, angleState, rest) => {
+    switch (rest) {
+    | [Unresolved((`Degree | `ArcMinute | `ArcSecond) as angle, i'), ...rest] =>
+      let number =
+        switch (Value_NumberParser.toNode(numberState), angle) {
+        | (Some(number), `Degree) =>
+          Some(AST.mul(number, AST.div(AST.pi, AST.ofInt(180))))
+        | (Some(number), `ArcMinute) =>
+          Some(AST.mul(number, AST.div(AST.pi, AST.ofInt(10800))))
+        | (Some(number), `ArcSecond) =>
+          Some(AST.mul(number, AST.div(AST.pi, AST.ofInt(648000))))
+        | (None, _) => None
+        };
+      switch (number, angleState, angle) {
+      | (Some(number), None, _) =>
+        iter(Value_NumberParser.empty, Some((number, angle)), rest)
+      | (Some(number), Some((angleAccum, `Degree)), `ArcMinute | `ArcSecond)
+      | (Some(number), Some((angleAccum, `ArcMinute)), `ArcSecond) =>
+        iter(
+          Value_NumberParser.empty,
+          Some((AST.add(angleAccum, number), angle)),
+          rest,
+        )
+      | _ => `Error(i')
+      };
+    | [Unresolved(element, _), ...after] =>
+      switch (Value_NumberParser.reduce(numberState, element)) {
+      | Some(s) => iter(s, angleState, after)
+      | None => next'(numberState, angleState, rest)
+      }
+    | _ => next'(numberState, angleState, rest)
+    };
+  };
+  iter(Value_NumberParser.empty, None, elements);
 };
 let next = parseNumbers;
 
@@ -91,47 +113,51 @@ let rec parseParenFreeFunctions = elements => {
 };
 let next = parseParenFreeFunctions;
 
-let rec parseMulDiv = elements => {
-  let rec iter = (current, after, i) =>
+module type BinaryOperatorParserDef = {
+  let operatorHandled: AST_Types.operatorAtom => bool;
+  let next:
+    list(ScilineEditor.Value_Types.partialNode) =>
+    [ | `Ok(AST.t) | `Error(int) | `UnknownError];
+};
+
+let binaryOperatorParser = (~operatorHandled, ~next) => {
+  let rec iter = (unaryPosition, current, after, i) =>
     switch (after) {
-    | [Unresolved((`Mul | `Div | `Dot) as op, i'), ...after] =>
-      iter(Some((op, after, i, i')), after, i + 1)
-    | [_, ...after] => iter(current, after, i + 1)
+    | [Unresolved(#AST_Types.operatorAtom as op, i'), ...after] =>
+      let nextAccum =
+        !unaryPosition && operatorHandled(op)
+          ? Some((op, after, i, i')) : current;
+      iter(true, nextAccum, after, i + 1);
+    | [_, ...after] => iter(false, current, after, i + 1)
     | [] => current
     };
-  switch (iter(None, elements, 0)) {
-  | Some((op, after, i, i')) =>
-    switch (ListUtil.takeUpto(elements, i)->parseMulDiv, next(after)) {
-    | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
-    | (`Error(_) as e, _)
-    | (_, `Error(_) as e) => e
-    | (`UnknownError, _)
-    | (_, `UnknownError) => `Error(i')
-    }
-  | None => next(elements)
-  };
+  let rec inner = elements =>
+    switch (iter(true, None, elements, 0)) {
+    | Some((op, after, i, i')) =>
+      switch (ListUtil.takeUpto(elements, i)->inner, next(after)) {
+      | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
+      | (`Error(_) as e, _)
+      | (_, `Error(_) as e) => e
+      | (`UnknownError, _)
+      | (_, `UnknownError) => `Error(i')
+      }
+    | None => next(elements)
+    };
+  inner;
 };
+
+let parseMulDiv =
+  binaryOperatorParser(
+    ~operatorHandled=op => op == `Mul || op == `Div || op == `Dot,
+    ~next,
+  );
 let next = parseMulDiv;
 
-let rec parseAddSub = elements => {
-  let rec iter = (current, after, i) =>
-    switch (after) {
-    | [Unresolved((`Add | `Sub) as op, _), ...after] =>
-      iter(Some((op, after, i)), after, i + 1)
-    | [_, ...after] => iter(current, after, i + 1)
-    | [] => current
-    };
-  switch (iter(None, elements, 0)) {
-  | Some((op, after, i)) =>
-    switch (ListUtil.takeUpto(elements, i)->parseAddSub, next(after)) {
-    | (`Ok(before), `Ok(after)) => `Ok(handleOp(op, before, after))
-    | _ =>
-      /* Assume this was unary operator. Ignore it and try to handle it later */
-      next(elements)
-    }
-  | None => next(elements)
-  };
-};
+let parseAddSub =
+  binaryOperatorParser(
+    ~operatorHandled=op => op == `Add || op == `Sub,
+    ~next,
+  );
 let next = parseAddSub;
 
 let handleBrackets = elements => {
