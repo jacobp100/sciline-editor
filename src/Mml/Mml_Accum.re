@@ -3,8 +3,8 @@ open Mml_Builders;
 module DigitGroups = {
   type state =
     | Normal(string)
-    | AppendedDigits(string)
-    | AppendingDigits({
+    | SkipGrouping(string)
+    | GroupingDigits({
         body: string,
         numbersRev: list(string),
       });
@@ -26,8 +26,8 @@ module DigitGroups = {
   let toString = ({state}) =>
     switch (state) {
     | Normal(body)
-    | AppendedDigits(body) => body
-    | AppendingDigits({body, numbersRev}) =>
+    | SkipGrouping(body) => body
+    | GroupingDigits({body, numbersRev}) =>
       _flattenDigits(~body, ~numbersRev)
     };
 
@@ -41,17 +41,16 @@ module DigitGroups = {
   let appendDigit = ({state, length}, element) => {
     state:
       switch (state) {
-      | Normal(body)
-      | AppendedDigits(body) =>
-        AppendingDigits({body, numbersRev: [element]})
-      | AppendingDigits({body, numbersRev}) =>
-        AppendingDigits({body, numbersRev: [element, ...numbersRev]})
+      | Normal(body) => GroupingDigits({body, numbersRev: [element]})
+      | SkipGrouping(body) => SkipGrouping(body ++ element)
+      | GroupingDigits({body, numbersRev}) =>
+        GroupingDigits({body, numbersRev: [element, ...numbersRev]})
       },
     length: length + 1,
   };
 
   let appendDecimalSeparator = (v, element) => {
-    state: AppendedDigits(toString(v) ++ element),
+    state: SkipGrouping(toString(v) ++ element),
     length: v.length + 1,
   };
 

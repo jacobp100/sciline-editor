@@ -10,19 +10,23 @@ test("Formats numbers", (.) => {
   Mml.create([|`DigitS("1")|])
   ->expect
   ->toEqual({j|$openTag<mn id="0:1">1</mn>$closeTag|j});
+
   Mml.create([|`DigitS("1"), `DigitS("2")|])
   ->expect
   ->toEqual({j|$openRow<mn id="0:1">1</mn><mn id="1:2">2</mn>$closeRow|j});
+
   Mml.create([|`DigitS("1"), `DigitS("2"), `DigitS("3")|])
   ->expect
   ->toEqual(
       {j|$openRow<mn id="0:1">1</mn><mn id="1:2">2</mn><mn id="2:3">3</mn>$closeRow|j},
     );
+
   Mml.create([|`DigitS("1"), `DigitS("2"), `DigitS("3"), `DigitS("4")|])
   ->expect
   ->toEqual(
       {j|$openRow<mn id="0:1">1</mn><mn>,</mn><mn id="1:2">2</mn><mn id="2:3">3</mn><mn id="3:4">4</mn>$closeRow|j},
     );
+
   Mml.create([|
     `DigitS("1"),
     `DigitS("2"),
@@ -35,6 +39,36 @@ test("Formats numbers", (.) => {
   ->expect
   ->toEqual(
       {j|$openRow<mn id="0:1">1</mn><mn>,</mn><mn id="1:2">2</mn><mn id="2:3">3</mn><mn id="3:4">4</mn><mn>,</mn><mn id="4:5">5</mn><mn id="5:6">6</mn><mn id="6:7">7</mn>$closeRow|j},
+    );
+
+  Mml.create([|
+    `DigitS("0"),
+    `DecimalSeparator,
+    `DigitS("1"),
+    `DigitS("2"),
+    `DigitS("3"),
+    `DigitS("4"),
+    `DigitS("5"),
+    `DigitS("6"),
+    `DigitS("7"),
+  |])
+  ->expect
+  ->toEqual(
+      {j|$openRow<mn id="0:1">0</mn><mn id="1:2">.</mn><mn id="2:3">1</mn><mn id="3:4">2</mn><mn id="4:5">3</mn><mn id="5:6">4</mn><mn id="6:7">5</mn><mn id="7:8">6</mn><mn id="8:9">7</mn>$closeRow|j},
+    );
+
+  Mml.create([|
+    `Base(Hex),
+    `DigitS("2"),
+    `DigitS("3"),
+    `DigitS("4"),
+    `DigitS("5"),
+    `DigitS("6"),
+    `DigitS("7"),
+  |])
+  ->expect
+  ->toEqual(
+      {j|$openRow<mn id="0:1">0x</mn><mn id="1:2">2</mn><mn id="2:3">3</mn><mn id="3:4">4</mn><mn id="4:5">5</mn><mn id="5:6">6</mn><mn id="6:7">7</mn>$closeRow|j},
     );
 
   Js.undefined;
