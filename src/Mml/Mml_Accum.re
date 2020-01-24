@@ -23,8 +23,8 @@ module DigitGroups = {
     | [] => body
     };
 
-  let toString = ({state}) =>
-    switch (state) {
+  let toString = v =>
+    switch (v.state) {
     | Normal(body)
     | SkipGrouping(body) => body
     | GroupingDigits({body, numbersRev}) =>
@@ -38,15 +38,15 @@ module DigitGroups = {
     length: v.length + 1,
   };
 
-  let appendDigit = ({state, length}, element) => {
+  let appendDigit = (v, element) => {
     state:
-      switch (state) {
+      switch (v.state) {
       | Normal(body) => GroupingDigits({body, numbersRev: [element]})
       | SkipGrouping(body) => SkipGrouping(body ++ element)
       | GroupingDigits({body, numbersRev}) =>
         GroupingDigits({body, numbersRev: [element, ...numbersRev]})
       },
-    length: length + 1,
+    length: v.length + 1,
   };
 
   let appendDecimalSeparator = (v, element) => {
@@ -147,21 +147,21 @@ module BracketGroups = {
 };
 
 let empty = BracketGroups.empty;
-let append = (element, body) =>
+let append = (body, element) =>
   BracketGroups.transformTopLevelWithArg(body, element, DigitGroups.append);
-let appendDigit = (element, body) =>
+let appendDigit = (body, element) =>
   BracketGroups.transformTopLevelWithArg(
     body,
     element,
     DigitGroups.appendDigit,
   );
-let appendDecimalSeparator = (element, body) =>
+let appendDecimalSeparator = (body, element) =>
   BracketGroups.transformTopLevelWithArg(
     body,
     element,
     DigitGroups.appendDecimalSeparator,
   );
-let appendBasePrefix = (element, body) =>
+let appendBasePrefix = (body, element) =>
   BracketGroups.transformTopLevelWithArg(
     body,
     element,

@@ -1,7 +1,8 @@
 let createElement = (~attributes=[], element, body) => {
   let attributes =
-    attributes->Belt.List.map(((p, v)) => p ++ "=\"" ++ v ++ "\"")
-    |> String.concat(" ");
+    attributes
+    ->Belt.List.map(((p, v)) => p ++ "=\"" ++ v ++ "\"")
+    ->String.concat(" ", _);
   let head =
     switch (attributes) {
     | "" => "<" ++ element ++ ">"
