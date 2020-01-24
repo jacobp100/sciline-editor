@@ -1,77 +1,78 @@
 open AST_ReduceMap;
-open MML_Builders;
+open Mml_Builders;
 
-let map = (accum, range) => MML_Accum.toString(accum, range);
+let map = (accum, range) => Mml_Accum.toString(accum, range);
 
 let reduce = (accum, element: t(string), range) =>
   switch (element) {
-  | `OpenBracket => MML_Accum.openBracket(accum, range)
+  | `OpenBracket => Mml_Accum.appendOpenBracket(accum, range)
   | `CloseBracket(superscript) =>
-    MML_Accum.closeBracket(accum, range, superscript)
-  | `Superscript(superscript) =>
-    placeholder(~superscript=Some(superscript), range)
-    ->MML_Accum.append(accum)
-  | `Base(base) =>
-    elementWithIndex("mn", range, MML_Util.stringOfBase(base))
-    ->MML_Accum.append(accum)
+    Mml_Accum.appendCloseBracket(accum, range, superscript)
   | `Digit({atomNucleus, superscript}) =>
     elementWithIndex(~superscript, "mn", range, atomNucleus)
-    ->MML_Accum.append(accum)
-  | `Percent => elementWithIndex("mn", range, "%")->MML_Accum.append(accum)
+    ->Mml_Accum.appendDigit(accum)
+  | `DecimalSeparator =>
+    elementWithIndex("mn", range, ".")
+    ->Mml_Accum.appendDecimalSeparator(accum)
+  | `Base(base) =>
+    elementWithIndex("mn", range, Mml_Util.stringOfBase(base))
+    ->Mml_Accum.appendBasePrefix(accum)
+  | `Superscript(superscript) =>
+    placeholder(~superscript=Some(superscript), range)
+    ->Mml_Accum.append(accum)
+  | `Percent => elementWithIndex("mn", range, "%")->Mml_Accum.append(accum)
   | `Degree =>
-    elementWithIndex("mo", range, "&#x00B0;")->MML_Accum.append(accum)
+    elementWithIndex("mo", range, "&#x00B0;")->Mml_Accum.append(accum)
   | `ArcMinute =>
     let body = "<mo />" ++ createElement("mo", "&#x2032;");
-    ignore(elementWithIndex("msup", range, body)->MML_Accum.append(accum));
+    ignore(elementWithIndex("msup", range, body)->Mml_Accum.append(accum));
     // FIXME - superscript
-    elementWithIndex("mo", range, "&#x2032;")->MML_Accum.append(accum);
+    elementWithIndex("mo", range, "&#x2032;")->Mml_Accum.append(accum);
   | `ArcSecond =>
     let body = "<mo />" ++ createElement("mo", "&#x2033;");
-    ignore(elementWithIndex("msup", range, body)->MML_Accum.append(accum));
+    ignore(elementWithIndex("msup", range, body)->Mml_Accum.append(accum));
     // FIXME - superscript
-    elementWithIndex("mo", range, "&#x2033;")->MML_Accum.append(accum);
-  | `DecimalSeparator =>
-    elementWithIndex("mn", range, ".")->MML_Accum.append(accum)
+    elementWithIndex("mo", range, "&#x2033;")->Mml_Accum.append(accum);
   | `ImaginaryUnit(superscript) =>
-    elementWithIndex(~superscript, "mi", range, "i")->MML_Accum.append(accum)
-  | `Conj => elementWithIndex("mo", range, "&#x2a;")->MML_Accum.append(accum)
+    elementWithIndex(~superscript, "mi", range, "i")->Mml_Accum.append(accum)
+  | `Conj => elementWithIndex("mo", range, "&#x2a;")->Mml_Accum.append(accum)
   | `Magnitude({magnitudeBase}) =>
     let body =
-      createElement("mo", MML_Util.stringOfOperator(`Mul))
+      createElement("mo", Mml_Util.stringOfOperator(`Mul))
       ++ createElement("mn", "10");
     elementWithIndex(~superscript=Some(magnitudeBase), "mrow", range, body)
-    ->MML_Accum.append(accum);
+    ->Mml_Accum.append(accum);
   | `Variable({atomNucleus, superscript}) =>
     elementWithIndex(~superscript, "mi", range, atomNucleus)
-    ->MML_Accum.append(accum)
+    ->Mml_Accum.append(accum)
   | `ConstPi(superscript) =>
     elementWithIndex(~superscript, "mi", range, "&#x03C0;")
-    ->MML_Accum.append(accum)
+    ->Mml_Accum.append(accum)
   | `ConstE(superscript) =>
-    elementWithIndex(~superscript, "mi", range, "e")->MML_Accum.append(accum)
+    elementWithIndex(~superscript, "mi", range, "e")->Mml_Accum.append(accum)
   | `CustomAtom({mml, superscript}) =>
     elementWithIndex(~superscript, "mrow", range, mml)
-    ->MML_Accum.append(accum)
+    ->Mml_Accum.append(accum)
   | `Function(f) =>
     let attributes = f == AST_Types.Gamma ? [("mathvariant", "normal")] : [];
-    elementWithIndex(~attributes, "mi", range, MML_Util.stringOfFunction(f))
-    ->MML_Accum.append(accum);
-  | `Factorial => elementWithIndex("mo", range, "!")->MML_Accum.append(accum)
+    elementWithIndex(~attributes, "mi", range, Mml_Util.stringOfFunction(f))
+    ->Mml_Accum.append(accum);
+  | `Factorial => elementWithIndex("mo", range, "!")->Mml_Accum.append(accum)
   | (`Add | `Sub | `Mul | `Div | `Dot) as v =>
-    elementWithIndex("mo", range, MML_Util.stringOfOperator(v))
-    ->MML_Accum.append(accum)
+    elementWithIndex("mo", range, Mml_Util.stringOfOperator(v))
+    ->Mml_Accum.append(accum)
   | `Frac({fracNum, den, superscript}) =>
     elementWithIndex(~superscript, "mfrac", range, fracNum ++ den)
-    ->MML_Accum.append(accum)
+    ->Mml_Accum.append(accum)
   | `Sqrt({rootRadicand, superscript}) =>
     elementWithIndex(~superscript, "msqrt", range, rootRadicand)
-    ->MML_Accum.append(accum)
+    ->Mml_Accum.append(accum)
   | `NRoot({nrootDegree, radicand, superscript}) =>
     elementWithIndex(~superscript, "mroot", range, radicand ++ nrootDegree)
-    ->MML_Accum.append(accum)
+    ->Mml_Accum.append(accum)
   | `NLog({nlogBase}) =>
     let body = createElement("mi", "log") ++ nlogBase;
-    elementWithIndex("msub", range, body)->MML_Accum.append(accum);
+    elementWithIndex("msub", range, body)->Mml_Accum.append(accum);
   | (`Abs(fnArg) | `Floor(fnArg) | `Ceil(fnArg) | `Round(fnArg)) as unary =>
     let {unaryArg, superscript} = fnArg;
     let (leftBracket, rightBracket) =
@@ -86,10 +87,10 @@ let reduce = (accum, element: t(string), range) =>
       ++ unaryArg
       ++ createElement("mo", rightBracket);
     elementWithIndex(~superscript, "mrow", range, body)
-    ->MML_Accum.append(accum);
+    ->Mml_Accum.append(accum);
   | `Rand(superscript) =>
     elementWithIndex(~superscript, "mi", range, "Rand")
-    ->MML_Accum.append(accum)
+    ->Mml_Accum.append(accum)
   | `RandInt({randIntA, b, superscript}) =>
     let body =
       createElement(
@@ -98,7 +99,7 @@ let reduce = (accum, element: t(string), range) =>
         ++ createElement("mrow", randIntA ++ createElement("mo", ",") ++ b),
       );
     elementWithIndex(~superscript, "mrow", range, body)
-    ->MML_Accum.append(accum);
+    ->Mml_Accum.append(accum);
   | (`NPR({statN, r}) | `NCR({statN, r})) as fnArg =>
     let symbol =
       switch (fnArg) {
@@ -108,7 +109,7 @@ let reduce = (accum, element: t(string), range) =>
     let nucleus =
       createElement(~attributes=[("mathvariant", "bold")], "mi", symbol);
     let body = createElement("msubsup", nucleus ++ r ++ statN);
-    elementWithIndex("mrow", range, body)->MML_Accum.append(accum);
+    elementWithIndex("mrow", range, body)->Mml_Accum.append(accum);
   | `Differential({body, differentialX}) =>
     let pre =
       createElement(
@@ -123,7 +124,7 @@ let reduce = (accum, element: t(string), range) =>
         createElement("mo", "|") ++ xSetRow(differentialX),
       );
     elementWithIndex("mrow", range, pre ++ body ++ post)
-    ->MML_Accum.append(accum);
+    ->Mml_Accum.append(accum);
   | `Integral({integralA, b, body}) =>
     let pre =
       createElement(
@@ -132,7 +133,7 @@ let reduce = (accum, element: t(string), range) =>
       );
     let post = createElement("mi", "dx");
     elementWithIndex("mrow", range, pre ++ body ++ post)
-    ->MML_Accum.append(accum);
+    ->Mml_Accum.append(accum);
   | (
       `Sum({iterationStart, iterationEnd}) |
       `Product({iterationStart, iterationEnd})
@@ -146,7 +147,7 @@ let reduce = (accum, element: t(string), range) =>
       elementWithIndex("mo", range, atom)
       ++ xSetRow(iterationStart)
       ++ iterationEnd;
-    createElement("munderover", body)->MML_Accum.append(accum);
+    createElement("munderover", body)->Mml_Accum.append(accum);
   | `Table({tableElements, superscript, numRows, numColumns}) =>
     let inner =
       Belt.List.makeBy(numRows, row =>
@@ -163,13 +164,13 @@ let reduce = (accum, element: t(string), range) =>
       |> createElement("mtable");
     let body = createElement("mo", "[") ++ inner ++ createElement("mo", "]");
     elementWithIndex(~superscript, "mrow", range, body)
-    ->MML_Accum.append(accum);
+    ->Mml_Accum.append(accum);
   | `UnitConversion({fromUnits, toUnits}) =>
     let body =
-      MML_Units.unitsMml(fromUnits)
+      Mml_Units.unitsMml(fromUnits)
       ++ "<mo>&RightArrow;</mo>"
-      ++ MML_Units.unitsMml(toUnits);
-    elementWithIndex("mrow", range, body)->MML_Accum.append(accum);
+      ++ Mml_Units.unitsMml(toUnits);
+    elementWithIndex("mrow", range, body)->Mml_Accum.append(accum);
   };
 
 let create = elements => {
@@ -179,7 +180,7 @@ let create = elements => {
         elements,
         ~reduce,
         ~map,
-        ~initial=MML_Accum.empty,
+        ~initial=Mml_Accum.empty,
       );
     } else {
       "";
