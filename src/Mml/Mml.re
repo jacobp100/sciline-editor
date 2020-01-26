@@ -182,14 +182,15 @@ let reduce = (accum, element: t(string), range) =>
     elementWithIndex("mrow", range, body)->Mml_Accum.append(accum, _);
   };
 
-let create = elements => {
+let create = (~digitGrouping=true, elements) => {
   let body =
     if (Belt.Array.length(elements) != 0) {
       AST_ReduceMap.reduceMap(
         elements,
         ~reduce,
         ~map,
-        ~initial=Mml_Accum.empty,
+        ~initial=
+          digitGrouping ? Mml_Accum.empty : Mml_Accum.emptyNoDigitGrouping,
       );
     } else {
       "";

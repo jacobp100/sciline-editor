@@ -2,18 +2,18 @@ open Mml_Builders;
 
 module DigitGroups = {
   type state =
-    | Normal(string)
-    | SkipGrouping(string)
-    | GroupingDigits({
-        body: string,
-        numbersRev: list(string),
-      });
+    | GroupingDisabled
+    | Normal
+    | SkipGrouping /* After decimal points etc. */
+    | GroupingDigits({numbersRev: list(string)});
   type t = {
     state,
+    body: string,
     length: int,
   };
 
-  let empty = {state: Normal(""), length: 0};
+  let empty = {state: Normal, body: "", length: 0};
+  let emptyNoDigitGrouping = {state: GroupingDisabled, body: "", length: 0};
 
   let rec _flattenDigits = (~body, ~numbersRev) =>
     switch (numbersRev) {
@@ -23,45 +23,63 @@ module DigitGroups = {
     | [] => body
     };
 
-  let toString = v =>
-    switch (v.state) {
-    | Normal(body)
-    | SkipGrouping(body) => body
-    | GroupingDigits({body, numbersRev}) =>
-      _flattenDigits(~body, ~numbersRev)
+  let toString = ({state, body}) =>
+    switch (state) {
+    | GroupingDisabled
+    | Normal
+    | SkipGrouping => body
+    | GroupingDigits({numbersRev}) => _flattenDigits(~body, ~numbersRev)
     };
 
   let length = v => v.length;
 
   let append = (v, element) => {
-    state: Normal(toString(v) ++ element),
+    state: Normal,
+    body: toString(v) ++ element,
     length: v.length + 1,
   };
 
-  let appendDigit = (v, element) => {
-    state:
-      switch (v.state) {
-      | Normal(body) => GroupingDigits({body, numbersRev: [element]})
-      | SkipGrouping(body) => SkipGrouping(body ++ element)
-      | GroupingDigits({body, numbersRev}) =>
-        GroupingDigits({body, numbersRev: [element, ...numbersRev]})
-      },
-    length: v.length + 1,
+  let appendDigit = ({state, body, length}, element) => {
+    let length = length + 1;
+    switch (state) {
+    | GroupingDisabled
+    | SkipGrouping => {state, body: body ++ element, length}
+    | Normal => {
+        state: GroupingDigits({numbersRev: [element]}),
+        body,
+        length,
+      }
+    | GroupingDigits({numbersRev}) => {
+        state: GroupingDigits({numbersRev: [element, ...numbersRev]}),
+        body,
+        length,
+      }
+    };
   };
 
   let appendDecimalSeparator = (v, element) => {
-    state: SkipGrouping(toString(v) ++ element),
+    state:
+      switch (v.state) {
+      | GroupingDisabled => GroupingDisabled
+      | _ => SkipGrouping
+      },
+    body: toString(v) ++ element,
     length: v.length + 1,
   };
 
   let appendBasePrefix = appendDecimalSeparator;
 
   let concat = (a, b) => {
-    state: Normal(toString(a) ++ toString(b)),
+    state: a.state == GroupingDisabled ? GroupingDisabled : Normal,
+    body: toString(a) ++ toString(b),
     length: a.length + b.length,
   };
 
-  let map = (a, fn) => {state: Normal(toString(a)->fn), length: a.length};
+  let map = (a, fn) => {
+    state: a.state == GroupingDisabled ? GroupingDisabled : Normal,
+    body: toString(a)->fn,
+    length: a.length,
+  };
 };
 
 module BracketGroups = {
@@ -76,6 +94,10 @@ module BracketGroups = {
   };
 
   let empty = {level0Body: DigitGroups.empty, bracketGroups: []};
+  let emptyNoDigitGrouping = {
+    level0Body: DigitGroups.emptyNoDigitGrouping,
+    bracketGroups: [],
+  };
 
   let transformTopLevelWithArg = ({level0Body, bracketGroups}, arg, fn) =>
     switch (bracketGroups) {
@@ -147,6 +169,7 @@ module BracketGroups = {
 };
 
 let empty = BracketGroups.empty;
+let emptyNoDigitGrouping = BracketGroups.emptyNoDigitGrouping;
 let append = (body, element) =>
   BracketGroups.transformTopLevelWithArg(body, element, DigitGroups.append);
 let appendDigit = (body, element) =>
