@@ -63,11 +63,7 @@ module DigitGroups = {
   };
 
   let appendDecimalSeparator = (v, element) => {
-    state:
-      switch (v.state) {
-      | GroupingDisabled => GroupingDisabled
-      | _ => SkipGrouping
-      },
+    state: v.state == GroupingDisabled ? GroupingDisabled : SkipGrouping,
     body: toString(v) ++ element,
     length: v.length + 1,
   };
