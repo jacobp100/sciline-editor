@@ -189,8 +189,7 @@ let create = (~digitGrouping=true, elements) => {
         elements,
         ~reduce,
         ~map,
-        ~initial=
-          digitGrouping ? Mml_Accum.empty : Mml_Accum.emptyNoDigitGrouping,
+        ~initial=Mml_Accum.make(~digitGrouping),
       );
     } else {
       "";
