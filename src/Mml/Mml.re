@@ -9,7 +9,7 @@ let reduce = (accum, element: t(string), range) =>
   | `CloseBracket(superscript) =>
     Mml_Accum.appendCloseBracket(accum, range, superscript)
   | `Digit({atomNucleus, superscript}) =>
-    elementWithIndex(~superscript, "mn", range, atomNucleus)
+    elementWithIndex(~superscript?, "mn", range, atomNucleus)
     ->Mml_Accum.appendDigit(accum, _)
   | `DecimalSeparator =>
     elementWithIndex("mn", range, ".")
@@ -18,28 +18,19 @@ let reduce = (accum, element: t(string), range) =>
     elementWithIndex("mn", range, Mml_Util.stringOfBase(base))
     ->Mml_Accum.appendBasePrefix(accum, _)
   | `Superscript(superscript) =>
-    placeholder(~superscript=Some(superscript), range)
-    ->Mml_Accum.append(accum, _)
+    placeholder(~superscript, range)->Mml_Accum.append(accum, _)
   | `Percent =>
     elementWithIndex("mn", range, "%")->Mml_Accum.append(accum, _)
   | `Degree =>
     elementWithIndex("mo", range, "&#x00B0;")->Mml_Accum.append(accum, _)
   | `ArcMinute =>
     let body = "<mo />" ++ createElement("mo", "&#x2032;");
-    ignore(
-      elementWithIndex("msup", range, body)->Mml_Accum.append(accum, _),
-    );
-    // FIXME - superscript
-    elementWithIndex("mo", range, "&#x2032;")->Mml_Accum.append(accum, _);
+    elementWithIndex("msup", range, body)->Mml_Accum.append(accum, _);
   | `ArcSecond =>
     let body = "<mo />" ++ createElement("mo", "&#x2033;");
-    ignore(
-      elementWithIndex("msup", range, body)->Mml_Accum.append(accum, _),
-    );
-    // FIXME - superscript
-    elementWithIndex("mo", range, "&#x2033;")->Mml_Accum.append(accum, _);
+    elementWithIndex("msup", range, body)->Mml_Accum.append(accum, _);
   | `ImaginaryUnit(superscript) =>
-    elementWithIndex(~superscript, "mi", range, "i")
+    elementWithIndex(~superscript?, "mi", range, "i")
     ->Mml_Accum.append(accum, _)
   | `Conj =>
     elementWithIndex("mo", range, "&#x2a;")->Mml_Accum.append(accum, _)
@@ -47,19 +38,19 @@ let reduce = (accum, element: t(string), range) =>
     let body =
       createElement("mo", Mml_Util.stringOfOperator(`Mul))
       ++ createElement("mn", "10");
-    elementWithIndex(~superscript=Some(magnitudeBase), "mrow", range, body)
+    elementWithIndex(~superscript=magnitudeBase, "mrow", range, body)
     ->Mml_Accum.append(accum, _);
   | `Variable({atomNucleus, superscript}) =>
-    elementWithIndex(~superscript, "mi", range, atomNucleus)
+    elementWithIndex(~superscript?, "mi", range, atomNucleus)
     ->Mml_Accum.append(accum, _)
   | `ConstPi(superscript) =>
-    elementWithIndex(~superscript, "mi", range, "&#x03C0;")
+    elementWithIndex(~superscript?, "mi", range, "&#x03C0;")
     ->Mml_Accum.append(accum, _)
   | `ConstE(superscript) =>
-    elementWithIndex(~superscript, "mi", range, "e")
+    elementWithIndex(~superscript?, "mi", range, "e")
     ->Mml_Accum.append(accum, _)
   | `CustomAtom({mml, superscript}) =>
-    elementWithIndex(~superscript, "mrow", range, mml)
+    elementWithIndex(~superscript?, "mrow", range, mml)
     ->Mml_Accum.append(accum, _)
   | `Function(f) =>
     let attributes = f == AST_Types.Gamma ? [("mathvariant", "normal")] : [];
@@ -71,13 +62,13 @@ let reduce = (accum, element: t(string), range) =>
     elementWithIndex("mo", range, Mml_Util.stringOfOperator(v))
     ->Mml_Accum.append(accum, _)
   | `Frac({fracNum, den, superscript}) =>
-    elementWithIndex(~superscript, "mfrac", range, fracNum ++ den)
+    elementWithIndex(~superscript?, "mfrac", range, fracNum ++ den)
     ->Mml_Accum.append(accum, _)
   | `Sqrt({rootRadicand, superscript}) =>
-    elementWithIndex(~superscript, "msqrt", range, rootRadicand)
+    elementWithIndex(~superscript?, "msqrt", range, rootRadicand)
     ->Mml_Accum.append(accum, _)
   | `NRoot({nrootDegree, radicand, superscript}) =>
-    elementWithIndex(~superscript, "mroot", range, radicand ++ nrootDegree)
+    elementWithIndex(~superscript?, "mroot", range, radicand ++ nrootDegree)
     ->Mml_Accum.append(accum, _)
   | `NLog({nlogBase}) =>
     let body = createElement("mi", "log") ++ nlogBase;
@@ -95,10 +86,10 @@ let reduce = (accum, element: t(string), range) =>
       createElement("mo", leftBracket)
       ++ unaryArg
       ++ createElement("mo", rightBracket);
-    elementWithIndex(~superscript, "mrow", range, body)
+    elementWithIndex(~superscript?, "mrow", range, body)
     ->Mml_Accum.append(accum, _);
   | `Rand(superscript) =>
-    elementWithIndex(~superscript, "mi", range, "Rand")
+    elementWithIndex(~superscript?, "mi", range, "Rand")
     ->Mml_Accum.append(accum, _)
   | `RandInt({randIntA, b, superscript}) =>
     let body =
@@ -107,7 +98,7 @@ let reduce = (accum, element: t(string), range) =>
         createElement("mi", "Rand#")
         ++ createElement("mrow", randIntA ++ createElement("mo", ",") ++ b),
       );
-    elementWithIndex(~superscript, "mrow", range, body)
+    elementWithIndex(~superscript?, "mrow", range, body)
     ->Mml_Accum.append(accum, _);
   | (`NPR({statN, r}) | `NCR({statN, r})) as fnArg =>
     let symbol =
@@ -172,7 +163,7 @@ let reduce = (accum, element: t(string), range) =>
       ->String.concat("", _)
       ->createElement("mtable", _);
     let body = createElement("mo", "[") ++ inner ++ createElement("mo", "]");
-    elementWithIndex(~superscript, "mrow", range, body)
+    elementWithIndex(~superscript?, "mrow", range, body)
     ->Mml_Accum.append(accum, _);
   | `UnitConversion({fromUnits, toUnits}) =>
     let body =

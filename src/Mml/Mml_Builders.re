@@ -12,7 +12,7 @@ let createElement = (~attributes=[], element, body) => {
 };
 
 let elementWithIndex =
-    (~attributes=[], ~superscript=None, element, (i, i', s), body) =>
+    (~attributes=[], ~superscript=?, element, (i, i', s), body) =>
   switch (superscript) {
   | None =>
     let attributes = [

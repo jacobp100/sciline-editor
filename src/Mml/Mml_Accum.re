@@ -121,7 +121,7 @@ module BracketGroups = {
     ],
   };
 
-  let _flattenBracketGroups = (~attributes=?, v, {openBracketRange, body}) => {
+  let _flattenBracketGroup = (~attributes=?, v, {openBracketRange, body}) => {
     let openBracket =
       elementWithIndex(~attributes?, "mo", openBracketRange, "(");
     DigitGroups.digitGroupingEnabled(v.level0Body)
@@ -133,23 +133,36 @@ module BracketGroups = {
   let _invalidAttributes = [("class", "invalid"), ("stretchy", "false")];
   let appendCloseBracket = (accum, range, superscript): t =>
     switch (accum.bracketGroups) {
-    | [closed, ...nextBracketGroupss] =>
-      let body =
-        _flattenBracketGroups(accum, closed)
-        ->DigitGroups.append(
-            elementWithIndex(~superscript, "mo", range, ")"),
-          )
-        ->DigitGroups.map(createElement("mrow"));
-      transformTopLevelWithArg(
-        {...accum, bracketGroups: nextBracketGroupss},
-        body,
-        DigitGroups.concat,
-      );
+    | [closed, ...nextBracketGroups] =>
+      let (i, i', s) = range;
+      // We want the superscript to be over the whole bracket group,
+      // not just over the close bracket
+      // Every other element works differently to this
+      let appliedRange = superscript != None ? (i, s, (-1)) : range;
+      let closeBracket = elementWithIndex("mo", appliedRange, ")");
+
+      _flattenBracketGroup(accum, closed)
+      ->DigitGroups.append(closeBracket)
+      ->DigitGroups.map(body =>
+          switch (superscript) {
+          | Some(superscript) =>
+            createElement(
+              ~attributes=[("id", ":" ++ string_of_int(i'))],
+              "msup",
+              createElement("mrow", body) ++ superscript,
+            )
+          | None => createElement("mrow", body)
+          }
+        )
+      ->transformTopLevelWithArg(
+          {...accum, bracketGroups: nextBracketGroups},
+          _,
+          DigitGroups.concat,
+        );
     | [] =>
       let attributes = _invalidAttributes;
-      let body =
-        elementWithIndex(~attributes, ~superscript, "mo", range, ")");
-      transformTopLevelWithArg(accum, body, DigitGroups.append);
+      elementWithIndex(~attributes, ~superscript?, "mo", range, ")")
+      ->transformTopLevelWithArg(accum, _, DigitGroups.append);
     };
 
   let flatten = ({level0Body, bracketGroups} as v) => {
@@ -157,7 +170,7 @@ module BracketGroups = {
       switch (bracketGroups) {
       | [bracketGroup, ...tail] =>
         let body =
-          _flattenBracketGroups(
+          _flattenBracketGroup(
             ~attributes=_invalidAttributes,
             v,
             bracketGroup,
