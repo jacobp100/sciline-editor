@@ -84,9 +84,8 @@ module DigitGroups = {
 };
 
 module BracketGroups = {
-  type range = (int, int, int);
   type bracketGroup = {
-    openBracketRange: range,
+    openBracketRange: AST_ReduceMap.range,
     body: DigitGroups.t,
   };
   type t = {
@@ -134,22 +133,25 @@ module BracketGroups = {
   let appendCloseBracket = (accum, range, superscript): t =>
     switch (accum.bracketGroups) {
     | [closed, ...nextBracketGroups] =>
-      let (i, i', s) = range;
       // We want the superscript to be over the whole bracket group,
       // not just over the close bracket
       // Every other element works differently to this
-      let appliedRange = superscript != None ? (i, s, (-1)) : range;
-      let closeBracket = elementWithIndex("mo", appliedRange, ")");
+      let closeBracket =
+        switch (superscript) {
+        | Some({AST_ReduceMap.superscriptBody: _, index}) =>
+          elementWithIndex("mo", (fst(range), index), ")")
+        | None => elementWithIndex("mo", range, ")")
+        };
 
       _flattenBracketGroup(accum, closed)
       ->DigitGroups.append(closeBracket)
       ->DigitGroups.map(body =>
           switch (superscript) {
-          | Some(superscript) =>
+          | Some({AST_ReduceMap.superscriptBody}) =>
             createElement(
-              ~attributes=[("id", ":" ++ string_of_int(i'))],
+              ~attributes=[("id", ":" ++ snd(range)->string_of_int)],
               "msup",
-              createElement("mrow", body) ++ superscript,
+              createElement("mrow", body) ++ superscriptBody,
             )
           | None => createElement("mrow", body)
           }

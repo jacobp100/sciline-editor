@@ -18,7 +18,8 @@ let reduce = (accum, element: t(string), range) =>
     elementWithIndex("mn", range, Mml_Util.stringOfBase(base))
     ->Mml_Accum.appendBasePrefix(accum, _)
   | `Superscript(superscript) =>
-    placeholder(~superscript, range)->Mml_Accum.append(accum, _)
+    createElement("msup", placeholder(range) ++ superscript)
+    ->Mml_Accum.append(accum, _)
   | `Percent =>
     elementWithIndex("mn", range, "%")->Mml_Accum.append(accum, _)
   | `Degree =>
@@ -34,11 +35,12 @@ let reduce = (accum, element: t(string), range) =>
     ->Mml_Accum.append(accum, _)
   | `Conj =>
     elementWithIndex("mo", range, "&#x2a;")->Mml_Accum.append(accum, _)
-  | `Magnitude({magnitudeBase}) =>
+  | `Magnitude({magnitudeValue}) =>
     let body =
       createElement("mo", Mml_Util.stringOfOperator(`Mul))
       ++ createElement("mn", "10");
-    elementWithIndex(~superscript=magnitudeBase, "mrow", range, body)
+    let body = createElement("mrow", body);
+    elementWithIndex("msup", range, body ++ magnitudeValue)
     ->Mml_Accum.append(accum, _);
   | `Variable({atomNucleus, superscript}) =>
     elementWithIndex(~superscript?, "mi", range, atomNucleus)

@@ -5,7 +5,7 @@ module AST = ScilineCalculator.AST_Types;
 let parse = (elements: array(AST_Types.t)) => {
   let error = ref(None);
 
-  let reduce = (accum, element, (i, _, _)) =>
+  let reduce = (accum, element, (i, _)) =>
     if (error^ == None) {
       switch (element) {
       | `Superscript(_) =>
@@ -19,7 +19,7 @@ let parse = (elements: array(AST_Types.t)) => {
       MutableListBuilder.empty;
     };
 
-  let map = (accum, (i, _, _)): AST.t =>
+  let map = (accum, (i, _)): AST.t =>
     if (error^ == None) {
       let elements = MutableListBuilder.toList(accum);
       switch (Value_Row.next(elements)) {

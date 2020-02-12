@@ -32,12 +32,13 @@ let reduce = (state, element) =>
     Some({
       ...state,
       numString: state.numString ++ atomNucleus,
-      numSup: superscript,
+      numSup: Belt.Option.map(superscript, superscriptBody),
     })
   | ({numHasDecimal: false, numSup: None, magSup: None}, `DecimalSeparator) =>
     Some({...state, numString: state.numString ++ ".", numHasDecimal: true})
-  | ({magSup: None}, `Magnitude({magnitudeBase})) when state.numString != "" =>
-    Some({...state, magSup: Some(magnitudeBase)})
+  | ({magSup: None}, `Magnitude({magnitudeValue}))
+      when state.numString != "" =>
+    Some({...state, magSup: Some(magnitudeValue)})
   | _ => None
   };
 
