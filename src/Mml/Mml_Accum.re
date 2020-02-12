@@ -122,7 +122,7 @@ module BracketGroups = {
 
   let _flattenBracketGroup = (~attributes=?, v, {openBracketRange, body}) => {
     let openBracket =
-      elementWithIndex(~attributes?, "mo", openBracketRange, "(");
+      elementWithRange(~attributes?, "mo", openBracketRange, "(");
     DigitGroups.digitGroupingEnabled(v.level0Body)
     ->DigitGroups.make(~digitGrouping=_)
     ->DigitGroups.append(openBracket)
@@ -139,8 +139,8 @@ module BracketGroups = {
       let closeBracket =
         switch (superscript) {
         | Some({AST_ReduceMap.superscriptBody: _, index}) =>
-          elementWithIndex("mo", (fst(range), index), ")")
-        | None => elementWithIndex("mo", range, ")")
+          elementWithRange("mo", (fst(range), index), ")")
+        | None => elementWithRange("mo", range, ")")
         };
 
       _flattenBracketGroup(accum, closed)
@@ -163,7 +163,7 @@ module BracketGroups = {
         );
     | [] =>
       let attributes = _invalidAttributes;
-      elementWithIndex(~attributes, ~superscript?, "mo", range, ")")
+      elementWithRange(~attributes, ~superscript?, "mo", range, ")")
       ->transformTopLevelWithArg(accum, _, DigitGroups.append);
     };
 
@@ -186,7 +186,13 @@ module BracketGroups = {
   let toString = (v, range) => {
     let body = flatten(v);
     switch (DigitGroups.length(body)) {
-    | 0 => placeholder(range)
+    | 0 =>
+      elementWithRange(
+        ~attributes=Placeholder.attributes,
+        Placeholder.element,
+        range,
+        Placeholder.body,
+      )
     | 1 => DigitGroups.toString(body)
     | _ => createElement("mrow", DigitGroups.toString(body))
     };

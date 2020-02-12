@@ -11,7 +11,7 @@ let createElement = (~attributes=[], element, body) => {
   head ++ body ++ "</" ++ element ++ ">";
 };
 
-let elementWithIndex =
+let elementWithRange =
     (~attributes=[], ~superscript=?, element, (i, i'), body) =>
   switch (superscript) {
   | None =>
@@ -34,13 +34,11 @@ let elementWithIndex =
     );
   };
 
-let placeholder = range =>
-  elementWithIndex(
-    ~attributes=[("class", "placeholder")],
-    "mi",
-    range,
-    "&#x25a1;",
-  );
+module Placeholder = {
+  let attributes = [("class", "placeholder")];
+  let element = "mi";
+  let body = "&#x25a1;";
+};
 
 let xSetRow = value =>
   createElement(
