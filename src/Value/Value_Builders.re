@@ -46,5 +46,5 @@ let handleOp = (op, a, b) =>
   | `Sub => AST.sub(a, b)
   | `Mul => AST.mul(a, b)
   | `Div => AST.div(a, b)
-  | `Dot => AST.mul(a, b)
+  | `Dot => AST.dot(a, b)
   };
