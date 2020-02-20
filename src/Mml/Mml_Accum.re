@@ -39,7 +39,7 @@ module DigitGroups = {
   let length = v => v.length;
 
   let append = (v, element) => {
-    state: Normal,
+    state: v.state == GroupingDisabled ? GroupingDisabled : Normal,
     body: toString(v) ++ element,
     length: v.length + 1,
   };
@@ -76,10 +76,10 @@ module DigitGroups = {
     length: a.length + b.length,
   };
 
-  let map = (a, fn) => {
-    state: a.state == GroupingDisabled ? GroupingDisabled : Normal,
-    body: toString(a)->fn,
-    length: a.length,
+  let map = (v, fn) => {
+    state: v.state == GroupingDisabled ? GroupingDisabled : Normal,
+    body: toString(v)->fn,
+    length: v.length,
   };
 };
 
