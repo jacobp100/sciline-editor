@@ -175,13 +175,13 @@ let reduce = (accum, element: t(string), range) =>
     ->Mml_Accum.append(accum, _);
   | `UnitConversion({fromUnits, toUnits}) =>
     let body =
-      Mml_Units.unitsMml(fromUnits)
+      Mml_Units.unitPowersToMml(fromUnits)
       ++ "<mo>&RightArrow;</mo>"
-      ++ Mml_Units.unitsMml(toUnits);
+      ++ Mml_Units.unitPowersToMml(toUnits);
     elementWithRange("mrow", range, body)->Mml_Accum.append(accum, _);
   };
 
-let create = (~digitGrouping=true, elements) => {
+let create = (~digitGrouping=true, ~inline=false, elements) => {
   let body =
     if (Belt.Array.length(elements) != 0) {
       AST_ReduceMap.reduceMap(
@@ -197,7 +197,7 @@ let create = (~digitGrouping=true, elements) => {
     "math",
     ~attributes=[
       ("xmlns", "http://www.w3.org/1998/Math/MathML"),
-      ("display", "block"),
+      ("display", inline ? "inline" : "block"),
     ],
     body,
   );
