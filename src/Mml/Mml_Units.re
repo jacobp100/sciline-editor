@@ -1,4 +1,4 @@
-let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
+let unitMmlSymbol = (unit: TechniCalcCalculator.Unit_Types.unitType) =>
   switch (unit) {
   /* Time */
   | Second => "s"
@@ -114,14 +114,15 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Fahrenheit => "&#x00B0;F"
   };
 
-let unitToMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
+let unitToMml = (unit: TechniCalcCalculator.Unit_Types.unitType) =>
   switch (unit) {
   /* Work around :( */
   | Angstrom => "<mi mathvariant=\"normal\">A</mi>"
   | _ => "<mi mathvariant=\"normal\">" ++ unitMmlSymbol(unit) ++ "</mi>"
   };
 
-let unitPowerToMml = ((unit, power): ScilineCalculator.Unit_Types.unitPower) =>
+let unitPowerToMml =
+    ((unit, power): TechniCalcCalculator.Unit_Types.unitPower) =>
   switch (power) {
   | 1 => unitToMml(unit)
   | _ =>
@@ -129,7 +130,7 @@ let unitPowerToMml = ((unit, power): ScilineCalculator.Unit_Types.unitPower) =>
     "<msup>" ++ unitToMml(unit) ++ powerMml ++ "</msup>";
   };
 
-let unitPowersToMml = (units: ScilineCalculator.Unit_Types.units) => {
+let unitPowersToMml = (units: TechniCalcCalculator.Unit_Types.units) => {
   let unitsMmlList =
     Belt.Array.map(units, unitPowerToMml)->Belt.List.fromArray;
   String.concat("<mspace width=\"0.1em\" />", unitsMmlList);

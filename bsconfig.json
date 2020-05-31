@@ -1,5 +1,5 @@
 {
-  "name": "sciline-editor",
+  "name": "technicalc-editor",
   "version": "0.1.0",
   "sources": {
     "dir": "src",
@@ -10,10 +10,10 @@
     "in-source": true
   },
   "suffix": ".bs.js",
-  "bs-dependencies": ["sciline-calculator"],
+  "bs-dependencies": ["technicalc-calculator"],
   "warnings": {
     "error": "+101"
   },
-  "namespace": true,
+  "namespace": "TechniCalcEditor",
   "refmt": 3
 }

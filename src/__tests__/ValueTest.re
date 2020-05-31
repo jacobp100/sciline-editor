@@ -3,11 +3,11 @@ open AST_Types;
 
 let parseEval = v =>
   switch (Value.parse(v)) {
-  | `Ok(v) => Some(ScilineCalculator.AST.eval(v))
+  | `Ok(v) => Some(TechniCalcCalculator.AST.eval(v))
   | _ => None
   };
 
-let ofString = ScilineCalculator.Types.ofString;
+let ofString = TechniCalcCalculator.Types.ofString;
 
 test("Parses with bodmas", (.) => {
   parseEval([|`DigitS("1"), `Sub, `DigitS("2"), `Add, `DigitS("3")|])

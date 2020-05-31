@@ -1,6 +1,6 @@
 open AST_ReduceMap;
 
-type node = ScilineCalculator.AST_Types.t;
+type node = TechniCalcCalculator.AST_Types.t;
 
 type funcitionLike =
   | GenericFunction(AST_Types.func)

@@ -2,7 +2,7 @@ open AST_ReduceMap;
 open AST_Types;
 open Value_Types;
 
-module AST = ScilineCalculator.AST_Types;
+module AST = TechniCalcCalculator.AST_Types;
 
 let withSuperscript = (value, superscript) =>
   switch (superscript) {

@@ -7,7 +7,7 @@ type atom('a) = {
   superscript: option(superscript('a)),
 };
 type customAtom('a) = {
-  customAtomValue: ScilineCalculator.Encoding.encoding,
+  customAtomValue: TechniCalcCalculator.Encoding.encoding,
   mml: string,
   superscript: option(superscript('a)),
 };

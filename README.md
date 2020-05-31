@@ -1,6 +1,6 @@
-# Sciline Editor
+# TechniCalc Editor
 
-Represents a math AST that can be converted to both MathML and an AST for Sciline Calculator
+Represents a math AST that can be converted to both MathML and an AST for TechniCalc Calculator
 
 ## AST Representation
 
@@ -85,7 +85,7 @@ There is additionally a superscript element, `` `Superscript1 ``, which accepts 
 
 &#x25a1;<sup>&#x25a1;</sup>
 
-However, in the case we are converting to MathML or a Sciline Calculator AST, and the superscript immediately precedes an element that accepts a superscript (the element is suffixed with an `S`), they are merged together, much like ligatures in fonts. If an element does not accept a superscript, it is left unaltered
+However, in the case we are converting to MathML or a TechniCalc Calculator AST, and the superscript immediately precedes an element that accepts a superscript (the element is suffixed with an `S`), they are merged together, much like ligatures in fonts. If an element does not accept a superscript, it is left unaltered
 
 1 &#x25a1;<sup>&#x25a1;</sup> &#x2192; 1<sup>&#x25a1;</sup>
 
@@ -111,9 +111,9 @@ Some elements have special insertion and deletion logic. For example, if you ins
 
 The superscript encoding leads to a really natural eding experience. If you have one digit raised to a power, you could insert another digit between the the first and the superscript to move the superscript. You could also put brackets between, and the superscript is still maintained
 
-### Convertion to MathML and Sciline Calculator AST
+### Convertion to MathML and TechniCalc Calculator AST
 
-For converting to either MathML or a Sciline Calculator AST, we first do a transformation to a node-based AST. For example, The fraction example above transforms to
+For converting to either MathML or a TechniCalc Calculator AST, we first do a transformation to a node-based AST. For example, The fraction example above transforms to
 
 ```reason
 type node('t) = `Frac({ fracNum: node('t), den: node('t), superscript: option(node('t)) })
@@ -140,7 +140,7 @@ A side note is that we never fully construct a node-based AST, as the reduction 
 
 ### Indices
 
-Every element of the elements array is addressable by a single index. This index is imporant for MathML, so we know where to put the cursor; and also in the conversion to a Sciline Calculator AST, as if there is a parsing error, we need to return the index
+Every element of the elements array is addressable by a single index. This index is imporant for MathML, so we know where to put the cursor; and also in the conversion to a TechniCalc Calculator AST, as if there is a parsing error, we need to return the index
 
 To handle this, the `~reduce` and `~map` functions are the start (`i`) and end index of the node (`i'`)
 

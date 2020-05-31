@@ -2,12 +2,12 @@ open Jest;
 
 let parseEval = v =>
   switch (Value.parse(v)) {
-  | `Ok(v) => Some(ScilineCalculator.AST.eval(v))
+  | `Ok(v) => Some(TechniCalcCalculator.AST.eval(v))
   | _ => None
   };
 
-let ofInt = ScilineCalculator.Types.ofInt;
-let ofString = ScilineCalculator.Types.ofString;
+let ofInt = TechniCalcCalculator.Types.ofInt;
+let ofString = TechniCalcCalculator.Types.ofString;
 
 test("Parses numbers", (.) => {
   parseEval([|`DigitS("1"), `DigitS("2"), `DigitS("3")|])
@@ -104,7 +104,7 @@ test("Parses magnitudes", (.) => {
 });
 
 test("Parses imaginary units", (.) => {
-  let mulI = ScilineCalculator.Value.(mul(i));
+  let mulI = TechniCalcCalculator.Value.(mul(i));
 
   parseEval([|`DigitS("2"), `ImaginaryUnitS|])
   ->expect
@@ -154,9 +154,9 @@ test("Parses imaginary units", (.) => {
 });
 
 test("Angles", (.) => {
-  let pi = ScilineCalculator.Value.pi;
-  let mul = ScilineCalculator.Value.mul;
-  let div = ScilineCalculator.Value.div;
+  let pi = TechniCalcCalculator.Value.pi;
+  let mul = TechniCalcCalculator.Value.mul;
+  let div = TechniCalcCalculator.Value.div;
 
   parseEval([|`DigitS("1"), `Degree|])
   ->expect

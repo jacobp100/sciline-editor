@@ -1,6 +1,6 @@
 open AST_ReduceMap;
 
-module AST = ScilineCalculator.AST_Types;
+module AST = TechniCalcCalculator.AST_Types;
 
 let parse = (elements: array(AST_Types.t)) => {
   let error = ref(None);

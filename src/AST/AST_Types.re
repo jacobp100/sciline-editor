@@ -20,11 +20,11 @@ type func =
   | Im
   | Gamma;
 type unitConversion = {
-  fromUnits: ScilineCalculator.Unit_Types.units,
-  toUnits: ScilineCalculator.Unit_Types.units,
+  fromUnits: TechniCalcCalculator.Unit_Types.units,
+  toUnits: TechniCalcCalculator.Unit_Types.units,
 };
 type customAtom = {
-  value: ScilineCalculator.Encoding.encoding,
+  value: TechniCalcCalculator.Encoding.encoding,
   mml: string,
 };
 type table = {

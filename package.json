@@ -19,7 +19,7 @@
     "bs-platform": "^8.0.0-dev.1",
     "esm": "^3.2.22",
     "jest": "^24.9.0",
-    "sciline-calculator": "https://github.com/jacobp100/sciline-calculator"
+    "technicalc-calculator": "https://github.com/jacobp100/technicalc-calculator"
   },
   "dependencies": {}
 }
