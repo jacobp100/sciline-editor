@@ -113,13 +113,6 @@ let rec parseParenFreeFunctions = elements => {
 };
 let next = parseParenFreeFunctions;
 
-module type BinaryOperatorParserDef = {
-  let operatorHandled: AST_Types.operatorAtom => bool;
-  let next:
-    list(ScilineEditor.Value_Types.partialNode) =>
-    [ | `Ok(AST.t) | `Error(int) | `UnknownError];
-};
-
 let binaryOperatorParser = (~operatorHandled, ~next) => {
   let rec iter = (unaryPosition, current, after, i) =>
     switch (after) {

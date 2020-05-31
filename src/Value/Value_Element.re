@@ -16,7 +16,7 @@ let map = (element: t('a), i) =>
     UnresolvedFunction(Sum({iterationStart, iterationEnd}), i)
   | `Product({iterationStart, iterationEnd}) =>
     UnresolvedFunction(Product({iterationStart, iterationEnd}), i)
-  | `Rand(superscript) => Resolved(AST.rand()->withSuperscript(superscript))
+  | `Rand(superscript) => Resolved(AST.rand->withSuperscript(superscript))
   | `RandInt({randIntA, b, superscript}) =>
     Resolved(AST.randInt(randIntA, b)->withSuperscript(superscript))
   | `NPR({statN, r}) => Resolved(AST.nPr(statN, r))
