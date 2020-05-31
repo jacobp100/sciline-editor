@@ -9,7 +9,9 @@ let map = (element: t('a), i) =>
   | (#AST_Types.atom | `CloseBracket(_) | `Digit(_) | `Magnitude(_)) as e =>
     Unresolved(e, i)
   | `ImaginaryUnit(superscript) =>
-    let superscript = Belt.Option.getWithDefault(superscript, AST.one);
+    let superscript =
+      Belt.Option.map(superscript, superscriptBody)
+      ->Belt.Option.getWithDefault(AST.one);
     Resolved(AST.pow(AST.i, superscript));
   | `NLog({nlogBase}) => UnresolvedFunction(NLog({nlogBase: nlogBase}), i)
   | `Sum({iterationStart, iterationEnd}) =>

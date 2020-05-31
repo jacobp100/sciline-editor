@@ -12,7 +12,7 @@ let validityStackReducer = prependValidityStack => {
       | `Arg =>
         Belt.List.tail(validityStack)
         ->Belt.Option.getWithDefault(validityStack)
-      | e => prependValidityStack(validityStack, e)
+      | e => prependValidityStack(. validityStack, e)
       };
     (range, validityStack);
   };
@@ -20,7 +20,7 @@ let validityStackReducer = prependValidityStack => {
 };
 
 let noTableRanges =
-  validityStackReducer((validityStack, element) =>
+  validityStackReducer((. validityStack, element) =>
     switch (element) {
     | `Frac2S => [/* num */ true, /* den */ false, ...validityStack]
     | `Abs1S
@@ -34,7 +34,7 @@ let noTableRanges =
   );
 
 let noIterationRanges =
-  validityStackReducer((validityStack, element) => {
+  validityStackReducer((. validityStack, element) => {
     let argCount = AST_Types.argCountExn(element);
     switch (element) {
     | #iterators => validityStack->ListUtil.prependMany(argCount, false)

@@ -14,13 +14,13 @@ As well as element arguments, optional superscripts are handled in a special way
 
 There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments is added as a suffix. If the number is dynamic, we suffix with an `N`. If they accept an optional superscript, the `S` suffix is added (after any element argument suffix)
 
-* `` `SomeElement `` - No element arguments, no superscript
-* `` `SomeElement1 `` - 1 element argument, no superscript
-* `` `SomeElement2 `` - 2 element arguments, no superscript
-* `` `SomeElementS `` - No element arguments, has an optional superscript
-* `` `SomeElement2S `` - 2 element arguments, has an optional superscript
-* `` `SomeElementNS `` - dynamic number of element arguments, has an optional superscript
-* `` `DigitS("1") `` - The digit `1`, which accepts no element arguments, has an optional superscript
+- `` `SomeElement `` - No element arguments, no superscript
+- `` `SomeElement1 `` - 1 element argument, no superscript
+- `` `SomeElement2 `` - 2 element arguments, no superscript
+- `` `SomeElementS `` - No element arguments, has an optional superscript
+- `` `SomeElement2S `` - 2 element arguments, has an optional superscript
+- `` `SomeElementNS `` - dynamic number of element arguments, has an optional superscript
+- `` `DigitS("1") `` - The digit `1`, which accepts no element arguments, has an optional superscript
 
 Putting this all together, and going back to our 'just a text input' analogy, we have can make the following inputs
 
@@ -39,9 +39,9 @@ It's worth highlighting that operator precedence isn't encoded here
 
 This format was picked because
 
-* It makes editing easy
-* It's relatively sound
-* When run through BuckleScript, all the data is directly JSON encodable and decodable
+- It makes editing easy
+- It's relatively sound
+- When run through BuckleScript, all the data is directly JSON encodable and decodable
 
 ### Element Arguments
 
@@ -77,7 +77,7 @@ It is possible to nest elements accepting arguments. An `` `Arg `` element corre
 [|`Frac2S, `Sum2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg, `Arg, `DigitS("2"), `Arg|]
 ```
 
-This does lead to it being possible to represent invalid ASTs, although this should not normally occur. In these cases, extraneous `` `Arg`` elements are dropped, and missing ones are appended to the end
+This does lead to it being possible to represent invalid ASTs, although this should not normally occur. In these cases, extraneous `` `Arg `` elements are dropped, and missing ones are appended to the end
 
 ### Superscripts
 
@@ -142,9 +142,26 @@ A side note is that we never fully construct a node-based AST, as the reduction 
 
 Every element of the elements array is addressable by a single index. This index is imporant for MathML, so we know where to put the cursor; and also in the conversion to a Sciline Calculator AST, as if there is a parsing error, we need to return the index
 
-To handle this, the `~reduce` and `~map` functions are the start and end index of the node (`i` and `i'`, respectively). The the `~reduce` function also gets the index of the superscript, `s`. This is `-1` if there is no superscript to make errors more obvious
+To handle this, the `~reduce` and `~map` functions are the start (`i`) and end index of the node (`i'`)
 
 MathML will attach these indices to certain MathML elements in the form `id="startIndex:endIndex` (e.g. `id="5:8"`). Every index is representable by at least one of `startIndex` or `endIndex`, with the start index taking precedence. There are never duplicates in the start indices, nor the end indices. If the start or end index, it is ignored. E.g. `id=":5"` only sets the end index to `5`, and does not record a start index
+
+For an atom with a superscript, `i'` would be after the superscript. However, MathML actually needs the index of the superscript to allow inserting something before the superscript, moving the superscript. For this, any ast node with a superscript is actually represented as,
+
+```reason
+type superscript('t) = { superscriptBody: 't, index: int };
+type node('t) = `Frac({ fracNum: node('t), den: node('t), superscript: option(superscript(node('t))) })
+```
+
+Using this, superscripts can have their incides encoded as follows,
+
+```xml
+<!-- 2^3 -->
+<msup id="0:4">
+  <mi id=":1">2</mi>
+  <mi id="2:3">3</mi>
+</msup>
+```
 
 ## BuckleScript
 

@@ -118,7 +118,7 @@ let binaryOperatorParser = (~operatorHandled, ~next) => {
     switch (after) {
     | [Unresolved(#AST_Types.operatorAtom as op, i'), ...after] =>
       let nextAccum =
-        !unaryPosition && operatorHandled(op)
+        !unaryPosition && operatorHandled(. op)
           ? Some((op, after, i, i')) : current;
       iter(true, nextAccum, after, i + 1);
     | [_, ...after] => iter(false, current, after, i + 1)
@@ -141,14 +141,14 @@ let binaryOperatorParser = (~operatorHandled, ~next) => {
 
 let parseMulDiv =
   binaryOperatorParser(
-    ~operatorHandled=op => op == `Mul || op == `Div || op == `Dot,
+    ~operatorHandled=(. op) => op == `Mul || op == `Div || op == `Dot,
     ~next,
   );
 let next = parseMulDiv;
 
 let parseAddSub =
   binaryOperatorParser(
-    ~operatorHandled=op => op == `Add || op == `Sub,
+    ~operatorHandled=(. op) => op == `Add || op == `Sub,
     ~next,
   );
 let next = parseAddSub;

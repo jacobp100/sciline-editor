@@ -1,7 +1,8 @@
 let createElement = (~attributes=[], element, body) => {
   let attributes =
-    attributes->Belt.List.map(((p, v)) => p ++ "=\"" ++ v ++ "\"")
-    |> String.concat(" ");
+    attributes
+    ->Belt.List.map(((p, v)) => p ++ "=\"" ++ v ++ "\"")
+    ->String.concat(" ", _);
   let head =
     switch (attributes) {
     | "" => "<" ++ element ++ ">"
@@ -10,8 +11,8 @@ let createElement = (~attributes=[], element, body) => {
   head ++ body ++ "</" ++ element ++ ">";
 };
 
-let elementWithIndex =
-    (~attributes=[], ~superscript=None, element, (i, i', s), body) =>
+let elementWithRange =
+    (~attributes=[], ~superscript=?, element, (i, i'), body) =>
   switch (superscript) {
   | None =>
     let attributes = [
@@ -19,7 +20,7 @@ let elementWithIndex =
       ...attributes,
     ];
     createElement(~attributes, element, body);
-  | Some(superscript) =>
+  | Some({AST_ReduceMap.superscriptBody, index: s}) =>
     let base =
       createElement(
         ~attributes=[("id", ":" ++ string_of_int(s)), ...attributes],
@@ -29,18 +30,15 @@ let elementWithIndex =
     createElement(
       ~attributes=[("id", string_of_int(i) ++ ":" ++ string_of_int(i'))],
       "msup",
-      base ++ superscript,
+      base ++ superscriptBody,
     );
   };
 
-let placeholder = (~superscript=?, range) =>
-  elementWithIndex(
-    ~superscript?,
-    ~attributes=[("class", "placeholder")],
-    "mi",
-    range,
-    "&#x25a1;",
-  );
+module Placeholder = {
+  let attributes = [("class", "placeholder")];
+  let element = "mi";
+  let body = "&#x25a1;";
+};
 
 let xSetRow = value =>
   createElement(

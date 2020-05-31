@@ -1,3 +1,4 @@
+open AST_ReduceMap;
 open AST_Types;
 open Value_Types;
 
@@ -5,7 +6,7 @@ module AST = ScilineCalculator.AST_Types;
 
 let withSuperscript = (value, superscript) =>
   switch (superscript) {
-  | Some(superscript) => AST.pow(value, superscript)
+  | Some({superscriptBody}) => AST.pow(value, superscriptBody)
   | None => value
   };
 
@@ -45,5 +46,5 @@ let handleOp = (op, a, b) =>
   | `Sub => AST.sub(a, b)
   | `Mul => AST.mul(a, b)
   | `Div => AST.div(a, b)
-  | `Dot => AST.mul(a, b)
+  | `Dot => AST.dot(a, b)
   };

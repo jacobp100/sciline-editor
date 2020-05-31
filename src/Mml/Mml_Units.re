@@ -114,22 +114,23 @@ let unitMmlSymbol = (unit: ScilineCalculator.Unit_Types.unitType) =>
   | Fahrenheit => "&#x00B0;F"
   };
 
-let unitMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
+let unitToMml = (unit: ScilineCalculator.Unit_Types.unitType) =>
   switch (unit) {
   /* Work around :( */
   | Angstrom => "<mi mathvariant=\"normal\">A</mi>"
   | _ => "<mi mathvariant=\"normal\">" ++ unitMmlSymbol(unit) ++ "</mi>"
   };
 
-let unitPowerMml = ((unit, power): ScilineCalculator.Unit_Types.unitPower) =>
+let unitPowerToMml = ((unit, power): ScilineCalculator.Unit_Types.unitPower) =>
   switch (power) {
-  | 1 => unitMml(unit)
+  | 1 => unitToMml(unit)
   | _ =>
     let powerMml = "<mn>" ++ string_of_int(power) ++ "</mn>";
-    "<msup>" ++ unitMml(unit) ++ powerMml ++ "</msup>";
+    "<msup>" ++ unitToMml(unit) ++ powerMml ++ "</msup>";
   };
 
-let unitsMml = (units: ScilineCalculator.Unit_Types.units) => {
-  let unitsMmlList = Belt.Array.map(units, unitPowerMml)->Belt.List.fromArray;
+let unitPowersToMml = (units: ScilineCalculator.Unit_Types.units) => {
+  let unitsMmlList =
+    Belt.Array.map(units, unitPowerToMml)->Belt.List.fromArray;
   String.concat("<mspace width=\"0.1em\" />", unitsMmlList);
 };

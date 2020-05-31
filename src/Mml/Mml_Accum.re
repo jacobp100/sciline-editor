@@ -2,18 +2,23 @@ open Mml_Builders;
 
 module DigitGroups = {
   type state =
-    | Normal(string)
-    | AppendedDigits(string)
-    | AppendingDigits({
-        body: string,
-        numbersRev: list(string),
-      });
+    | GroupingDisabled
+    | Normal
+    | SkipGrouping /* After decimal points etc. */
+    | GroupingDigits({numbersRev: list(string)});
   type t = {
     state,
+    body: string,
     length: int,
   };
 
-  let empty = {state: Normal(""), length: 0};
+  let make = (~digitGrouping) => {
+    state: digitGrouping ? Normal : GroupingDisabled,
+    body: "",
+    length: 0,
+  };
+
+  let digitGroupingEnabled = x => x.state === GroupingDisabled;
 
   let rec _flattenDigits = (~body, ~numbersRev) =>
     switch (numbersRev) {
@@ -23,52 +28,64 @@ module DigitGroups = {
     | [] => body
     };
 
-  let toString = ({state}) =>
+  let toString = ({state, body}) =>
     switch (state) {
-    | Normal(body)
-    | AppendedDigits(body) => body
-    | AppendingDigits({body, numbersRev}) =>
-      _flattenDigits(~body, ~numbersRev)
+    | GroupingDisabled
+    | Normal
+    | SkipGrouping => body
+    | GroupingDigits({numbersRev}) => _flattenDigits(~body, ~numbersRev)
     };
 
   let length = v => v.length;
 
   let append = (v, element) => {
-    state: Normal(toString(v) ++ element),
+    state: v.state == GroupingDisabled ? GroupingDisabled : Normal,
+    body: toString(v) ++ element,
     length: v.length + 1,
   };
 
-  let appendDigit = ({state, length}, element) => {
-    state:
-      switch (state) {
-      | Normal(body)
-      | AppendedDigits(body) =>
-        AppendingDigits({body, numbersRev: [element]})
-      | AppendingDigits({body, numbersRev}) =>
-        AppendingDigits({body, numbersRev: [element, ...numbersRev]})
-      },
-    length: length + 1,
+  let appendDigit = ({state, body, length}, element) => {
+    let length = length + 1;
+    switch (state) {
+    | GroupingDisabled
+    | SkipGrouping => {state, body: body ++ element, length}
+    | Normal => {
+        state: GroupingDigits({numbersRev: [element]}),
+        body,
+        length,
+      }
+    | GroupingDigits({numbersRev}) => {
+        state: GroupingDigits({numbersRev: [element, ...numbersRev]}),
+        body,
+        length,
+      }
+    };
   };
 
   let appendDecimalSeparator = (v, element) => {
-    state: AppendedDigits(toString(v) ++ element),
+    state: v.state == GroupingDisabled ? GroupingDisabled : SkipGrouping,
+    body: toString(v) ++ element,
     length: v.length + 1,
   };
 
   let appendBasePrefix = appendDecimalSeparator;
 
   let concat = (a, b) => {
-    state: Normal(toString(a) ++ toString(b)),
+    state: a.state == GroupingDisabled ? GroupingDisabled : Normal,
+    body: toString(a) ++ toString(b),
     length: a.length + b.length,
   };
 
-  let map = (a, fn) => {state: Normal(toString(a)->fn), length: a.length};
+  let map = (v, fn) => {
+    state: v.state == GroupingDisabled ? GroupingDisabled : Normal,
+    body: toString(v)->fn,
+    length: v.length,
+  };
 };
 
 module BracketGroups = {
-  type range = (int, int, int);
   type bracketGroup = {
-    openBracketRange: range,
+    openBracketRange: AST_ReduceMap.range,
     body: DigitGroups.t,
   };
   type t = {
@@ -76,7 +93,10 @@ module BracketGroups = {
     bracketGroups: list(bracketGroup),
   };
 
-  let empty = {level0Body: DigitGroups.empty, bracketGroups: []};
+  let make = (~digitGrouping) => {
+    level0Body: DigitGroups.make(~digitGrouping),
+    bracketGroups: [],
+  };
 
   let transformTopLevelWithArg = ({level0Body, bracketGroups}, arg, fn) =>
     switch (bracketGroups) {
@@ -87,18 +107,24 @@ module BracketGroups = {
     | [] => {level0Body: fn(level0Body, arg), bracketGroups: []}
     };
 
-  let appendOpenBracket = ({bracketGroups} as v, openBracketRange) => {
+  let appendOpenBracket = (v, openBracketRange) => {
     ...v,
     bracketGroups: [
-      {openBracketRange, body: DigitGroups.empty},
-      ...bracketGroups,
+      {
+        openBracketRange,
+        body:
+          DigitGroups.digitGroupingEnabled(v.level0Body)
+          ->DigitGroups.make(~digitGrouping=_),
+      },
+      ...v.bracketGroups,
     ],
   };
 
-  let _flattenBracketGroups = (~attributes=?, {openBracketRange, body}) => {
+  let _flattenBracketGroup = (~attributes=?, v, {openBracketRange, body}) => {
     let openBracket =
-      elementWithIndex(~attributes?, "mo", openBracketRange, "(");
-    DigitGroups.empty
+      elementWithRange(~attributes?, "mo", openBracketRange, "(");
+    DigitGroups.digitGroupingEnabled(v.level0Body)
+    ->DigitGroups.make(~digitGrouping=_)
     ->DigitGroups.append(openBracket)
     ->DigitGroups.concat(body);
   };
@@ -106,31 +132,51 @@ module BracketGroups = {
   let _invalidAttributes = [("class", "invalid"), ("stretchy", "false")];
   let appendCloseBracket = (accum, range, superscript): t =>
     switch (accum.bracketGroups) {
-    | [closed, ...nextBracketGroupss] =>
-      let body =
-        _flattenBracketGroups(closed)
-        ->DigitGroups.append(
-            elementWithIndex(~superscript, "mo", range, ")"),
-          )
-        ->DigitGroups.map(createElement("mrow"));
-      transformTopLevelWithArg(
-        {...accum, bracketGroups: nextBracketGroupss},
-        body,
-        DigitGroups.concat,
-      );
+    | [closed, ...nextBracketGroups] =>
+      // We want the superscript to be over the whole bracket group,
+      // not just over the close bracket
+      // Every other element works differently to this
+      let closeBracket =
+        switch (superscript) {
+        | Some({AST_ReduceMap.superscriptBody: _, index}) =>
+          elementWithRange("mo", (fst(range), index), ")")
+        | None => elementWithRange("mo", range, ")")
+        };
+
+      _flattenBracketGroup(accum, closed)
+      ->DigitGroups.append(closeBracket)
+      ->DigitGroups.map(body =>
+          switch (superscript) {
+          | Some({AST_ReduceMap.superscriptBody}) =>
+            createElement(
+              ~attributes=[("id", ":" ++ snd(range)->string_of_int)],
+              "msup",
+              createElement("mrow", body) ++ superscriptBody,
+            )
+          | None => createElement("mrow", body)
+          }
+        )
+      ->transformTopLevelWithArg(
+          {...accum, bracketGroups: nextBracketGroups},
+          _,
+          DigitGroups.concat,
+        );
     | [] =>
       let attributes = _invalidAttributes;
-      let body =
-        elementWithIndex(~attributes, ~superscript, "mo", range, ")");
-      transformTopLevelWithArg(accum, body, DigitGroups.append);
+      elementWithRange(~attributes, ~superscript?, "mo", range, ")")
+      ->transformTopLevelWithArg(accum, _, DigitGroups.append);
     };
 
-  let flatten = ({level0Body, bracketGroups}) => {
+  let flatten = ({level0Body, bracketGroups} as v) => {
     let rec iter = bracketGroups =>
       switch (bracketGroups) {
       | [bracketGroup, ...tail] =>
         let body =
-          _flattenBracketGroups(~attributes=_invalidAttributes, bracketGroup);
+          _flattenBracketGroup(
+            ~attributes=_invalidAttributes,
+            v,
+            bracketGroup,
+          );
         DigitGroups.concat(iter(tail), body);
       | [] => level0Body
       };
@@ -140,29 +186,35 @@ module BracketGroups = {
   let toString = (v, range) => {
     let body = flatten(v);
     switch (DigitGroups.length(body)) {
-    | 0 => placeholder(range)
+    | 0 =>
+      elementWithRange(
+        ~attributes=Placeholder.attributes,
+        Placeholder.element,
+        range,
+        Placeholder.body,
+      )
     | 1 => DigitGroups.toString(body)
     | _ => createElement("mrow", DigitGroups.toString(body))
     };
   };
 };
 
-let empty = BracketGroups.empty;
-let append = (element, body) =>
+let make = BracketGroups.make;
+let append = (body, element) =>
   BracketGroups.transformTopLevelWithArg(body, element, DigitGroups.append);
-let appendDigit = (element, body) =>
+let appendDigit = (body, element) =>
   BracketGroups.transformTopLevelWithArg(
     body,
     element,
     DigitGroups.appendDigit,
   );
-let appendDecimalSeparator = (element, body) =>
+let appendDecimalSeparator = (body, element) =>
   BracketGroups.transformTopLevelWithArg(
     body,
     element,
     DigitGroups.appendDecimalSeparator,
   );
-let appendBasePrefix = (element, body) =>
+let appendBasePrefix = (body, element) =>
   BracketGroups.transformTopLevelWithArg(
     body,
     element,
