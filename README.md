@@ -28,13 +28,13 @@ Putting this all together, and going back to our 'just a text input' analogy, we
 
 ```reason
 /* 1 + 2 */
-[|`DigitS("1"), `Add, `DigitS("2")|]
+[|`DigitS("1"), `Add, `DigitS("2")|];
 
 /* 1 + 2 * 3 */
-[|`DigitS("1"), `Add, `DigitS("2"), `Mul, `DigitS("3")|]
+[|`DigitS("1"), `Add, `DigitS("2"), `Mul, `DigitS("3")|];
 
 /* sin 45 degrees */
-[|`Function(Sin), `DigitS("4"), `DigitS("5"), `Degree|]
+[|`Function(Sin), `DigitS("4"), `DigitS("5"), `Degree|];
 ```
 
 It's worth highlighting that operator precedence isn't encoded here
@@ -57,26 +57,26 @@ There is an analogy to function calls here - if you had a call to `frac(num, den
 
 ```reason
 /* Empty fraction */
-[|`Frac2S, `Arg, `Arg|]
+[|`Frac2S, `Arg, `Arg|];
 
 /* Fraction of one half */
-[|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg|]
+[|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg|];
 
 /* random number between 1 and 10 */
-[|`Rand2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg|]
+[|`Rand2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg|];
 
 /* Empty 2x2 matrix */
-[|TableNS({ numRows: 2, numColumns: 2 }), `Arg, `Arg, `Arg, `Arg|]
+[|TableNS({ numRows: 2, numColumns: 2 }), `Arg, `Arg, `Arg, `Arg|];
 ```
 
 It is possible to nest elements accepting arguments. An `` `Arg `` element corresponds to the most recent element accepting element arguments, until it has received all its arguments. Then it goes to the second most recent, and so forth
 
 ```reason
 /* Fraction of one over another fraction of a half */
-[|`Frac2S, `DigitS("1"), `Arg, `Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Arg|]
+[|`Frac2S, `DigitS("1"), `Arg, `Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Arg|];
 
 /* Fraction of a random number between 1 and 10, all over 2 */
-[|`Frac2S, `Rand2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg, `Arg, `DigitS("2"), `Arg|]
+[|`Frac2S, `Rand2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg, `Arg, `DigitS("2"), `Arg|];
 ```
 
 This does lead to it being possible to represent invalid ASTs, although this should not normally occur. In these cases, extraneous `` `Arg `` elements are dropped, and missing ones are appended to the end
@@ -97,10 +97,10 @@ sin &#x25a1;<sup>&#x25a1;</sup> &#x2192; sin &#x25a1;<sup>&#x25a1;</sup> (functi
 
 ```reason
 /* Fraction of a half with an empty superscript */
-[|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Superscript1, `Arg|]
+[|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Superscript1, `Arg|];
 
 /* Fraction of a half raised to the power of 3 */
-[|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Superscript1, `DigitS("3"), `Arg|]
+[|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Superscript1, `DigitS("3"), `Arg|];
 ```
 
 ### Mutation
@@ -115,10 +115,10 @@ The superscript encoding leads to a really natural editing experience. If you ha
 
 ### Convertion to MathML and TechniCalc Calculator AST
 
-For converting to either MathML or a TechniCalc Calculator AST, we first do a transformation to a node-based AST. For example, The fraction example above transforms to
+For converting to either MathML or a TechniCalc Calculator AST, we first do a transformation to a node-based AST. For example, The fraction example above transforms to something like
 
 ```reason
-type node('t) = `Frac({ fracNum: node('t), den: node('t), superscript: option(node('t)) })
+type node('t) = [| `Frac({ fracNum: node('t), den: node('t), superscript: option(node('t)) }) ]
 ```
 
 The representation of the entire tree would be `type ast = node(list(ast))`
@@ -144,24 +144,30 @@ A side note is that we never fully construct a node-based AST, as the reduction 
 
 Every element of the elements array is addressable by a single index. This index is imporant for MathML, so we know where to put the cursor; and also in the conversion to a TechniCalc Calculator AST, as if there is a parsing error, we need to return the index
 
-To handle this, the `~reduce` and `~map` functions are the start (`i`) and end index of the node (`i'`)
+To handle this, the `~reduce` and `~map` functions are the start (`i`) and end index of the node (`i'`). For a simple digit, `i'` is just `i + 1`, but for a fraction, `i'` will be the `i'` of the last element in the denominator, plus one
 
-MathML will attach these indices to certain MathML elements in the form `id="startIndex:endIndex` (e.g. `id="5:8"`). Every index is representable by at least one of `startIndex` or `endIndex`, with the start index taking precedence. There are never duplicates in the start indices, nor the end indices. If the start or end index, it is ignored. E.g. `id=":5"` only sets the end index to `5`, and does not record a start index
+MathML will attach these indices to certain MathML elements in the form `id="startIndex:endIndex"` (e.g. `id="5:8"`). Every index from 0 to the length of the elements in the element array is representable by at least one of the `startIndex`s or `endIndex`s. There are never duplicates within the start indices or end indices themselves, but you may find an start index is equal to the end index
 
-For an atom with a superscript, `i'` would be after the superscript. However, MathML actually needs the index of the superscript to allow inserting something before the superscript, moving the superscript. For this, any ast node with a superscript is actually represented as,
+This may seem like duplication, but we don't always have the start index. For example, the index after the last element is only representable by an `endIndex`
+
+There are also times where a different MathML element will recieve the indices than the obvious element. For a digit on `1`, we would normally write this as `<mn id="(i):(i')">...</mn>`. However, for a digit of `1` with a superscript of `2` applied, we create am outer `<msup>` element takes the indicies instead of the `<mn>` element. (The `2` in the superscript behaves as normal)
+
+This is bevause if you recall from the superscript mechanics explained above, it's possible to insert an element after the `1`, but before the first element of superscript. To handle this, we track the index of the superscript element in our AST representation
 
 ```reason
 type superscript('t) = { superscriptBody: 't, index: int };
-type node('t) = `Frac({ fracNum: node('t), den: node('t), superscript: option(superscript(node('t))) })
+type node('t) = [
+  | `Digit({ atomNucleus: string, superscript: option(superscript(node('t))) })
+  | `Frac({ fracNum: node('t), den: node('t), superscript: option(superscript(node('t))) })
+]
 ```
 
-Using this, superscripts can have their incides encoded as follows,
+Now we can apply superscript index as the end index of the base `<mn>` element. We allow specifying just one index in an `id` by omitting any indices you don't want to specify. For the `1^2` example above, the resulting MathML looks like this
 
 ```xml
-<!-- 2^3 -->
 <msup id="0:4">
-  <mi id=":1">2</mi>
-  <mi id="2:3">3</mi>
+  <mi id=":1">1</mi>
+  <mi id="2:3">2</mi>
 </msup>
 ```
 
