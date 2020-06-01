@@ -4,15 +4,17 @@ Represents a math AST that can be converted to both MathML and an AST for Techni
 
 ## AST Representation
 
-The main aim of the editor is to make editing as natural as possible. And I decided having it behave mostly like a text input is natural. For reason too, every other editor decided this as well!
+The main aim of the editor is to make editing maths equations as natural as possible. I copy how most word processors (like word) do it - you have a cursor and you can use left and right to scroll through the text. When you have a superscript, the cursor gets smaller and moves upwards
 
-Because of this reason, the primary AST is represented as a a flat array of elements. An element can be anything from a digit, to an operator, to a function like `sin`. In text input analogy, each element is like a character. And in OCaml terms, each element are represented as polymorphic variant type. Some elements are just raw polymorphic variant tags that without take arguments, but where it makes parsing easier - or where required for other reasons - you can get a variant with an argument. E.g. `` `Digit("1") ``
+Functions - like `sin` - act like a single character. You can select directly before the function, or directly after, but you can't edit inside it. Fractions work similar to superscripts. If your cursor is directly before the fraction, pressing right will move you to the numerator, then when you're at the end of the numerator, pressing right will take you to the denominator. When you're at the end of the denominator and press right, you move to directly after the fraction. Square roots act in a similar way
+
+Because of this reason, the primary AST is represented as a a flat array of elements. An element can be anything from a digit, to an operator, to a function like `sin`. In text input analogy, each element is like a character. And in OCaml terms, each element are represented as polymorphic variant type. Some elements are just raw polymorphic variant tags without arguments, but where it makes parsing easier - or where required for other reasons - you can get a variant with an argument. E.g. `` `Digit("1") ``
 
 In reality, we quickly have to break this 'just a text input' analogy. For example, a fraction has a numerator and denominator, which are both editable, and affect both rendering and parsing. Elements that act in this way accept element arguments. These completely separate from the arguments of the polymorphic variant types, and we'll get into more detail later
 
-As well as element arguments, optional superscripts are handled in a special way
+As well as element arguments, optional superscripts are handled in a special way too
 
-There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments is added as a suffix. If the number is dynamic, we suffix with an `N`. If they accept an optional superscript, the `S` suffix is added (after any element argument suffix)
+There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments it takes is added as a suffix (as an integer). If the number is dynamic (like for vectors and matrices), we suffix with an `N`. If they accept an optional superscript, the `S` suffix is added (after any element argument suffix)
 
 - `` `SomeElement `` - No element arguments, no superscript
 - `` `SomeElement1 `` - 1 element argument, no superscript
@@ -47,11 +49,11 @@ This format was picked because
 
 Element arguments alter the way you input expressions for the element. For example, a fraction has a numerator and denominator placed out of line. This element has two element arguments and accepts a superscript, so is represented as `` `Frac2S ``
 
-Here, we need to introduce a special element type, `` `Arg ``. This is purely semantical, and is used to indicate end of one argument. It does not render anything.
+Here, we need to introduce a special element type, `` `Arg ``. This is purely semantical, and is used to indicate end of one argument. It does not render anything
 
-Every element that accepts element arguments must be preceded by an amount of `` `Arg `` elements equal to the number of element arguments accepted. For example, the fraction must be preceded by two `` `Arg `` elements
+Every element that accepts element arguments must be preceded at some point by an amount of `` `Arg `` elements equal to the number of element arguments accepted. For example, the fraction must be preceded by two `` `Arg `` elements
 
-There is an analogy to function calls here - if you had a call to `frac(num, den)`, the function name **and** the opening bracket (`frac(`) are represented as `` `Frac2S ``, and the commas closing bracket are both represented as `` `Arg ``. Putting this together, we get
+There is an analogy to function calls here - if you had a call to `frac(num, den)`, the function name **and** the opening bracket combined (`frac(`) are represented as `` `Frac2S ``, and the commas closing bracket are both use same representation: `` `Arg ``. Putting this together, we get
 
 ```reason
 /* Empty fraction */
@@ -60,8 +62,8 @@ There is an analogy to function calls here - if you had a call to `frac(num, den
 /* Fraction of one half */
 [|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg|]
 
-/* Summation from 1 to 10 */
-[|`Sum2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg|]
+/* random number between 1 and 10 */
+[|`Rand2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg|]
 
 /* Empty 2x2 matrix */
 [|TableNS({ numRows: 2, numColumns: 2 }), `Arg, `Arg, `Arg, `Arg|]
@@ -73,8 +75,8 @@ It is possible to nest elements accepting arguments. An `` `Arg `` element corre
 /* Fraction of one over another fraction of a half */
 [|`Frac2S, `DigitS("1"), `Arg, `Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Arg|]
 
-/* Fraction of a summation from 1 to 10 over 2 */
-[|`Frac2S, `Sum2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg, `Arg, `DigitS("2"), `Arg|]
+/* Fraction of a random number between 1 and 10, all over 2 */
+[|`Frac2S, `Rand2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg, `Arg, `DigitS("2"), `Arg|]
 ```
 
 This does lead to it being possible to represent invalid ASTs, although this should not normally occur. In these cases, extraneous `` `Arg `` elements are dropped, and missing ones are appended to the end
@@ -109,7 +111,7 @@ It is impossible for a user to insert of delete `` `Arg `` elements directly. Th
 
 Some elements have special insertion and deletion logic. For example, if you insert a fraction in the middle of `1 2`, you'll get a fraction of a half, and if you delete that fraction with the numerator and denominator in tact, it will revert to `1 2`. Most other elements don't let you delete them unless they're empty
 
-The superscript encoding leads to a really natural eding experience. If you have one digit raised to a power, you could insert another digit between the the first and the superscript to move the superscript. You could also put brackets between, and the superscript is still maintained
+The superscript encoding leads to a really natural editing experience. If you have one digit raised to a power, you could insert another digit between the the first and the superscript to move the superscript. You could also put a close bracket between the number and the superscript, and the superscript will move to the close bracket - very handy for refactoring equations
 
 ### Convertion to MathML and TechniCalc Calculator AST
 
