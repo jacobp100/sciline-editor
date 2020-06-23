@@ -16,7 +16,7 @@
     "@babel/core": "^7.8.0",
     "@babel/preset-env": "^7.8.0",
     "babel-jest": "^24.9.0",
-    "bs-platform": "^8.0.0-dev.1",
+    "bs-platform": "^8.0.1",
     "esm": "^3.2.22",
     "jest": "^24.9.0",
     "technicalc-calculator": "https://github.com/jacobp100/technicalc-calculator"

@@ -1,5 +1,5 @@
 external mutableCell: ('a, list('a)) => list('a) = "#makemutablelist";
-[@bs.set] external unsafeMutateTail: (list('a), list('a)) => unit = "_1";
+[@bs.set] external unsafeMutateTail: (list('a), list('a)) => unit = "tl";
 
 type t('a) =
   | Empty
