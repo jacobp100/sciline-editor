@@ -3,17 +3,17 @@ open Value_Types;
 
 module AST = TechniCalcCalculator.AST_Types;
 
-let numberIsValidForBase = (base, atomNucleus) =>
-  switch (base, atomNucleus) {
+let numberIsValidForBase = (base, nucleus) =>
+  switch (base, nucleus) {
   | (_, "0" | "1")
-  | (None | Some(AST_Types.Oct | Hex), "2" | "3" | "4" | "5" | "6" | "7")
+  | (None | Some(AST_ReduceMap.Oct | Hex), "2" | "3" | "4" | "5" | "6" | "7")
   | (None | Some(Hex), "8" | "9")
   | (Some(Hex), "A" | "B" | "C" | "D" | "E" | "F") => true
   | _ => false
   };
 
 type numState = {
-  numBase: option(AST_Types.base),
+  numBase: option(AST_ReduceMap.base),
   numString: string,
   numHasDecimal: bool,
   numSup: option(node),
@@ -24,21 +24,20 @@ let reduce = (state, element) =>
   switch (state, element) {
   | (
       {numBase: None, numString: "", numSup: None, magSup: None},
-      `Base(numBase),
+      Base(numBase),
     ) =>
     Some({...state, numBase: Some(numBase)})
-  | ({numSup: None, magSup: None}, `Digit({atomNucleus, superscript}))
-      when numberIsValidForBase(state.numBase, atomNucleus) =>
+  | ({numSup: None, magSup: None}, Digit({nucleus, superscript}))
+      when numberIsValidForBase(state.numBase, nucleus) =>
     Some({
       ...state,
-      numString: state.numString ++ atomNucleus,
+      numString: state.numString ++ nucleus,
       numSup: Belt.Option.map(superscript, superscriptBody),
     })
-  | ({numHasDecimal: false, numSup: None, magSup: None}, `DecimalSeparator) =>
+  | ({numHasDecimal: false, numSup: None, magSup: None}, DecimalSeparator) =>
     Some({...state, numString: state.numString ++ ".", numHasDecimal: true})
-  | ({magSup: None}, `Magnitude({magnitudeValue}))
-      when state.numString != "" =>
-    Some({...state, magSup: Some(magnitudeValue)})
+  | ({magSup: None}, Magnitude({value})) when state.numString != "" =>
+    Some({...state, magSup: Some(value)})
   | _ => None
   };
 

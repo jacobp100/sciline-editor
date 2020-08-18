@@ -2,115 +2,175 @@ type superscript('a) = {
   superscriptBody: 'a,
   index: int,
 };
-type atom('a) = {
-  atomNucleus: string,
-  superscript: option(superscript('a)),
-};
-type customAtom('a) = {
-  customAtomValue: TechniCalcCalculator.Encoding.encoding,
-  mml: string,
-  superscript: option(superscript('a)),
-};
-type frac('a) = {
-  fracNum: 'a,
-  den: 'a,
-  superscript: option(superscript('a)),
-};
-type root('a) = {
-  rootRadicand: 'a,
-  superscript: option(superscript('a)),
-};
-type nroot('a) = {
-  nrootDegree: 'a,
-  radicand: 'a,
-  superscript: option(superscript('a)),
-};
-type magnitude('a) = {magnitudeValue: 'a};
-type nlog('a) = {nlogBase: 'a};
-type unary('a) = {
-  unaryArg: 'a,
-  superscript: option(superscript('a)),
-};
-type randInt('a) = {
-  randIntA: 'a,
-  b: 'a,
-  superscript: option(superscript('a)),
-};
-type stat('a) = {
-  statN: 'a,
-  r: 'a,
-};
-type differential('a) = {
-  differentialX: 'a,
-  body: 'a,
-};
-type integral('a) = {
-  integralA: 'a,
-  b: 'a,
-  body: 'a,
-};
-type iteration('a) = {
-  iterationStart: 'a,
-  iterationEnd: 'a,
-};
-type table('a) = {
-  tableElements: array('a),
-  numRows: int,
-  numColumns: int,
-  superscript: option(superscript('a)),
-};
 
-type t('a) = [
-  | `Abs(unary('a))
-  | `Add
-  | `ArcMinute
-  | `ArcSecond
-  | `Base(AST_Types.base)
-  | `Ceil(unary('a))
-  | `CloseBracket(option(superscript('a)))
-  | `ConstE(option(superscript('a)))
-  | `ConstPi(option(superscript('a)))
-  | `Conj
-  | `CustomAtom(customAtom('a))
-  | `DecimalSeparator
-  | `Degree
-  | `Differential(differential('a))
-  | `Digit(atom('a))
-  | `Div
-  | `Dot
-  | `Factorial
-  | `Floor(unary('a))
-  | `Frac(frac('a))
-  | `Function(AST_Types.func)
-  | `ImaginaryUnit(option(superscript('a)))
-  | `Integral(integral('a))
-  | `Magnitude(magnitude('a))
-  | `Mul
-  | `NCR(stat('a))
-  | `NLog(nlog('a))
-  | `NPR(stat('a))
-  | `NRoot(nroot('a))
-  | `OpenBracket
-  | `Percent
-  | `Product(iteration('a))
-  | `Rand(option(superscript('a)))
-  | `RandInt(randInt('a))
-  | `Round(unary('a))
-  | `Sqrt(root('a))
-  | `Sub
-  | `Sum(iteration('a))
-  | `Superscript('a)
-  | `Table(table('a))
-  | `UnitConversion(AST_Types.unitConversion)
-  | `Variable(atom('a))
-];
+type base =
+  | Bin
+  | Oct
+  | Hex;
+type func =
+  | Sin
+  | Asin
+  | Sinh
+  | Asinh
+  | Cos
+  | Acos
+  | Cosh
+  | Acosh
+  | Tan
+  | Atan
+  | Tanh
+  | Atanh
+  | Log
+  | Re
+  | Im
+  | Gamma;
+type angle =
+  | Degree
+  | ArcMinute
+  | ArcSecond;
+type operator =
+  | Add
+  | Sub
+  | Mul
+  | Div
+  | Dot;
+
+type t('a) =
+  | Abs({
+      arg: 'a,
+      superscript: option(superscript('a)),
+    })
+  | Angle(angle)
+  | Base(base)
+  | Ceil({
+      arg: 'a,
+      superscript: option(superscript('a)),
+    })
+  | CloseBracket(option(superscript('a)))
+  | ConstE(option(superscript('a)))
+  | ConstPi(option(superscript('a)))
+  | Conj
+  | CustomAtom({
+      value: TechniCalcCalculator.Encoding.encoding,
+      mml: string,
+      superscript: option(superscript('a)),
+    })
+  | DecimalSeparator
+  | Differential({
+      x: 'a,
+      body: 'a,
+    })
+  | Digit({
+      nucleus: string,
+      superscript: option(superscript('a)),
+    })
+  | Factorial
+  | Floor({
+      arg: 'a,
+      superscript: option(superscript('a)),
+    })
+  | Frac({
+      num: 'a,
+      den: 'a,
+      superscript: option(superscript('a)),
+    })
+  | Function({
+      func,
+      squareResultSuperscript: option(superscript('a)),
+    })
+  | ImaginaryUnit(option(superscript('a)))
+  | Integral({
+      a: 'a,
+      b: 'a,
+      body: 'a,
+    })
+  | Magnitude({value: 'a})
+  | NCR({
+      n: 'a,
+      r: 'a,
+    })
+  | NLog({base: 'a})
+  | NPR({
+      n: 'a,
+      r: 'a,
+    })
+  | NRoot({
+      degree: 'a,
+      radicand: 'a,
+      superscript: option(superscript('a)),
+    })
+  | OpenBracket
+  | Operator(operator)
+  | Percent
+  | Product({
+      start: 'a,
+      end_: 'a,
+    })
+  | Rand(option(superscript('a)))
+  | RandInt({
+      a: 'a,
+      b: 'a,
+      superscript: option(superscript('a)),
+    })
+  | Round({
+      arg: 'a,
+      superscript: option(superscript('a)),
+    })
+  | Sqrt({
+      radicand: 'a,
+      superscript: option(superscript('a)),
+    })
+  | Sum({
+      start: 'a,
+      end_: 'a,
+    })
+  | Superscript('a)
+  | Vector({
+      elements: array('a),
+      superscript: option(superscript('a)),
+    })
+  | Table({
+      elements: array('a),
+      numRows: int,
+      numColumns: int,
+      superscript: option(superscript('a)),
+    })
+  | UnitConversion({
+      fromUnits: TechniCalcCalculator.Unit_Types.units,
+      toUnits: TechniCalcCalculator.Unit_Types.units,
+    })
+  | Variable({
+      nucleus: string,
+      superscript: option(superscript('a)),
+    });
 
 type range = (int, int);
 
 exception ExpectedArg;
 exception UnexpectedArg(int);
 
-let superscriptBody = s => s.superscriptBody;
+let superscriptBody = superscript => superscript.superscriptBody;
+
+let%private digitNucleus = digit =>
+  switch (digit) {
+  | AST_Types.N0_S => "0"
+  | N1_S => "1"
+  | N2_S => "2"
+  | N3_S => "3"
+  | N4_S => "4"
+  | N5_S => "5"
+  | N6_S => "6"
+  | N7_S => "7"
+  | N8_S => "8"
+  | N9_S => "9"
+  | NA_S => "A"
+  | NB_S => "B"
+  | NC_S => "C"
+  | ND_S => "D"
+  | NE_S => "E"
+  | NF_S => "F"
+  | _ => failwith("digit")
+  };
 
 let reduceMap =
     (
@@ -122,128 +182,156 @@ let reduceMap =
     : 'value => {
   let rec readNodeExn = (i): (t('a), int) =>
     switch (Belt.Array.getExn(input, i)) {
-    | #AST_Types.atom as v => (v, i + 1)
-    | `CloseBracketS =>
+    | Conj => (Conj, i + 1)
+    | DecimalSeparator => (DecimalSeparator, i + 1)
+    | Factorial => (Factorial, i + 1)
+    | OpenBracket => (OpenBracket, i + 1)
+    | Percent => (Percent, i + 1)
+    | Bin => (Base(Bin), i + 1)
+    | Oct => (Base(Oct), i + 1)
+    | Hex => (Base(Hex), i + 1)
+    | Add => (Operator(Add), i + 1)
+    | Sub => (Operator(Sub), i + 1)
+    | Mul => (Operator(Mul), i + 1)
+    | Div => (Operator(Div), i + 1)
+    | Dot => (Operator(Dot), i + 1)
+    | Asin => func(i, Asin)
+    | Asinh => func(i, Asinh)
+    | Acos => func(i, Acos)
+    | Acosh => func(i, Acosh)
+    | Atan => func(i, Atan)
+    | Atanh => func(i, Atanh)
+    | Log => func(i, Log)
+    | Re => func(i, Re)
+    | Im => func(i, Im)
+    | SinS => funcS(i, Sin)
+    | SinhS => funcS(i, Sinh)
+    | CosS => funcS(i, Cos)
+    | CoshS => funcS(i, Cosh)
+    | TanS => funcS(i, Tan)
+    | TanhS => funcS(i, Tanh)
+    | Gamma => funcS(i, Gamma)
+    | Degree => (Angle(Degree), i + 1)
+    | ArcMinute => (Angle(ArcMinute), i + 1)
+    | ArcSecond => (Angle(ArcSecond), i + 1)
+    | UnitConversion({fromUnits, toUnits}) => (
+        UnitConversion({fromUnits, toUnits}),
+        i + 1,
+      )
+    | CloseBracketS =>
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
-      (`CloseBracket(superscript), i');
-    | `ConstPiS =>
+      (CloseBracket(superscript), i');
+    | ConstPiS =>
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
-      (`ConstPi(superscript), i');
-    | `ConstES =>
+      (ConstPi(superscript), i');
+    | ConstES =>
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
-      (`ConstE(superscript), i');
-    | `CustomAtomS({AST_Types.value: customAtomValue, mml}) =>
+      (ConstE(superscript), i');
+    | CustomAtomS({value, mml}) =>
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
-      (`CustomAtom({customAtomValue, mml, superscript}), i');
-    | `DigitS(atomNucleus) =>
+      (CustomAtom({value, mml, superscript}), i');
+    | (N0_S | N1_S | N2_S | N3_S | N4_S | N5_S | N6_S | N7_S | N8_S | N9_S) as digit
+    | (NA_S | NB_S | NC_S | ND_S | NE_S | NF_S) as digit =>
+      let nucleus = digitNucleus(digit);
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
-      (`Digit({atomNucleus, superscript}), i');
-    | `ImaginaryUnitS =>
+      (Digit({nucleus, superscript}), i');
+    | ImaginaryUnitS =>
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
-      (`ImaginaryUnit(superscript), i');
-    | `RandS =>
+      (ImaginaryUnit(superscript), i');
+    | RandS =>
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
-      (`Rand(superscript), i');
-    | `VariableS(atomNucleus) =>
+      (Rand(superscript), i');
+    | VariableS(nucleus) =>
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
-      (`Variable({atomNucleus, superscript}), i');
-    | `Magnitude1 =>
-      let (magnitudeValue, i') = readArg(i + 1);
-      (`Magnitude({magnitudeValue: magnitudeValue}), i');
-    | `Superscript1 =>
+      (Variable({nucleus, superscript}), i');
+    | Magnitude1 =>
+      let (value, i') = readArg(i + 1);
+      (Magnitude({value: value}), i');
+    | Superscript1 =>
       let (superscript, i') = readArg(i + 1);
-      (`Superscript(superscript), i');
-    | `NLog1 =>
-      let (nlogBase, i') = readArg(i + 1);
-      (`NLog({nlogBase: nlogBase}), i');
-    | `Abs1S =>
-      let (unaryArg, i') = readArg(i + 1);
+      (Superscript(superscript), i');
+    | NLog1 =>
+      let (base, i') = readArg(i + 1);
+      (NLog({base: base}), i');
+    | Abs1S =>
+      let (arg, i') = readArg(i + 1);
       let (superscript, i') = readSuperscript(i');
-      (`Abs({unaryArg, superscript}), i');
-    | `Ceil1S =>
-      let (unaryArg, i') = readArg(i + 1);
+      (Abs({arg, superscript}), i');
+    | Ceil1S =>
+      let (arg, i') = readArg(i + 1);
       let (superscript, i') = readSuperscript(i');
-      (`Ceil({unaryArg, superscript}), i');
-    | `Floor1S =>
-      let (unaryArg, i') = readArg(i + 1);
+      (Ceil({arg, superscript}), i');
+    | Floor1S =>
+      let (arg, i') = readArg(i + 1);
       let (superscript, i') = readSuperscript(i');
-      (`Floor({unaryArg, superscript}), i');
-    | `Round1S =>
-      let (unaryArg, i') = readArg(i + 1);
+      (Floor({arg, superscript}), i');
+    | Round1S =>
+      let (arg, i') = readArg(i + 1);
       let (superscript, i') = readSuperscript(i');
-      (`Round({unaryArg, superscript}), i');
-    | `Sqrt1S =>
-      let (rootRadicand, i') = readArg(i + 1);
+      (Round({arg, superscript}), i');
+    | Sqrt1S =>
+      let (radicand, i') = readArg(i + 1);
       let (superscript, i') = readSuperscript(i');
-      (`Sqrt({rootRadicand, superscript}), i');
-    | `Differential2 =>
+      (Sqrt({radicand, superscript}), i');
+    | Differential2 =>
       let (body, i') = readArg(i + 1);
-      let (differentialX, i') = readArg(i');
-      (`Differential({differentialX, body}), i');
-    | `NCR2 =>
-      let (statN, i') = readArg(i + 1);
+      let (x, i') = readArg(i');
+      (Differential({x, body}), i');
+    | NCR2 =>
+      let (n, i') = readArg(i + 1);
       let (r, i') = readArg(i');
-      (`NCR({statN, r}), i');
-    | `NPR2 =>
-      let (statN, i') = readArg(i + 1);
+      (NCR({n, r}), i');
+    | NPR2 =>
+      let (n, i') = readArg(i + 1);
       let (r, i') = readArg(i');
-      (`NPR({statN, r}), i');
-    | `Product2 =>
-      let (iterationStart, i') = readArg(i + 1);
-      let (iterationEnd, i') = readArg(i');
-      (`Product({iterationStart, iterationEnd}), i');
-    | `Sum2 =>
-      let (iterationStart, i') = readArg(i + 1);
-      let (iterationEnd, i') = readArg(i');
-      (`Sum({iterationStart, iterationEnd}), i');
-    | `Frac2S =>
-      let (fracNum, i') = readArg(i + 1);
+      (NPR({n, r}), i');
+    | Product2 =>
+      let (start, i') = readArg(i + 1);
+      let (end_, i') = readArg(i');
+      (Product({start, end_}), i');
+    | Sum2 =>
+      let (start, i') = readArg(i + 1);
+      let (end_, i') = readArg(i');
+      (Sum({start, end_}), i');
+    | Frac2S =>
+      let (num, i') = readArg(i + 1);
       let (den, i') = readArg(i');
       let (superscript, i') = readSuperscript(i');
-      (`Frac({fracNum, den, superscript}), i');
-    | `NRoot2S =>
-      let (nrootDegree, i') = readArg(i + 1);
+      (Frac({num, den, superscript}), i');
+    | NRoot2S =>
+      let (degree, i') = readArg(i + 1);
       let (radicand, i') = readArg(i');
       let (superscript, i') = readSuperscript(i');
-      (`NRoot({nrootDegree, radicand, superscript}), i');
-    | `RandInt2S =>
-      let (randIntA, i') = readArg(i + 1);
+      (NRoot({degree, radicand, superscript}), i');
+    | RandInt2S =>
+      let (a, i') = readArg(i + 1);
       let (b, i') = readArg(i');
       let (superscript, i') = readSuperscript(i');
-      (`RandInt({randIntA, b, superscript}), i');
-    | `Integral3 =>
-      let (integralA, i') = readArg(i + 1);
+      (RandInt({a, b, superscript}), i');
+    | Integral3 =>
+      let (a, i') = readArg(i + 1);
       let (b, i') = readArg(i');
       let (body, i') = readArg(i');
-      (`Integral({integralA, b, body}), i');
-    | `TableNS({numRows, numColumns}) =>
-      let i' = i + 1;
-      let (i', tableElements) =
-        ArrayUtil.foldMake(
-          numRows * numColumns,
-          i',
-          (s, _) => {
-            let (element, index) = readArg(s);
-            (index, element);
-          },
-        );
-      let (superscript, i') = readSuperscript(i');
-      (`Table({tableElements, numRows, numColumns, superscript}), i');
-    | `Arg => failwith("Arg")
+      (Integral({a, b, body}), i');
+    | Vector2S => vectorS(i, ~numElements=2)
+    | Vector3S => vectorS(i, ~numElements=3)
+    | Matrix4S => tableS(i, ~numRows=2, ~numColumns=2)
+    | Matrix9S => tableS(i, ~numRows=3, ~numColumns=3)
+    | Arg => failwith("Arg")
     }
   and readArg = (~accum=initial, ~start=?, i) => {
     let start = Belt.Option.getWithDefault(start, i);
     switch (Belt.Array.get(input, i)) {
     | None => raise(ExpectedArg)
-    | Some(`Arg) =>
+    | Some(Arg) =>
       let i' = i;
       (map(accum, (start, i')), i' + 1);
     | Some(_) =>
@@ -253,16 +341,52 @@ let reduceMap =
   }
   and readSuperscript = i =>
     switch (Belt.Array.get(input, i)) {
-    | Some(`Superscript1) =>
+    | Some(Superscript1) =>
       let (superscriptBody, i') = readArg(i + 1);
       (Some({superscriptBody, index: i}), i');
     | _ => (None, i)
-    };
+    }
+  and func = (i, func) => {
+    (Function({func, squareResultSuperscript: None}), i + 1);
+  }
+  and funcS = (i, func) => {
+    let i' = i + 1;
+    let (squareResultSuperscript, i') = readSuperscript(i');
+    (Function({func, squareResultSuperscript}), i');
+  }
+  and vectorS = (i, ~numElements) => {
+    let i' = i + 1;
+    let (i', elements) =
+      ArrayUtil.foldMake(
+        numElements,
+        i',
+        (s, _) => {
+          let (element, index) = readArg(s);
+          (index, element);
+        },
+      );
+    let (superscript, i') = readSuperscript(i');
+    (Vector({elements, superscript}), i');
+  }
+  and tableS = (i, ~numRows, ~numColumns) => {
+    let i' = i + 1;
+    let (i', elements) =
+      ArrayUtil.foldMake(
+        numRows * numColumns,
+        i',
+        (s, _) => {
+          let (element, index) = readArg(s);
+          (index, element);
+        },
+      );
+    let (superscript, i') = readSuperscript(i');
+    (Table({elements, numRows, numColumns, superscript}), i');
+  };
 
   let rec readUntilEnd = (~accum=initial, i) =>
     switch (Belt.Array.get(input, i)) {
     | None => map(accum, (0, i))
-    | Some(`Arg) => raise(UnexpectedArg(i))
+    | Some(Arg) => raise(UnexpectedArg(i))
     | Some(_) =>
       let (node, i') = readNodeExn(i);
       readUntilEnd(~accum=reduce(accum, node, (i, i')), i');

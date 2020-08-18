@@ -7,17 +7,18 @@ let countInsertables = (x: array(AST_Types.t), ~from, ~direction) => {
   let rec iter = (~current, ~bracketLevel, ~argLevel, ~from) =>
     switch (Belt.Array.get(x, from)) {
     | None => current
-    | Some(#AST_Types.operatorAtom) when bracketLevel == 0 && argLevel == 0 => current
+    | Some(Add | Sub | Mul | Div | Dot)
+        when bracketLevel == 0 && argLevel == 0 => current
     | Some(v) =>
       let bracketLevel =
         switch (v) {
-        | `OpenBracket => bracketLevel + 1
-        | `CloseBracketS => bracketLevel - 1
+        | OpenBracket => bracketLevel + 1
+        | CloseBracketS => bracketLevel - 1
         | _ => bracketLevel
         };
       let argLevel =
         switch (v) {
-        | `Arg => argLevel - 1
+        | Arg => argLevel - 1
         | _ => argLevel + AST_Types.argCountExn(v)
         };
       let shouldBreak =
@@ -41,27 +42,27 @@ let countInsertables = (x: array(AST_Types.t), ~from, ~direction) => {
 
 let insertElement = (ast, element, index) => {
   switch (element) {
-  | `Superscript1
-  | `Sqrt1S =>
+  | AST_Types.Superscript1
+  | Sqrt1S =>
     let e = countInsertables(ast, ~from=index, ~direction=Forwards);
     let (ast, arg) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
-    let combined = Belt.Array.concatMany([|[|element|], arg, [|`Arg|]|]);
+    let combined = Belt.Array.concatMany([|[|element|], arg, [|Arg|]|]);
     let ast = ArrayUtil.insertArray(ast, combined, index);
     (ast, index + 1);
-  | `NRoot2S =>
+  | NRoot2S =>
     let e = countInsertables(ast, ~from=index, ~direction=Forwards);
     let (ast, radicand) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
     let combined =
-      Belt.Array.concatMany([|[|element, `Arg|], radicand, [|`Arg|]|]);
+      Belt.Array.concatMany([|[|element, Arg|], radicand, [|Arg|]|]);
     let ast = ArrayUtil.insertArray(ast, combined, index);
     (ast, index + 1);
-  | `Frac2S =>
+  | Frac2S =>
     let s = countInsertables(ast, ~from=index - 1, ~direction=Backwards);
     let e = countInsertables(ast, ~from=index, ~direction=Forwards);
     let (ast, den) = ArrayUtil.splice(ast, ~offset=index, ~len=e);
     let (ast, num) = ArrayUtil.splice(ast, ~offset=index - s, ~len=s);
     let frac =
-      Belt.Array.concatMany([|[|element|], num, [|`Arg|], den, [|`Arg|]|]);
+      Belt.Array.concatMany([|[|element|], num, [|Arg|], den, [|Arg|]|]);
     let ast = ArrayUtil.insertArray(ast, frac, index - s);
     let nextIndex = s > 0 ? index + 2 : index + 1;
     (ast, nextIndex);
@@ -70,7 +71,7 @@ let insertElement = (ast, element, index) => {
       switch (AST_Types.argCountExn(element)) {
       | 0 => [|element|]
       | argCount =>
-        let elements = Belt.Array.make(argCount + 1, `Arg);
+        let elements = Belt.Array.make(argCount + 1, AST_Types.Arg);
         Belt.Array.setExn(elements, 0, element);
         elements;
       };

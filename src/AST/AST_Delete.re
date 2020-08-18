@@ -1,7 +1,7 @@
 let rec matchNEmptyArgs = (ast, ~index, ~count) =>
   if (count == 0) {
     true;
-  } else if (ast->Belt.Array.get(index) != Some(`Arg)) {
+  } else if (ast->Belt.Array.get(index) != Some(AST_Types.Arg)) {
     false;
   } else {
     matchNEmptyArgs(ast, ~index=index + 1, ~count=count - 1);
@@ -33,10 +33,9 @@ type deletionMode =
 
 let deletionMode = (ast, index) =>
   switch (Belt.Array.get(ast, index)) {
-  | Some(`Arg) => Keep
-  | Some(`Superscript1 | `Sqrt1S | `Frac2S) =>
-    Spread(nArgsSlice(ast, index))
-  | Some(`NRoot2S) =>
+  | Some(AST_Types.Arg) => Keep
+  | Some(Superscript1 | Sqrt1S | Frac2S) => Spread(nArgsSlice(ast, index))
+  | Some(NRoot2S) =>
     let degreeIsEmpty = matchNEmptyArgs(ast, ~index=index + 1, ~count=1);
     degreeIsEmpty ? Spread(nArgsSlice(ast, index, ~skipInitial=1)) : Keep;
   | Some(v) =>
@@ -66,7 +65,7 @@ let deleteAtIndexExn = (ast, startIndex) => {
 
 let deleteEmptySuperscript = (ast, index) =>
   switch (Belt.Array.get(ast, index), Belt.Array.get(ast, index + 1)) {
-  | (Some(`Superscript1), Some(`Arg)) =>
+  | (Some(AST_Types.Superscript1), Some(Arg)) =>
     Belt.Array.concat(
       Belt.Array.slice(ast, ~offset=0, ~len=index),
       Belt.Array.sliceToEnd(ast, index + 2),

@@ -49,6 +49,6 @@ let closeBracket = ({level0Body, bracketGroups}) =>
 
 let toList = ({level0Body, bracketGroups}) =>
   switch (bracketGroups) {
-  | [] => `Ok(MutableListBuilder.toList(level0Body))
-  | [{index}, ..._] => `Error(index)
+  | [] => Ok(MutableListBuilder.toList(level0Body))
+  | [{index}, ..._] => Error(index)
   };

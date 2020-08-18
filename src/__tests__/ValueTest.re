@@ -3,18 +3,18 @@ open AST_Types;
 
 let parseEval = v =>
   switch (Value.parse(v)) {
-  | `Ok(v) => Some(TechniCalcCalculator.AST.eval(v))
+  | Ok(v) => Some(TechniCalcCalculator.AST.eval(v))
   | _ => None
   };
 
 let ofString = TechniCalcCalculator.Types.ofString;
 
 test("Parses with bodmas", (.) => {
-  parseEval([|`DigitS("1"), `Sub, `DigitS("2"), `Add, `DigitS("3")|])
+  parseEval([|N1_S, Sub, N2_S, Add, N3_S|])
   ->expect
   ->toEqual(Some(ofString("2")));
 
-  parseEval([|`DigitS("4"), `Div, `DigitS("2"), `Mul, `DigitS("3")|])
+  parseEval([|N4_S, Div, N2_S, Mul, N3_S|])
   ->expect
   ->toEqual(Some(ofString("6")));
 
@@ -22,15 +22,13 @@ test("Parses with bodmas", (.) => {
 });
 
 test("Parses unary operators", (.) => {
-  parseEval([|`Sub, `DigitS("2")|])
+  parseEval([|Sub, N2_S|])->expect->toEqual(Some(ofString("-2")));
+
+  parseEval([|Sub, Sub, Sub, N2_S|])
   ->expect
   ->toEqual(Some(ofString("-2")));
 
-  parseEval([|`Sub, `Sub, `Sub, `DigitS("2")|])
-  ->expect
-  ->toEqual(Some(ofString("-2")));
-
-  parseEval([|`DigitS("1"), `Sub, `Sub, `Sub, `DigitS("2")|])
+  parseEval([|N1_S, Sub, Sub, Sub, N2_S|])
   ->expect
   ->toEqual(Some(ofString("-1")));
 
@@ -39,15 +37,15 @@ test("Parses unary operators", (.) => {
 
 test("Parses brackets", (.) => {
   parseEval([|
-    `DigitS("2"),
-    `Mul,
-    `OpenBracket,
-    `DigitS("3"),
-    `Add,
-    `DigitS("4"),
-    `CloseBracketS,
-    `Mul,
-    `DigitS("2"),
+    N2_S,
+    Mul,
+    OpenBracket,
+    N3_S,
+    Add,
+    N4_S,
+    CloseBracketS,
+    Mul,
+    N2_S,
   |])
   ->expect
   ->toEqual(Some(ofString("28")));
@@ -56,11 +54,9 @@ test("Parses brackets", (.) => {
 });
 
 test("Parses functions", (.) => {
-  parseEval([|`Function(Cos), `DigitS("0")|])
-  ->expect
-  ->toEqual(Some(ofString("1")));
+  parseEval([|CosS, N0_S|])->expect->toEqual(Some(ofString("1")));
 
-  parseEval([|`Function(Cos), `OpenBracket, `DigitS("0"), `CloseBracketS|])
+  parseEval([|CosS, OpenBracket, N0_S, CloseBracketS|])
   ->expect
   ->toEqual(Some(ofString("1")));
 
@@ -68,30 +64,21 @@ test("Parses functions", (.) => {
 });
 
 test("Parses iteration operators", (.) => {
-  parseEval([|
-    `Sum2,
-    `DigitS("0"),
-    `Arg,
-    `DigitS("3"),
-    `Arg,
-    `VariableS("x"),
-    `Add,
-    `DigitS("1"),
-  |])
+  parseEval([|Sum2, N0_S, Arg, N3_S, Arg, VariableS("x"), Add, N1_S|])
   ->expect
   ->toEqual(Some(ofString("7")));
 
   parseEval([|
-    `Sum2,
-    `DigitS("0"),
-    `Arg,
-    `DigitS("3"),
-    `Arg,
-    `OpenBracket,
-    `VariableS("x"),
-    `Add,
-    `DigitS("1"),
-    `CloseBracketS,
+    Sum2,
+    N0_S,
+    Arg,
+    N3_S,
+    Arg,
+    OpenBracket,
+    VariableS("x"),
+    Add,
+    N1_S,
+    CloseBracketS,
   |])
   ->expect
   ->toEqual(Some(ofString("10")));

@@ -1,17 +1,15 @@
-open AST_Types;
-
 let stringOfOperator = x =>
   switch (x) {
-  | `Add => "+"
-  | `Sub => "-"
-  | `Mul => "&#x00D7;"
-  | `Div => "&#x00F7;"
-  | `Dot => "&#xb7;"
+  | AST_ReduceMap.Add => "+"
+  | Sub => "-"
+  | Mul => "&#x00D7;"
+  | Div => "&#x00F7;"
+  | Dot => "&#xb7;"
   };
 
 let stringOfFunction = x =>
   switch (x) {
-  | Sin => "sin"
+  | AST_ReduceMap.Sin => "sin"
   | Asin => "arcsin"
   | Sinh => "sinh"
   | Asinh => "arcsinh"
@@ -31,7 +29,7 @@ let stringOfFunction = x =>
 
 let stringOfBase = base =>
   switch (base) {
-  | Bin => "0b"
+  | AST_ReduceMap.Bin => "0b"
   | Oct => "0o"
   | Hex => "0x"
   };

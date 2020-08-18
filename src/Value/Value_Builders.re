@@ -1,18 +1,14 @@
-open AST_ReduceMap;
-open AST_Types;
-open Value_Types;
-
 module AST = TechniCalcCalculator.AST_Types;
 
 let withSuperscript = (value, superscript) =>
   switch (superscript) {
-  | Some({superscriptBody}) => AST.pow(value, superscriptBody)
+  | Some(AST_ReduceMap.{superscriptBody}) => AST.pow(value, superscriptBody)
   | None => value
   };
 
 let handleGenericFunction = (arg, fn) =>
   switch (fn) {
-  | Sin => AST.sin(arg)
+  | AST_ReduceMap.Sin => AST.sin(arg)
   | Asin => AST.asin(arg)
   | Sinh => AST.sinh(arg)
   | Asinh => AST.asinh(arg)
@@ -32,19 +28,23 @@ let handleGenericFunction = (arg, fn) =>
 
 let handleFunction = (arg, fn) =>
   switch (fn) {
-  | GenericFunction(fn) => handleGenericFunction(arg, fn)
-  | NLog({nlogBase}) => AST.div(AST.log(arg), AST.log(nlogBase))
-  | Sum({iterationStart, iterationEnd}) =>
-    AST.sum(iterationStart, iterationEnd, arg)
-  | Product({iterationStart, iterationEnd}) =>
-    AST.product(iterationStart, iterationEnd, arg)
+  | Value_Types.GenericFunction({func, squareResultSuperscript}) =>
+    let value = handleGenericFunction(arg, func);
+    switch (squareResultSuperscript) {
+    | Some(squareResultSuperscript) =>
+      AST.pow(value, squareResultSuperscript)
+    | None => value
+    };
+  | NLog({base}) => AST.div(AST.log(arg), AST.log(base))
+  | Sum({start, end_}) => AST.sum(start, end_, arg)
+  | Product({start, end_}) => AST.product(start, end_, arg)
   };
 
 let handleOp = (op, a, b) =>
   switch (op) {
-  | `Add => AST.add(a, b)
-  | `Sub => AST.sub(a, b)
-  | `Mul => AST.mul(a, b)
-  | `Div => AST.div(a, b)
-  | `Dot => AST.dot(a, b)
+  | AST_ReduceMap.Add => AST.add(a, b)
+  | Sub => AST.sub(a, b)
+  | Mul => AST.mul(a, b)
+  | Div => AST.div(a, b)
+  | Dot => AST.dot(a, b)
   };

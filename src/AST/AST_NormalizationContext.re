@@ -1,5 +1,3 @@
-type iterators = [ | `Sum2 | `Product2 | `Differential2 | `Integral3];
-
 let validityStackReducer = prependValidityStack => {
   let reducerFn = ((range, validityStack), element, i) => {
     let range =
@@ -9,7 +7,7 @@ let validityStackReducer = prependValidityStack => {
       };
     let validityStack =
       switch (element) {
-      | `Arg =>
+      | AST_Types.Arg =>
         Belt.List.tail(validityStack)
         ->Belt.Option.getWithDefault(validityStack)
       | e => prependValidityStack(. validityStack, e)
@@ -22,29 +20,39 @@ let validityStackReducer = prependValidityStack => {
 let noTableRanges =
   validityStackReducer((. validityStack, element) =>
     switch (element) {
-    | `Frac2S => [/* num */ true, /* den */ false, ...validityStack]
-    | `Abs1S
-    | `Floor1S
-    | `Ceil1S
-    | `Round1S => [true, ...validityStack]
+    | AST_Types.Frac2S => [/* num */ true, /* den */ false, ...validityStack]
+    | Abs1S
+    | Floor1S
+    | Ceil1S
+    | Round1S => [true, ...validityStack]
     | _ =>
       let argCount = AST_Types.argCountExn(element);
       validityStack->ListUtil.prependMany(argCount, false);
     }
   );
 
+let isIterator = element =>
+  switch (element) {
+  | AST_Types.Sum2
+  | Product2
+  | Differential2
+  | Integral3 => true
+  | _ => false
+  };
+
 let noIterationRanges =
   validityStackReducer((. validityStack, element) => {
     let argCount = AST_Types.argCountExn(element);
-    switch (element) {
-    | #iterators => validityStack->ListUtil.prependMany(argCount, false)
-    | _ => validityStack->ListUtil.prependMany(argCount, true)
-    };
+    validityStack->ListUtil.prependMany(argCount, isIterator(element));
   });
 
 let elementIsValid = (ast: array(AST_Types.t), element: AST_Types.t, index) =>
   switch (element) {
-  | #iterators => !noIterationRanges(ast)->Ranges.contains(index)
-  | `TableNS(_) => !noTableRanges(ast)->Ranges.contains(index)
+  | element when isIterator(element) =>
+    !noIterationRanges(ast)->Ranges.contains(index)
+  | Vector2S
+  | Vector3S
+  | Matrix4S
+  | Matrix9S => !noTableRanges(ast)->Ranges.contains(index)
   | _ => true
   };

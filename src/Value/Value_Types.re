@@ -1,14 +1,21 @@
-open AST_ReduceMap;
-
 type node = TechniCalcCalculator.AST_Types.t;
 
 type funcitionLike =
-  | GenericFunction(AST_Types.func)
-  | NLog(nlog(node))
-  | Sum(iteration(node))
-  | Product(iteration(node));
+  | GenericFunction({
+      func: AST_ReduceMap.func,
+      squareResultSuperscript: option(node),
+    })
+  | NLog({base: node})
+  | Sum({
+      start: node,
+      end_: node,
+    })
+  | Product({
+      start: node,
+      end_: node,
+    });
 
 type partialNode =
   | Resolved(node)
-  | Unresolved(t(node), int)
+  | Unresolved(AST_ReduceMap.t(node), int)
   | UnresolvedFunction(funcitionLike, int);

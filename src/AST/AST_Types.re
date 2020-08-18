@@ -1,101 +1,195 @@
-type base =
-  | Bin
-  | Oct
-  | Hex;
-type func =
-  | Sin
-  | Asin
-  | Sinh
-  | Asinh
-  | Cos
+type t =
+  /* Arg */
+  | Arg
+  /* Atom */
   | Acos
-  | Cosh
   | Acosh
-  | Tan
+  | Add
+  | ArcMinute
+  | ArcSecond
+  | Asin
+  | Asinh
   | Atan
-  | Tanh
   | Atanh
-  | Log
-  | Re
+  | Bin
+  | Conj
+  | DecimalSeparator
+  | Degree
+  | Div
+  | Dot
+  | Factorial
+  | Gamma
+  | Hex
   | Im
-  | Gamma;
-type unitConversion = {
-  fromUnits: TechniCalcCalculator.Unit_Types.units,
-  toUnits: TechniCalcCalculator.Unit_Types.units,
-};
-type customAtom = {
-  value: TechniCalcCalculator.Encoding.encoding,
-  mml: string,
-};
-type table = {
-  numRows: int,
-  numColumns: int,
-};
-
-type operatorAtom = [ | `Add | `Div | `Dot | `Mul | `Sub];
-
-type atom = [
-  operatorAtom
-  | `ArcMinute
-  | `ArcSecond
-  | `Base(base)
-  | `Conj
-  | `DecimalSeparator
-  | `Degree
-  | `Factorial
-  | `Function(func)
-  | `OpenBracket
-  | `Percent
-  | `UnitConversion(unitConversion)
-];
-
-type atomS = [
-  | `CloseBracketS
-  | `ConstES
-  | `ConstPiS
-  | `CustomAtomS(customAtom)
-  | `DigitS(string)
-  | `ImaginaryUnitS
-  | `RandS
-  | `VariableS(string)
-];
-
-type atom1 = [ | `Magnitude1 | `NLog1 | `Superscript1];
-type atom1S = [ | `Abs1S | `Ceil1S | `Floor1S | `Round1S | `Sqrt1S];
-type atom2 = [ | `Differential2 | `NCR2 | `NPR2 | `Product2 | `Sum2];
-type atom2S = [ | `Frac2S | `NRoot2S | `RandInt2S];
-type atom3 = [ | `Integral3];
-type atomNS = [ | `TableNS(table)];
-
-type t = [
-  | `Arg
-  | atom
-  | atomS
-  | atom1
-  | atom1S
-  | atom2
-  | atom2S
-  | atom3
-  | atomNS
-];
+  | Log
+  | Mul
+  | Oct
+  | OpenBracket
+  | Percent
+  | Re
+  | Sub
+  | UnitConversion({
+      fromUnits: TechniCalcCalculator.Unit_Types.units,
+      toUnits: TechniCalcCalculator.Unit_Types.units,
+    })
+  /* AtomS */
+  | CloseBracketS
+  | ConstES
+  | ConstPiS
+  | CoshS
+  | CosS
+  | ImaginaryUnitS
+  | N0_S
+  | N1_S
+  | N2_S
+  | N3_S
+  | N4_S
+  | N5_S
+  | N6_S
+  | N7_S
+  | N8_S
+  | N9_S
+  | NA_S
+  | NB_S
+  | NC_S
+  | ND_S
+  | NE_S
+  | NF_S
+  | RandS
+  | SinhS
+  | SinS
+  | TanhS
+  | TanS
+  | CustomAtomS({
+      value: TechniCalcCalculator.Encoding.encoding,
+      mml: string,
+    })
+  | VariableS(string)
+  /* Atom1 */
+  | Magnitude1
+  | NLog1
+  | Superscript1
+  /* Atom1S */
+  | Abs1S
+  | Ceil1S
+  | Floor1S
+  | Round1S
+  | Sqrt1S
+  /* Atom2 */
+  | Differential2
+  | NCR2
+  | NPR2
+  | Product2
+  | Sum2
+  /* Atom2S */
+  | Frac2S
+  | NRoot2S
+  | RandInt2S
+  | Vector2S
+  /* Atom3 */
+  | Integral3
+  /* Atom3S */
+  | Vector3S
+  /* Matrices */
+  | Matrix4S
+  | Matrix9S;
 
 let argCountExn = (arg: t) =>
   switch (arg) {
-  | `Arg => failwith("arg")
-  | #atom
-  | #atomS => 0
-  | #atom1
-  | #atom1S => 1
-  | #atom2
-  | #atom2S => 2
-  | #atom3 => 3
-  | `TableNS({numRows, numColumns}) => numRows * numColumns
+  /* Arg */
+  | Arg => failwith("arg")
+  /* Atom */
+  | Acos
+  | Acosh
+  | Add
+  | ArcMinute
+  | ArcSecond
+  | Asin
+  | Asinh
+  | Atan
+  | Atanh
+  | Bin
+  | Conj
+  | DecimalSeparator
+  | Degree
+  | Div
+  | Dot
+  | Factorial
+  | Gamma
+  | Hex
+  | Im
+  | Log
+  | Mul
+  | Oct
+  | OpenBracket
+  | Percent
+  | Re
+  | Sub
+  | UnitConversion(_)
+  /* AtomS */
+  | CloseBracketS
+  | ConstES
+  | ConstPiS
+  | CoshS
+  | CosS
+  | CustomAtomS(_)
+  | ImaginaryUnitS
+  | N0_S
+  | N1_S
+  | N2_S
+  | N3_S
+  | N4_S
+  | N5_S
+  | N6_S
+  | N7_S
+  | N8_S
+  | N9_S
+  | NA_S
+  | NB_S
+  | NC_S
+  | ND_S
+  | NE_S
+  | NF_S
+  | RandS
+  | SinhS
+  | SinS
+  | TanhS
+  | TanS
+  | VariableS(_) => 0
+  /* Atom1 */
+  | Magnitude1
+  | NLog1
+  | Superscript1
+  /* Atom1S */
+  | Abs1S
+  | Ceil1S
+  | Floor1S
+  | Round1S
+  | Sqrt1S => 1
+  /* Atom2 */
+  | Differential2
+  | NCR2
+  | NPR2
+  | Product2
+  | Sum2
+  /* Atom2S */
+  | Frac2S
+  | NRoot2S
+  | RandInt2S
+  | Vector2S => 2
+  /* Atom3 */
+  | Integral3
+  /* Atom3S */
+  | Vector3S => 3
+  /* Matrices */
+  | Matrix4S => 4
+  | Matrix9S => 9
   };
 
 let argEndIndex = (ast: array(t), index) => {
   let rec iter = (~pending, index) =>
     switch (Belt.Array.get(ast, index)) {
-    | Some(`Arg) =>
+    | Some(Arg) =>
       if (pending == 0) {
         index + 1;
       } else {
@@ -109,8 +203,8 @@ let argEndIndex = (ast: array(t), index) => {
 
 let rec normalizationState = (ast, remaining, i) =>
   switch (remaining, Belt.Array.get(ast, i)) {
-  | (0, Some(`Arg)) => `GenericError
-  | (_, Some(`Arg)) => normalizationState(ast, remaining - 1, i + 1)
+  | (0, Some(Arg)) => `GenericError
+  | (_, Some(Arg)) => normalizationState(ast, remaining - 1, i + 1)
   | (_, Some(v)) =>
     normalizationState(ast, remaining + argCountExn(v), i + 1)
   | (0, None) => `Ok
@@ -125,7 +219,7 @@ let normalize = (ast: array(t)) =>
     let remaining = ref(0);
     let ast =
       Belt.Array.keep(ast, element =>
-        if (element != `Arg) {
+        if (element != Arg) {
           remaining := remaining^ + argCountExn(element);
           true;
         } else if (remaining^ != 0) {
@@ -136,11 +230,11 @@ let normalize = (ast: array(t)) =>
         }
       );
     if (remaining^ != 0) {
-      Belt.Array.concat(ast, Belt.Array.make(remaining^, `Arg));
+      Belt.Array.concat(ast, Belt.Array.make(remaining^, Arg));
     } else {
       ast;
     };
   | `TooFewArgsError(remaining) =>
     Js.log("Too few args in ast (fixing)");
-    Belt.Array.concat(ast, Belt.Array.make(remaining, `Arg));
+    Belt.Array.concat(ast, Belt.Array.make(remaining, Arg));
   };

@@ -8,33 +8,34 @@ The main aim of the editor is to make editing maths equations as natural as poss
 
 Functions - like `sin` - act like a single character. You can select directly before the function, or directly after, but you can't edit inside it. Fractions work similar to superscripts. If your cursor is directly before the fraction, pressing right will move you to the numerator, then when you're at the end of the numerator, pressing right will take you to the denominator. When you're at the end of the denominator and press right, you move to directly after the fraction. Square roots act in a similar way
 
-Because of this reason, the primary AST is represented as a a flat array of elements. An element can be anything from a digit, to an operator, to a function like `sin`. In text input analogy, each element is like a character. And in OCaml terms, each element are represented as polymorphic variant type. Some elements are just raw polymorphic variant tags without arguments, but where it makes parsing easier - or where required for other reasons - you can get a variant with an argument. E.g. `` `Digit("1") ``
+Because of this reason, the primary AST is represented as a a flat array of elements. An element can be anything from a digit, to an operator, to a function like `sin`. In text input analogy, each element is like a character. The internal representation of this is a variant. Almost variants don't have arguments; however, some special elements require them. E.g. `CustomAtomS({value, mml: string})`
 
-In reality, we quickly have to break this 'just a text input' analogy. For example, a fraction has a numerator and denominator, which are both editable, and affect both rendering and parsing. Elements that act in this way accept element arguments. These completely separate from the arguments of the polymorphic variant types, and we'll get into more detail later
+In reality, we quickly have to break this 'just a text input' analogy. For example, a fraction has a numerator and denominator, which are both editable, and affect both rendering and parsing. Elements that act in this way accept element arguments. These completely separate from the arguments of the variant types, and we'll get into more detail later
 
 As well as element arguments, optional superscripts are handled in a special way too
 
-There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments it takes is added as a suffix (as an integer). If the number is dynamic (like for vectors and matrices), we suffix with an `N`. If they accept an optional superscript, the `S` suffix is added (after any element argument suffix)
+There is a strict naming convention with element. We start with the element name. If the element takes element arguments, the number of arguments it takes is added as a suffix (as an integer). If they accept an optional superscript, the `S` suffix is added (after any element argument suffix)
 
-- `` `SomeElement `` - No element arguments, no superscript
-- `` `SomeElement1 `` - 1 element argument, no superscript
-- `` `SomeElement2 `` - 2 element arguments, no superscript
-- `` `SomeElementS `` - No element arguments, has an optional superscript
-- `` `SomeElement2S `` - 2 element arguments, has an optional superscript
-- `` `SomeElementNS `` - dynamic number of element arguments, has an optional superscript
-- `` `DigitS("1") `` - The digit `1`, which accepts no element arguments, has an optional superscript
+- `SomeElement` - No element arguments, no superscript
+- `SomeElement1` - 1 element argument, no superscript
+- `SomeElement2` - 2 element arguments, no superscript
+- `SomeElementS` - No element arguments, has an optional superscript
+- `SomeElement2S` - 2 element arguments, has an optional superscript
+- `SomeElementNS` - dynamic number of element arguments, has an optional superscript
+- `N0_S` - The digit '0', which accepts no element arguments, has an optional superscript (underscore added for clarity)
+- `CustomAtomS({value, mml: string})` - A custom atom, which accepts no element arguments, has an optional superscript
 
 Putting this all together, and going back to our 'just a text input' analogy, we have can make the following inputs
 
 ```reason
 /* 1 + 2 */
-[|`DigitS("1"), `Add, `DigitS("2")|];
+[|N1_S, Add, N2_S|];
 
 /* 1 + 2 * 3 */
-[|`DigitS("1"), `Add, `DigitS("2"), `Mul, `DigitS("3")|];
+[|N1_S, Add, N2_S, Mul, N3_S|];
 
 /* sin 45 degrees */
-[|`Function(Sin), `DigitS("4"), `DigitS("5"), `Degree|];
+[|Sin, N4_S, N5_S, Degree|];
 ```
 
 It's worth highlighting that operator precedence isn't encoded here
@@ -43,47 +44,48 @@ This format was picked because
 
 - It makes editing easy
 - It's relatively sound
+- Ignoring special elements, it's easily encodable for URLs etc.
 - When run through BuckleScript, all the data is directly JSON encodable and decodable
 
 ### Element Arguments
 
-Element arguments alter the way you input expressions for the element. For example, a fraction has a numerator and denominator placed out of line. This element has two element arguments and accepts a superscript, so is represented as `` `Frac2S ``
+Element arguments alter the way you input expressions for the element. For example, a fraction has a numerator and denominator placed out of line. This element has two element arguments and accepts a superscript, so is represented as `Frac2S`
 
-Here, we need to introduce a special element type, `` `Arg ``. This is purely semantical, and is used to indicate end of one argument. It does not render anything
+Here, we need to introduce a special element type, `Arg`. This is purely semantical, and is used to indicate end of one argument. It does not render anything
 
-Every element that accepts element arguments must be preceded at some point by an amount of `` `Arg `` elements equal to the number of element arguments accepted. For example, the fraction must be preceded by two `` `Arg `` elements
+Every element that accepts element arguments must be preceded at some point by an amount of `Arg` elements equal to the number of element arguments accepted. For example, the fraction must be preceded by two `Arg` elements
 
-There is an analogy to function calls here - if you had a call to `frac(num, den)`, the function name **and** the opening bracket combined (`frac(`) are represented as `` `Frac2S ``, and the commas closing bracket are both use same representation: `` `Arg ``. Putting this together, we get
+There is an analogy to function calls here - if you had a call to `frac(num, den)`, the function name **and** the opening bracket combined (`frac(`) are represented as `Frac2S`, and the commas closing bracket are both use same representation: `Arg`. Putting this together, we get
 
 ```reason
 /* Empty fraction */
-[|`Frac2S, `Arg, `Arg|];
+[|Frac2S, Arg, Arg|];
 
 /* Fraction of one half */
-[|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg|];
+[|Frac2S, N1_S, Arg, N2_S, Arg|];
 
-/* random number between 1 and 10 */
-[|`Rand2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg|];
+/* random integer between 1 and 10 */
+[|RandInt2S, N1_S, Arg, N1_S, N0_S, Arg|];
 
-/* Empty 2x2 matrix */
-[|TableNS({ numRows: 2, numColumns: 2 }), `Arg, `Arg, `Arg, `Arg|];
+/* Empty 2x2 (4 element) matrix */
+[|Matrix4S, Arg, Arg, Arg, Arg|];
 ```
 
-It is possible to nest elements accepting arguments. An `` `Arg `` element corresponds to the most recent element accepting element arguments, until it has received all its arguments. Then it goes to the second most recent, and so forth
+It is possible to nest elements accepting arguments. An `Arg` element corresponds to the most recent element accepting element arguments, until it has received all its arguments. Then it goes to the second most recent, and so forth
 
 ```reason
 /* Fraction of one over another fraction of a half */
-[|`Frac2S, `DigitS("1"), `Arg, `Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Arg|];
+[|Frac2S, N1_S, Arg, Frac2S, N1_S, Arg, N2_S, Arg, Arg|];
 
-/* Fraction of a random number between 1 and 10, all over 2 */
-[|`Frac2S, `Rand2, `DigitS("1"), `Arg, `DigitS("1"), `DigitS("0"), `Arg, `Arg, `DigitS("2"), `Arg|];
+/* Fraction of a random integer between 1 and 10, all over 2 */
+[|Frac2S, RandInt2S, N1_S, Arg, N1_S, N0_S, Arg, Arg, N2_S, Arg|];
 ```
 
-This does lead to it being possible to represent invalid ASTs, although this should not normally occur. In these cases, extraneous `` `Arg `` elements are dropped, and missing ones are appended to the end
+This does lead to it being possible to represent invalid ASTs, although this should not normally occur. In these cases, extraneous `Arg` elements are dropped, and missing ones are appended to the end
 
 ### Superscripts
 
-There is additionally a superscript element, `` `Superscript1 ``, which accepts one argument. This is a regular element, and - when isollated - is rendered as a placeholder square with a superscript
+There is additionally a superscript element, `Superscript1`, which accepts one argument. This is a regular element, and - when isollated - is rendered as a placeholder square with a superscript
 
 &#x25a1;<sup>&#x25a1;</sup>
 
@@ -93,21 +95,21 @@ However, in the case we are converting to MathML or a TechniCalc Calculator AST,
 
 1 &#x25a1;<sup>2</sup> &#x2192; 1<sup>2</sup>
 
-sin &#x25a1;<sup>&#x25a1;</sup> &#x2192; sin &#x25a1;<sup>&#x25a1;</sup> (functions don't accept superscripts; no change)
+sin &#x25a1;<sup>&#x25a1;</sup> &#x2192; log &#x25a1;<sup>&#x25a1;</sup> (non-trig functions don't accept superscripts; no change)
 
 ```reason
 /* Fraction of a half with an empty superscript */
-[|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Superscript1, `Arg|];
+[|Frac2S, N1_S, Arg, N2_S, Arg, Superscript1, Arg|];
 
 /* Fraction of a half raised to the power of 3 */
-[|`Frac2S, `DigitS("1"), `Arg, `DigitS("2"), `Arg, `Superscript1, `DigitS("3"), `Arg|];
+[|Frac2S, N1_S, Arg, N2_S, Arg, Superscript1, N3_S, Arg|];
 ```
 
 ### Mutation
 
 Insertion and deletion of elements happen directly on the array. There is no preprocessing step. This is useful, as it is sometimes required to get the surrounding context
 
-It is impossible for a user to insert of delete `` `Arg `` elements directly. There is care to ensure that when inserting, we add the right amount of `` `Arg `` elements, and when we delete an element, that we delete the right amount too
+It is impossible for a user to insert of delete `Arg` elements directly. There is care to ensure that when inserting, we add the right amount of `Arg` elements, and when we delete an element, that we delete the right amount too
 
 Some elements have special insertion and deletion logic. For example, if you insert a fraction in the middle of `1 2`, you'll get a fraction of a half, and if you delete that fraction with the numerator and denominator in tact, it will revert to `1 2`. Most other elements don't let you delete them unless they're empty
 
@@ -118,7 +120,7 @@ The superscript encoding leads to a really natural editing experience. If you ha
 For converting to either MathML or a TechniCalc Calculator AST, we first do a transformation to a node-based AST. For example, The fraction example above transforms to something like
 
 ```reason
-type node('t) = [| `Frac({ fracNum: node('t), den: node('t), superscript: option(node('t)) }) ]
+type node('t) = | Frac({num: node('t), den: node('t), superscript: option(node('t))})
 ```
 
 The representation of the entire tree would be `type ast = node(list(ast))`
@@ -134,9 +136,11 @@ type fold('accumulator, 'output) = (
 ) => 'output
 ```
 
-The initial accumulator is reset for every new list of elements. For the fraction example, `fracNum`, `den`, and `superscript` each start with a fresh value of `initialAccumulator`, and the list that contained the `Frac({ ... })` would also have a fresh value
+The initial accumulator is reset for every new list of elements. For the fraction example, `num`, `den`, and `superscript` each start with a fresh value of `initialAccumulator`, and the list that contained the `Frac({ ... })` would also have a fresh value
 
-It's worth highlighting that nodes that contain child nodes are reduced with their child nodes already folded. When converting the fraction example to MathML (where `'output` is a string), `fracNum` and `den` would be strings, and `superscript` would be `option(string)`
+It's worth highlighting that nodes that contain child nodes are reduced with their child nodes already folded. When converting the fraction example to MathML (where `'output` is a string), `num` and `den` would be strings, and `superscript` would be `option(string)`
+
+Also of note here is we do some grouping of like-elements: digits, functions, and tables to name a few. This makes transforms easier, while allowing a very flat raw element data structure. There's no hard-and-fast rules for when to group, it's normally done when it significantly simplifies code in either the mml or value processing code
 
 A side note is that we never fully construct a node-based AST, as the reduction can be done at the same time as we form the AST
 
@@ -155,11 +159,10 @@ There are also times where a different MathML element will recieve the indices t
 This is bevause if you recall from the superscript mechanics explained above, it's possible to insert an element after the `1`, but before the first element of superscript. To handle this, we track the index of the superscript element in our AST representation
 
 ```reason
-type superscript('t) = { superscriptBody: 't, index: int };
-type node('t) = [
-  | `Digit({ atomNucleus: string, superscript: option(superscript(node('t))) })
-  | `Frac({ fracNum: node('t), den: node('t), superscript: option(superscript(node('t))) })
-]
+type superscript('t) = {superscriptBody: 't, index: int};
+type node('t) =
+  | Digit({nucleus: string, superscript: option(superscript(node('t)))})
+  | Frac({num: node('t), den: node('t), superscript: option(superscript(node('t)))})
 ```
 
 Now we can apply superscript index as the end index of the base `<mn>` element. We allow specifying just one index in an `id` by omitting any indices you don't want to specify. For the `1^2` example above, the resulting MathML looks like this

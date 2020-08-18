@@ -8,7 +8,7 @@ let parse = (elements: array(AST_Types.t)) => {
   let reduce = (accum, element, (i, _)) =>
     if (error^ == None) {
       switch (element) {
-      | `Superscript(_) =>
+      | Superscript(_) =>
         error := Some(i);
         MutableListBuilder.empty;
       | _ =>
@@ -23,11 +23,11 @@ let parse = (elements: array(AST_Types.t)) => {
     if (error^ == None) {
       let elements = MutableListBuilder.toList(accum);
       switch (Value_Row.next(elements)) {
-      | `Ok(root) => root
-      | `Error(i) =>
+      | Ok(root) => root
+      | Error(i) =>
         error := Some(i);
         AST.nan;
-      | `UnknownError =>
+      | UnknownError =>
         error := Some(i);
         AST.nan;
       };
@@ -39,7 +39,7 @@ let parse = (elements: array(AST_Types.t)) => {
     reduceMap(elements, ~reduce, ~map, ~initial=MutableListBuilder.empty);
 
   switch (error^) {
-  | Some(i) => `Error(i)
-  | None => `Ok(root)
+  | Some(i) => Error(i)
+  | None => Ok(root)
   };
 };
