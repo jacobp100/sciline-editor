@@ -8,7 +8,7 @@ The main aim of the editor is to make editing maths equations as natural as poss
 
 Functions - like `sin` - act like a single character. You can select directly before the function, or directly after, but you can't edit inside it. Fractions work similar to superscripts. If your cursor is directly before the fraction, pressing right will move you to the numerator, then when you're at the end of the numerator, pressing right will take you to the denominator. When you're at the end of the denominator and press right, you move to directly after the fraction. Square roots act in a similar way
 
-Because of this reason, the primary AST is represented as a a flat array of "elements". An element can be anything from a digit, to an operator, to a function like `sin`. In text input analogy, each element is like a character. The internal representation of this is a variant. Almost variants don't have arguments; however, some special elements require them - for example, there is a custom element with a custom value and mml representation
+Because of this reason, the primary AST is represented as a a flat array of "elements". An element can be anything from a digit, to an operator, to a function like `sin`. In text input analogy, each element is like a character. The internal representation of this is a variant. Almost variants don't have arguments; however, some special elements require them - for example, there is a custom element with a custom value and MathML representation
 
 In reality, we quickly have to break this 'just a text input' analogy. For example, a fraction has a numerator and denominator, which are both editable, and affect both rendering and parsing. Elements that act in this way accept "element arguments". These completely separate from the arguments of the variant types, and we'll get into more detail later
 
@@ -140,7 +140,7 @@ The initial accumulator is reset for every new list of elements. For the fractio
 
 It's worth highlighting that nodes that contain child nodes are reduced with their child nodes already folded. When converting the fraction example to MathML (where `'output` is a string), `num` and `den` would be strings, and `superscript` would be `option(string)`
 
-Also of note here is we do some grouping of like-elements: digits, functions, and tables to name a few. This makes transforms easier, while allowing a very flat raw element data structure. There's no hard-and-fast rules for when to group, it's normally done when it significantly simplifies code in either the mml or value processing code
+Also of note here is we do some grouping of like-elements: digits, functions, and tables to name a few. This makes transforms easier, while allowing a very flat raw element data structure. There's no hard-and-fast rules for when to group, it's normally done when it significantly simplifies code in either the MathML or value AST processing code
 
 A side note is that we never fully construct a node-based AST, as the reduction can be done at the same time as we form the AST
 
