@@ -3,17 +3,20 @@ external mutableCell: ('a, list('a)) => list('a) = "#makemutablelist";
 
 type t('a) =
   | Empty
-  | Initialized(list('a), ref(list('a)));
+  | Initialized({
+      start: list('a),
+      end_: ref(list('a)),
+    });
 
 let empty = Empty;
 
 let append = (list, element) => {
   let next = mutableCell(element, []);
   switch (list) {
-  | Empty => Initialized(next, ref(next))
-  | Initialized(_, tail) =>
-    unsafeMutateTail(tail^, next);
-    tail := next;
+  | Empty => Initialized({start: next, end_: ref(next)})
+  | Initialized({end_}) =>
+    unsafeMutateTail(end_^, next);
+    end_ := next;
     list;
   };
 };
@@ -21,5 +24,5 @@ let append = (list, element) => {
 let toList = list =>
   switch (list) {
   | Empty => []
-  | Initialized(value, _) => value
+  | Initialized({start}) => start
   };

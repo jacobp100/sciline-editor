@@ -7,7 +7,8 @@ let parseEval = v =>
   | _ => None
   };
 
-let ofString = TechniCalcCalculator.Types.ofString;
+let ofString = x =>
+  TechniCalcCalculator.Value.ofString(x)->Belt.Option.getExn;
 
 test("Parses with bodmas", (.) => {
   parseEval([|N1_S, Sub, N2_S, Add, N3_S|])

@@ -8,6 +8,7 @@ let addSequentialIndex = (x, i) =>
   | rest => [(i, i), ...rest]
   };
 
-let contains = (x, i) => Belt.List.some(x, ((a, b)) => a <= i && b >= i);
+let contains = (x: t, i: int) =>
+  Belt.List.some(x, ((a, b)) => a <= i && b >= i);
 
-let toArray = x => Belt.List.toArray(x);
+let toArray = (x: t) => Belt.List.toArray(x);

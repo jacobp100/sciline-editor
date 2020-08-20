@@ -6,8 +6,9 @@ let parseEval = v =>
   | _ => None
   };
 
-let ofInt = TechniCalcCalculator.Types.ofInt;
-let ofString = TechniCalcCalculator.Types.ofString;
+let ofInt = TechniCalcCalculator.Value.ofInt;
+let ofString = x =>
+  TechniCalcCalculator.Value.ofString(x)->Belt.Option.getExn;
 
 test("Parses numbers", (.) => {
   parseEval([|N1_S, N2_S, N3_S|])->expect->toEqual(Some(ofString("123")));

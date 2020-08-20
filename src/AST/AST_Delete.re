@@ -1,10 +1,11 @@
 let rec matchNEmptyArgs = (ast, ~index, ~count) =>
   if (count == 0) {
     true;
-  } else if (ast->Belt.Array.get(index) != Some(AST_Types.Arg)) {
-    false;
   } else {
-    matchNEmptyArgs(ast, ~index=index + 1, ~count=count - 1);
+    switch (Belt.Array.get(ast, index)) {
+    | Some(AST_Types.Arg) => false
+    | _ => matchNEmptyArgs(ast, ~index=index + 1, ~count=count - 1)
+    };
   };
 
 let nArgsSlice = (~skipInitial=0, ast, index) => {
