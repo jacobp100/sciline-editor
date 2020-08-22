@@ -5,7 +5,7 @@ type t('a) =
   | Empty
   | Initialized({
       start: list('a),
-      end_: ref(list('a)),
+      mutable end_: list('a),
     });
 
 let empty = Empty;
@@ -13,10 +13,10 @@ let empty = Empty;
 let append = (list, element) => {
   let next = mutableCell(element, []);
   switch (list) {
-  | Empty => Initialized({start: next, end_: ref(next)})
-  | Initialized({end_}) =>
-    unsafeMutateTail(end_^, next);
-    end_ := next;
+  | Empty => Initialized({start: next, end_: next})
+  | Initialized(contents) =>
+    unsafeMutateTail(contents.end_, next);
+    contents.end_ = next;
     list;
   };
 };

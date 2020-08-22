@@ -91,4 +91,4 @@ for (i in 0 to makeSureThisIsTheLastIndex - 1) {
   Belt.Array.setExn(reverseMapping, index, element);
 };
 
-let ofInt = index => Belt.Array.getExn(reverseMapping, index);
+let ofInt = index => Belt.Array.get(reverseMapping, index);

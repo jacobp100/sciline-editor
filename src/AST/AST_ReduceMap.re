@@ -51,8 +51,8 @@ type t('a) =
   | ConstPi(option(superscript('a)))
   | Conj
   | CustomAtom({
-      value: TechniCalcCalculator.Encoding.encoding,
       mml: string,
+      value: TechniCalcCalculator.Encoding.encoding,
       superscript: option(superscript('a)),
     })
   | DecimalSeparator
@@ -230,10 +230,10 @@ let reduceMap =
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
       (ConstE(superscript), i');
-    | CustomAtomS({value, mml}) =>
+    | CustomAtomS({mml, value}) =>
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
-      (CustomAtom({value, mml, superscript}), i');
+      (CustomAtom({mml, value, superscript}), i');
     | (N0_S | N1_S | N2_S | N3_S | N4_S | N5_S | N6_S | N7_S | N8_S | N9_S) as digit
     | (NA_S | NB_S | NC_S | ND_S | NE_S | NF_S) as digit =>
       let nucleus = digitNucleus(digit);
