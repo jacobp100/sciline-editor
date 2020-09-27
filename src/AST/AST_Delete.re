@@ -3,8 +3,9 @@ let rec matchNEmptyArgs = (ast, ~index, ~count) =>
     true;
   } else {
     switch (Belt.Array.get(ast, index)) {
-    | Some(AST_Types.Arg) => false
-    | _ => matchNEmptyArgs(ast, ~index=index + 1, ~count=count - 1)
+    | Some(AST_Types.Arg) =>
+      matchNEmptyArgs(ast, ~index=index + 1, ~count=count - 1)
+    | _ => false
     };
   };
 
