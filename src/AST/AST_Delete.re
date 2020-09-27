@@ -1,4 +1,4 @@
-let rec matchNEmptyArgs = (ast, ~index, ~count) =>
+let%private rec matchNEmptyArgs = (ast, ~index, ~count) =>
   if (count == 0) {
     true;
   } else {
@@ -9,7 +9,7 @@ let rec matchNEmptyArgs = (ast, ~index, ~count) =>
     };
   };
 
-let nArgsSlice = (~skipInitial=0, ast, index) => {
+let%private nArgsSlice = (~skipInitial=0, ast, index) => {
   let element = Belt.Array.getExn(ast, index);
   let count = AST_Types.argCountExn(element);
   let current = ref([||]);
@@ -33,7 +33,7 @@ type deletionMode =
   | Delete
   | Spread(array(AST_Types.t));
 
-let deletionMode = (ast, index) =>
+let%private deletionMode = (ast, index) =>
   switch (Belt.Array.get(ast, index)) {
   | Some(AST_Types.Arg) => Keep
   | Some(Superscript1 | Sqrt1S | Frac2S) => Spread(nArgsSlice(ast, index))
@@ -47,7 +47,7 @@ let deletionMode = (ast, index) =>
   | None => Keep
   };
 
-let deleteAtIndexExn = (ast, startIndex) => {
+let%private deleteAtIndexExn = (ast, startIndex) => {
   let element = Belt.Array.getExn(ast, startIndex);
   let argCount = AST_Types.argCountExn(element);
   let endIndex = ref(startIndex + 1);
@@ -65,7 +65,7 @@ let deleteAtIndexExn = (ast, startIndex) => {
   };
 };
 
-let deleteEmptySuperscript = (ast, index) =>
+let%private deleteEmptySuperscript = (ast, index) =>
   switch (Belt.Array.get(ast, index), Belt.Array.get(ast, index + 1)) {
   | (Some(AST_Types.Superscript1), Some(Arg)) =>
     Belt.Array.concat(

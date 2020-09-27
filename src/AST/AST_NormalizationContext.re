@@ -1,4 +1,4 @@
-let validityStackReducer = prependValidityStack => {
+let%private validityStackReducer = prependValidityStack => {
   let reducerFn = ((range, validityStack), element, i) => {
     let range =
       switch (validityStack) {
@@ -17,7 +17,7 @@ let validityStackReducer = prependValidityStack => {
   ast => Belt.Array.reduceWithIndex(ast, (Ranges.empty, []), reducerFn)->fst;
 };
 
-let noTableRanges =
+let%private noTableRanges =
   validityStackReducer((. validityStack, element) =>
     switch (element) {
     | AST_Types.Frac2S => [/* num */ true, /* den */ false, ...validityStack]
@@ -31,7 +31,7 @@ let noTableRanges =
     }
   );
 
-let isIterator = element =>
+let%private isIterator = element =>
   switch (element) {
   | AST_Types.Sum2
   | Product2
@@ -40,7 +40,7 @@ let isIterator = element =>
   | _ => false
   };
 
-let noIterationRanges =
+let%private noIterationRanges =
   validityStackReducer((. validityStack, element) => {
     let argCount = AST_Types.argCountExn(element);
     validityStack->ListUtil.prependMany(argCount, isIterator(element));

@@ -2,7 +2,7 @@ type countDirection =
   | Forwards
   | Backwards;
 
-let countInsertables = (x: array(AST_Types.t), ~from, ~direction) => {
+let%private countInsertables = (x: array(AST_Types.t), ~from, ~direction) => {
   let step = direction == Forwards ? 1 : (-1);
   let rec iter = (~current, ~bracketLevel, ~argLevel, ~from) =>
     switch (Belt.Array.get(x, from)) {
@@ -40,7 +40,7 @@ let countInsertables = (x: array(AST_Types.t), ~from, ~direction) => {
   iter(~current=0, ~bracketLevel=0, ~argLevel=0, ~from);
 };
 
-let insertElement = (ast, element, index) => {
+let%private insertElement = (ast, element, index) => {
   switch (element) {
   | AST_Types.Superscript1
   | Sqrt1S =>
@@ -89,7 +89,7 @@ let insertIndex = (ast: array(AST_Types.t), element: AST_Types.t, index: int) =>
   };
 };
 
-let insertArrayIndex = (ast, elements, index) => {
+let y = (ast, elements, index) => {
   let valid =
     Belt.Array.every(elements, element =>
       AST_NormalizationContext.elementIsValid(ast, element, index)
