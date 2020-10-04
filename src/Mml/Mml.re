@@ -17,10 +17,14 @@ let%private sumProduct = (symbol, start, end_, range) => {
   createElement("munderover", body);
 };
 
-let%private nprNcr = (symbol, r, n, range) => {
+let%private nprNcr = (symbol, n, r, range) => {
   let nucleus =
     createElement(~attributes=[("mathvariant", "bold")], "mi", symbol);
-  let body = createElement("msubsup", nucleus ++ r ++ n);
+  let body =
+    createElement(
+      "mmultiscripts",
+      nucleus ++ r ++ "<none /><mprescripts />" ++ n ++ "<none />",
+    );
   elementWithRange("mrow", range, body);
 };
 
