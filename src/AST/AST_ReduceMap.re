@@ -52,7 +52,7 @@ type t('a) =
   | Conj
   | CustomAtom({
       mml: string,
-      value: TechniCalcCalculator.Encoding.encoding,
+      value: TechniCalcCalculator.Value_Encoding.encoding,
       superscript: option(superscript('a)),
     })
   | DecimalSeparator

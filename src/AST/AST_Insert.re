@@ -89,7 +89,7 @@ let insertIndex = (ast: array(AST_Types.t), element: AST_Types.t, index: int) =>
   };
 };
 
-let y = (ast, elements, index) => {
+let insertArrayIndex = (ast, elements, index) => {
   let valid =
     Belt.Array.every(elements, element =>
       AST_NormalizationContext.elementIsValid(ast, element, index)

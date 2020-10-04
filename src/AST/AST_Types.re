@@ -62,7 +62,7 @@ type t =
   | TanS
   | CustomAtomS({
       mml: string,
-      value: TechniCalcCalculator.Encoding.encoding,
+      value: TechniCalcCalculator.Value_Encoding.encoding,
     })
   | VariableS(string)
   /* Atom1 */

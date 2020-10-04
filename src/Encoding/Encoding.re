@@ -4,7 +4,7 @@ type unitConversion = {
 };
 type customAtom = {
   mml: string,
-  value: TechniCalcCalculator.Encoding.encoding,
+  value: TechniCalcCalculator.Value_Encoding.encoding,
 };
 
 type t = {
