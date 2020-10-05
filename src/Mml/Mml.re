@@ -17,6 +17,16 @@ let%private sumProduct = (symbol, start, end_, range) => {
   createElement("munderover", body);
 };
 
+let%private func2 = (name, a, b, superscript, range) => {
+  let body =
+    createElement(
+      "msub",
+      createElement("mi", name)
+      ++ createElement("mrow", a ++ createElement("mo", ",") ++ b),
+    );
+  elementWithRange(~superscript?, "mrow", range, body);
+};
+
 let%private nprNcr = (symbol, n, r, range) => {
   let nucleus =
     createElement(~attributes=[("mathvariant", "bold")], "mi", symbol);
@@ -138,17 +148,18 @@ let reduce = (accum, element: t(string), range) =>
     bracketGroup("&#x230A;", "&#x2309;", arg, superscript, range)
     ->Mml_Accum.append(accum, _)
   | Rand(superscript) =>
-    elementWithRange(~superscript?, "mi", range, "Rand")
+    elementWithRange(~superscript?, "mi", range, "rand")
     ->Mml_Accum.append(accum, _)
   | RandInt({a, b, superscript}) =>
-    let body =
-      createElement(
-        "msub",
-        createElement("mi", "Rand#")
-        ++ createElement("mrow", a ++ createElement("mo", ",") ++ b),
-      );
-    elementWithRange(~superscript?, "mrow", range, body)
-    ->Mml_Accum.append(accum, _);
+    func2("rand#", a, b, superscript, range)->Mml_Accum.append(accum, _)
+  | Min({a, b, superscript}) =>
+    func2("min", a, b, superscript, range)->Mml_Accum.append(accum, _)
+  | Max({a, b, superscript}) =>
+    func2("max", a, b, superscript, range)->Mml_Accum.append(accum, _)
+  | Gcd({a, b, superscript}) =>
+    func2("gcd", a, b, superscript, range)->Mml_Accum.append(accum, _)
+  | Lcm({a, b, superscript}) =>
+    func2("lcm", a, b, superscript, range)->Mml_Accum.append(accum, _)
   | NPR({n, r}) => nprNcr("P", n, r, range)->Mml_Accum.append(accum, _)
   | NCR({n, r}) => nprNcr("C", n, r, range)->Mml_Accum.append(accum, _)
   | Differential({body, x}) =>

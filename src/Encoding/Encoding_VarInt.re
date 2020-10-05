@@ -8,7 +8,7 @@ let%private charToIndex = character =>
   | '0'..'9' => Char.code(character) - Char.code('0') + 52
   | '-' => 62
   | '_' => 63
-  | _ => failwith("Invalid character")
+  | _ => assert(false)
   };
 
 let encodeElement = index =>

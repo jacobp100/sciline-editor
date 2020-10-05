@@ -83,6 +83,10 @@ type t =
   | Sum2
   /* Atom2S */
   | Frac2S
+  | Gcd2S
+  | Lcm2S
+  | Max2S
+  | Min2S
   | NRoot2S
   | RandInt2S
   | Vector2S
@@ -97,7 +101,7 @@ type t =
 let argCountExn = (arg: t) =>
   switch (arg) {
   /* Arg */
-  | Arg => failwith("arg")
+  | Arg => assert(false)
   /* Atom */
   | Acos
   | Acosh
@@ -174,6 +178,10 @@ let argCountExn = (arg: t) =>
   | Sum2
   /* Atom2S */
   | Frac2S
+  | Gcd2S
+  | Lcm2S
+  | Max2S
+  | Min2S
   | NRoot2S
   | RandInt2S
   | Vector2S => 2

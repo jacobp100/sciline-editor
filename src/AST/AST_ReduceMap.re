@@ -78,13 +78,33 @@ type t('a) =
       func,
       squareResultSuperscript: option(superscript('a)),
     })
+  | Gcd({
+      a: 'a,
+      b: 'a,
+      superscript: option(superscript('a)),
+    })
   | ImaginaryUnit(option(superscript('a)))
   | Integral({
       a: 'a,
       b: 'a,
       body: 'a,
     })
+  | Lcm({
+      a: 'a,
+      b: 'a,
+      superscript: option(superscript('a)),
+    })
   | Magnitude({value: 'a})
+  | Min({
+      a: 'a,
+      b: 'a,
+      superscript: option(superscript('a)),
+    })
+  | Max({
+      a: 'a,
+      b: 'a,
+      superscript: option(superscript('a)),
+    })
   | NCR({
       n: 'a,
       r: 'a,
@@ -169,7 +189,7 @@ let%private digitNucleus = digit =>
   | ND_S => "D"
   | NE_S => "E"
   | NF_S => "F"
-  | _ => failwith("digit")
+  | _ => assert(false)
   };
 
 let reduceMap =
@@ -306,6 +326,26 @@ let reduceMap =
       let (den, i') = readArg(i');
       let (superscript, i') = readSuperscript(i');
       (Frac({num, den, superscript}), i');
+    | Min2S =>
+      let (a, i') = readArg(i + 1);
+      let (b, i') = readArg(i');
+      let (superscript, i') = readSuperscript(i');
+      (Min({a, b, superscript}), i');
+    | Max2S =>
+      let (a, i') = readArg(i + 1);
+      let (b, i') = readArg(i');
+      let (superscript, i') = readSuperscript(i');
+      (Max({a, b, superscript}), i');
+    | Gcd2S =>
+      let (a, i') = readArg(i + 1);
+      let (b, i') = readArg(i');
+      let (superscript, i') = readSuperscript(i');
+      (Gcd({a, b, superscript}), i');
+    | Lcm2S =>
+      let (a, i') = readArg(i + 1);
+      let (b, i') = readArg(i');
+      let (superscript, i') = readSuperscript(i');
+      (Lcm({a, b, superscript}), i');
     | NRoot2S =>
       let (degree, i') = readArg(i + 1);
       let (radicand, i') = readArg(i');
@@ -325,7 +365,7 @@ let reduceMap =
     | Vector3S => vectorS(i, ~numElements=3)
     | Matrix4S => tableS(i, ~numRows=2, ~numColumns=2)
     | Matrix9S => tableS(i, ~numRows=3, ~numColumns=3)
-    | Arg => failwith("Arg")
+    | Arg => assert(false)
     }
   and readArg = (~accum=initial, ~start=?, i) => {
     let start = Belt.Option.getWithDefault(start, i);

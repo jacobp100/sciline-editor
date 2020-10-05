@@ -1,6 +1,6 @@
 open AST_ReduceMap;
 
-module AST = TechniCalcCalculator.AST_Types;
+module AST = TechniCalcCalculator.AST_Base;
 
 let parse = (elements: array(AST_Types.t)) => {
   let error = ref(None);
@@ -19,7 +19,7 @@ let parse = (elements: array(AST_Types.t)) => {
       MutableListBuilder.empty;
     };
 
-  let map = (accum, (i, _)): AST.t =>
+  let map = (accum, (i, _)): TechniCalcCalculator.AST_Types.t =>
     if (error^ == None) {
       let elements = MutableListBuilder.toList(accum);
       switch (Value_Row.next(elements)) {

@@ -1,4 +1,4 @@
-module AST = TechniCalcCalculator.AST_Types;
+module AST = TechniCalcCalculator.AST_Base;
 
 let withSuperscript = (value, superscript) =>
   switch (superscript) {

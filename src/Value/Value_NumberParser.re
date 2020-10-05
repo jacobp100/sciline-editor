@@ -1,7 +1,7 @@
 open AST_ReduceMap;
 open Value_Types;
 
-module AST = TechniCalcCalculator.AST_Types;
+module AST = TechniCalcCalculator.AST_Base;
 
 let numberIsValidForBase = (base, nucleus) =>
   switch (base, nucleus) {

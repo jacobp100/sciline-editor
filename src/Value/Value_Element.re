@@ -3,7 +3,7 @@ open Value_Builders;
 
 let map = (element: t('a), i) =>
   switch (element) {
-  | AST_ReduceMap.Superscript(_) => failwith("superscript")
+  | AST_ReduceMap.Superscript(_) => assert(false)
   | Function({func, squareResultSuperscript}) =>
     let squareResultSuperscript =
       Belt.Option.map(squareResultSuperscript, superscriptBody);
@@ -37,6 +37,14 @@ let map = (element: t('a), i) =>
   | ConstE(superscript) => AST.e->withSuperscript(superscript)->Resolved
   | Frac({num, den, superscript}) =>
     Resolved(AST.div(num, den)->withSuperscript(superscript))
+  | Min({a, b, superscript}) =>
+    Resolved(AST.min(a, b)->withSuperscript(superscript))
+  | Max({a, b, superscript}) =>
+    Resolved(AST.max(a, b)->withSuperscript(superscript))
+  | Gcd({a, b, superscript}) =>
+    Resolved(AST.gcd(a, b)->withSuperscript(superscript))
+  | Lcm({a, b, superscript}) =>
+    Resolved(AST.lcm(a, b)->withSuperscript(superscript))
   | Abs({arg, superscript}) =>
     Resolved(AST.abs(arg)->withSuperscript(superscript))
   | Floor({arg, superscript}) =>
