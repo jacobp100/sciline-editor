@@ -43,7 +43,7 @@ let%private isIterator = element =>
 let%private noIterationRanges =
   validityStackReducer((. validityStack, element) => {
     let argCount = AST_Types.argCountExn(element);
-    validityStack->ListUtil.prependMany(argCount, isIterator(element));
+    validityStack->ListUtil.prependMany(argCount, !isIterator(element));
   });
 
 let elementIsValid = (ast: array(AST_Types.t), element: AST_Types.t, index) =>

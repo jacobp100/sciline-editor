@@ -1,14 +1,39 @@
+open AST_Types;
+
 type countDirection =
   | Forwards
   | Backwards;
 
-let%private countInsertables = (x: array(AST_Types.t), ~from, ~direction) => {
+let%private skipFunction = (x, ~from, ~direction) => {
   let step = direction == Forwards ? 1 : (-1);
-  let rec iter = (~current, ~bracketLevel, ~argLevel, ~from) =>
-    switch (Belt.Array.get(x, from)) {
-    | None => current
-    | Some(Add | Sub | Mul | Div | Dot)
-        when bracketLevel == 0 && argLevel == 0 => current
+  let rec iter = (~index, ~argLevel) =>
+    switch (Belt.Array.get(x, index)) {
+    | None => None
+    | Some(v) =>
+      let index = index + step;
+      let argLevel =
+        switch (v) {
+        | Arg => argLevel - 1
+        | _ => argLevel + AST_Types.argCountExn(v)
+        };
+      switch (compare(argLevel, 0), direction) {
+      | (0, _) =>
+        let fn = direction == Forwards ? Belt.Array.getExn(x, from) : v;
+        Some((index, fn));
+      | ((-1), Backwards)
+      | (1, Forwards) => iter(~index, ~argLevel)
+      | _ => None
+      };
+    };
+  iter(~index=from, ~argLevel=0);
+};
+
+let%private skipInsertables = (x: array(t), ~from, ~direction) => {
+  let rec iter = (~index, ~bracketLevel) =>
+    switch (Belt.Array.get(x, index)) {
+    | None
+    | Some(Add | Sub | Mul | Div | Dot) when bracketLevel == 0 => Some(index)
+    | None => None
     | Some(v) =>
       let bracketLevel =
         switch (v) {
@@ -16,29 +41,27 @@ let%private countInsertables = (x: array(AST_Types.t), ~from, ~direction) => {
         | CloseBracketS => bracketLevel - 1
         | _ => bracketLevel
         };
-      let argLevel =
-        switch (v) {
-        | Arg => argLevel - 1
-        | _ => argLevel + AST_Types.argCountExn(v)
-        };
       let shouldBreak =
         switch (direction) {
-        | Forwards => argLevel < 0 || bracketLevel < 0
-        | Backwards => argLevel > 0 || bracketLevel > 0
+        | Forwards => bracketLevel < 0
+        | Backwards => bracketLevel > 0
         };
-      if (shouldBreak) {
-        current;
-      } else {
-        iter(
-          ~current=current + 1,
-          ~bracketLevel,
-          ~argLevel,
-          ~from=from + step,
-        );
+      let nextIndex =
+        shouldBreak ? None : skipFunction(x, ~from=index, ~direction);
+      switch (nextIndex) {
+      | Some((_, Matrix4S | Matrix9S | Vector2S | Vector3S | Sum2 | Product2))
+      | None => Some(index)
+      | Some((index, _)) => iter(~index, ~bracketLevel)
       };
     };
-  iter(~current=0, ~bracketLevel=0, ~argLevel=0, ~from);
+  iter(~index=from, ~bracketLevel=0);
 };
+
+let%private countInsertables = (x: array(t), ~from, ~direction) =>
+  switch (skipInsertables(x, ~from, ~direction)) {
+  | Some(index) => abs(from - index)
+  | None => 0
+  };
 
 let%private insertElement = (ast, element, index) => {
   switch (element) {
