@@ -13,19 +13,26 @@ let%private bracketGroup =
 };
 
 let%private sumProduct = (symbol, start, end_, range) => {
-  let body = elementWithRange("mo", range, symbol) ++ xSetRow(start) ++ end_;
-  createElement("munderover", body);
-};
-
-let%private func2 = (name, a, b, superscript, range) => {
   let body =
     createElement(
-      "msub",
-      createElement("mi", name)
-      ++ createElement("mrow", a ++ createElement("mo", ",") ++ b),
+      "munderover",
+      createElement("mo", symbol) ++ xSetRow(start) ++ end_,
     );
-  elementWithRange(~superscript?, "mrow", range, body);
+  elementWithRange("mrow", range, body);
 };
+
+let%private func2 = (name, a, b, superscript, range) =>
+  elementWithRange(
+    ~superscript?,
+    "mrow",
+    range,
+    createElement("mi", name)
+    ++ createElement("mo", "(")
+    ++ a
+    ++ createElement("mo", ",")
+    ++ b
+    ++ createElement("mo", ")"),
+  );
 
 let%private nprNcr = (symbol, n, r, range) => {
   let nucleus =
@@ -151,7 +158,14 @@ let reduce = (accum, element: t(string), range) =>
     elementWithRange(~superscript?, "mi", range, "rand")
     ->Mml_Accum.append(accum, _)
   | RandInt({a, b, superscript}) =>
-    func2("rand#", a, b, superscript, range)->Mml_Accum.append(accum, _)
+    let body =
+      createElement(
+        "msub",
+        createElement("mi", "rand#")
+        ++ createElement("mrow", a ++ createElement("mo", ",") ++ b),
+      );
+    elementWithRange(~superscript?, "mrow", range, body)
+    ->Mml_Accum.append(accum, _);
   | Min({a, b, superscript}) =>
     func2("min", a, b, superscript, range)->Mml_Accum.append(accum, _)
   | Max({a, b, superscript}) =>
