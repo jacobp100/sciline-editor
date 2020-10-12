@@ -35,7 +35,7 @@ let elementWithRange =
   };
 
 module Placeholder = {
-  let attributes = [("class", "placeholder")];
+  let attributes = [("class", "placeholder"), ("mathvariant", "normal")];
   let element = "mi";
   let body = "&#x25a1;";
 };
