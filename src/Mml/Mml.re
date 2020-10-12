@@ -87,14 +87,17 @@ let reduce = (accum, element: t(string), range) =>
     elementWithRange("msup", range, placeholder ++ superscript)
     ->Mml_Accum.append(accum, _);
   | Percent => elementWithRange("mn", range, "%")->Mml_Accum.append(accum, _)
+  | Angle(Degree) =>
+    elementWithRange("mo", range, "&#x00B0;")->Mml_Accum.append(accum, _)
   | Angle(angle) =>
     let symbol =
       switch (angle) {
-      | Degree => "&#x00B0;"
       | ArcMinute => "&#x2032;"
       | ArcSecond => "&#x2033;"
+      | Degree => assert(false)
       };
-    elementWithRange("mo", range, symbol)->Mml_Accum.append(accum, _);
+    elementWithRange("msup", range, "<mo />" ++ createElement("mo", symbol))
+    ->Mml_Accum.append(accum, _);
   | ImaginaryUnit(superscript) =>
     elementWithRange(~superscript?, "mi", range, "i")
     ->Mml_Accum.append(accum, _)
