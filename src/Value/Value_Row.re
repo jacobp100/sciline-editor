@@ -12,8 +12,11 @@ let rec parseRest = (~current=None, elements) =>
     parseRest(~current=Some(AST.mul(a, next)), rest)
   | (None, [Resolved(next), ...rest]) =>
     parseRest(~current=Some(next), rest)
-  | (Some(a), [Unresolved(Percent, _)]) => Ok(AST.percent(a))
-  | (_, [UnresolvedFunction(_, i'), ..._] | [Unresolved(_, i'), ..._]) =>
+  | (Some(a), [Unresolved(Percent, _, _)]) => Ok(AST.percent(a))
+  | (
+      _,
+      [UnresolvedFunction(_, _, i'), ..._] | [Unresolved(_, _, i'), ..._],
+    ) =>
     Error(i')
   | (Some(v), []) => Ok(v)
   | (None, []) => UnknownError
@@ -24,16 +27,16 @@ let rec parsePostfixes = elements =>
   switch (elements) {
   | [
       Resolved(next),
-      Unresolved(UnitConversion({fromUnits, toUnits}), _),
+      Unresolved(UnitConversion({fromUnits, toUnits}), _, _),
       ...rest,
     ] =>
     parsePostfixes([
       Resolved(AST.convert(next, fromUnits, toUnits)),
       ...rest,
     ])
-  | [Resolved(next), Unresolved(Factorial, _), ...rest] =>
+  | [Resolved(next), Unresolved(Factorial, _, _), ...rest] =>
     parsePostfixes([Resolved(AST.factorial(next)), ...rest])
-  | [Resolved(next), Unresolved(Conj, _), ...rest] =>
+  | [Resolved(next), Unresolved(Conj, _, _), ...rest] =>
     parsePostfixes([Resolved(AST.conj(next)), ...rest])
   | _ => next(elements)
   };
@@ -50,7 +53,7 @@ let parseNumbers = elements => {
   };
   let rec iter = (numberState, angleState, rest) => {
     switch (rest) {
-    | [Unresolved(Angle(angle), i'), ...rest] =>
+    | [Unresolved(Angle(angle), i, _), ...rest] =>
       let number =
         switch (Value_NumberParser.toNode(numberState), angle) {
         | (Some(number), Degree) =>
@@ -75,9 +78,9 @@ let parseNumbers = elements => {
           Some((AST.add(angleAccum, number), angle)),
           rest,
         )
-      | _ => Error(i')
+      | _ => Error(i)
       };
-    | [Unresolved(element, _), ...after] =>
+    | [Unresolved(element, _, _), ...after] =>
       switch (Value_NumberParser.reduce(numberState, element)) {
       | Some(s) => iter(s, angleState, after)
       | None => next'(numberState, angleState, rest)
@@ -91,7 +94,7 @@ let next = parseNumbers;
 
 let rec parseUnary = elements =>
   switch (elements) {
-  | [Unresolved(Operator((Add | Sub) as op), i'), ...rest] =>
+  | [Unresolved(Operator((Add | Sub) as op), _, i'), ...rest] =>
     switch (parseUnary(rest)) {
     | Ok(root) =>
       let root = op == Sub ? AST.neg(root) : root;
@@ -104,18 +107,18 @@ let rec parseUnary = elements =>
 let next = parseUnary;
 
 let rec parseParenFreeFunctions = elements => {
-  let rec iter = (after, i) =>
+  let rec iter = (after, index) =>
     switch (after) {
-    | [UnresolvedFunction(fn, i'), ...after] =>
+    | [UnresolvedFunction(fn, _, i'), ...after] =>
       switch (parseParenFreeFunctions(after)) {
       | Ok(arg) =>
-        ListUtil.takeUpto(elements, i)
+        ListUtil.takeUpto(elements, index)
         ->Belt.List.concat([Resolved(handleFunction(arg, fn))])
         ->next
       | Error(_) as e => e
       | UnknownError => Error(i')
       }
-    | [_, ...after] => iter(after, i + 1)
+    | [_, ...after] => iter(after, index + 1)
     | [] => next(elements)
     };
   iter(elements, 0);
@@ -123,20 +126,20 @@ let rec parseParenFreeFunctions = elements => {
 let next = parseParenFreeFunctions;
 
 let binaryOperatorParser = (~operatorHandled, ~next) => {
-  let rec iter = (unaryPosition, current, after, i) =>
+  let rec iter = (unaryPosition, current, after, index) =>
     switch (after) {
-    | [Unresolved(Operator(op), i'), ...after] =>
+    | [Unresolved(Operator(op), _, i'), ...after] =>
       let nextAccum =
         !unaryPosition && operatorHandled(. op)
-          ? Some((op, after, i, i')) : current;
-      iter(true, nextAccum, after, i + 1);
-    | [_, ...after] => iter(false, current, after, i + 1)
+          ? Some((after, index, op, i')) : current;
+      iter(true, nextAccum, after, index + 1);
+    | [_, ...after] => iter(false, current, after, index + 1)
     | [] => current
     };
   let rec inner = elements =>
     switch (iter(true, None, elements, 0)) {
-    | Some((op, after, i, i')) =>
-      switch (ListUtil.takeUpto(elements, i)->inner, next(after)) {
+    | Some((after, index, op, i')) =>
+      switch (ListUtil.takeUpto(elements, index)->inner, next(after)) {
       | (Ok(before), Ok(after)) => Ok(handleOp(op, before, after))
       | (Error(_) as e, _)
       | (_, Error(_) as e) => e
@@ -165,11 +168,15 @@ let next = parseAddSub;
 let handleBrackets = elements => {
   let rec iter = (accum, after) =>
     switch (after) {
-    | [UnresolvedFunction(fn, _), Unresolved(OpenBracket, i'), ...after] =>
-      iter(Value_BracketAccum.openBracket(accum, i', Some(fn)), after)
-    | [Unresolved(OpenBracket, i'), ...after] =>
-      iter(Value_BracketAccum.openBracket(accum, i', None), after)
-    | [Unresolved(CloseBracket(superscript), i'), ...after] =>
+    | [
+        UnresolvedFunction(fn, _, _),
+        Unresolved(OpenBracket, i, _),
+        ...after,
+      ] =>
+      iter(Value_BracketAccum.openBracket(accum, i, Some(fn)), after)
+    | [Unresolved(OpenBracket, i, _), ...after] =>
+      iter(Value_BracketAccum.openBracket(accum, i, None), after)
+    | [Unresolved(CloseBracket(superscript), _, i'), ...after] =>
       switch (Value_BracketAccum.closeBracket(accum)) {
       | Some((accum, func, elements)) =>
         switch (next(elements)) {
@@ -190,7 +197,7 @@ let handleBrackets = elements => {
     | [] =>
       switch (Value_BracketAccum.toList(accum)) {
       | Ok(elements) => next(elements)
-      | Error(i) => Error(i)
+      | Error(index) => Error(index)
       }
     };
   iter(Value_BracketAccum.empty, elements);

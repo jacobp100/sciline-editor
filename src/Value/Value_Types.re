@@ -17,5 +17,5 @@ type funcitionLike =
 
 type partialNode =
   | Resolved(node)
-  | Unresolved(AST_ReduceMap.t(node), int)
-  | UnresolvedFunction(funcitionLike, int);
+  | Unresolved(AST_ReduceMap.t(node), int, int)
+  | UnresolvedFunction(funcitionLike, int, int);

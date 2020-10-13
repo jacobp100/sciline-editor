@@ -5,14 +5,14 @@ module AST = TechniCalcCalculator.AST_Base;
 let parse = (elements: array(AST_Types.t)) => {
   let error = ref(None);
 
-  let reduce = (accum, element, (i, _)) =>
+  let reduce = (accum, element, (i, i')) =>
     if (error^ == None) {
       switch (element) {
       | Superscript(_) =>
         error := Some(i);
         MutableListBuilder.empty;
       | _ =>
-        let value = Value_Element.map(element, i);
+        let value = Value_Element.map(element, i, i');
         MutableListBuilder.append(accum, value);
       };
     } else {
