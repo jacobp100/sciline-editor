@@ -174,7 +174,7 @@ Now we can apply superscript index as the end index of the base `<mn>` element. 
 </msup>
 ```
 
-## BuckleScript
+---
 
 ### Build
 
