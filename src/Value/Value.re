@@ -1,6 +1,5 @@
 open AST_ReduceMap;
-
-module AST = TechniCalcCalculator.AST_Base;
+open Value_Builders;
 
 let parse = (elements: array(AST_Types.t)) => {
   let error = ref(None);
@@ -26,13 +25,13 @@ let parse = (elements: array(AST_Types.t)) => {
       | Ok(root) => root
       | Error(i) =>
         error := Some(i);
-        AST.nan;
+        Node.nan;
       | UnknownError =>
         error := Some(i);
-        AST.nan;
+        Node.nan;
       };
     } else {
-      AST.nan;
+      Node.nan;
     };
 
   let root =

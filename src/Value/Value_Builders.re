@@ -1,29 +1,30 @@
-module AST = TechniCalcCalculator.AST_Base;
+module Node = TechniCalcCalculator.AST_Base;
 
 let withSuperscript = (value, superscript) =>
   switch (superscript) {
-  | Some(AST_ReduceMap.{superscriptBody}) => AST.pow(value, superscriptBody)
+  | Some(AST_ReduceMap.{superscriptBody}) =>
+    Node.pow(value, superscriptBody)
   | None => value
   };
 
 let handleGenericFunction = (arg, fn) =>
   switch (fn) {
-  | AST_ReduceMap.Sin => AST.sin(arg)
-  | Asin => AST.asin(arg)
-  | Sinh => AST.sinh(arg)
-  | Asinh => AST.asinh(arg)
-  | Cos => AST.cos(arg)
-  | Acos => AST.acos(arg)
-  | Cosh => AST.cosh(arg)
-  | Acosh => AST.acosh(arg)
-  | Tan => AST.tan(arg)
-  | Atan => AST.atan(arg)
-  | Tanh => AST.tanh(arg)
-  | Atanh => AST.atanh(arg)
-  | Log => AST.log(arg)
-  | Re => AST.re(arg)
-  | Im => AST.im(arg)
-  | Gamma => AST.gamma(arg)
+  | AST_ReduceMap.Sin => Node.sin(arg)
+  | Asin => Node.asin(arg)
+  | Sinh => Node.sinh(arg)
+  | Asinh => Node.asinh(arg)
+  | Cos => Node.cos(arg)
+  | Acos => Node.acos(arg)
+  | Cosh => Node.cosh(arg)
+  | Acosh => Node.acosh(arg)
+  | Tan => Node.tan(arg)
+  | Atan => Node.atan(arg)
+  | Tanh => Node.tanh(arg)
+  | Atanh => Node.atanh(arg)
+  | Log => Node.log(arg)
+  | Re => Node.re(arg)
+  | Im => Node.im(arg)
+  | Gamma => Node.gamma(arg)
   };
 
 let handleFunction = (arg, fn) =>
@@ -32,19 +33,19 @@ let handleFunction = (arg, fn) =>
     let value = handleGenericFunction(arg, func);
     switch (squareResultSuperscript) {
     | Some(squareResultSuperscript) =>
-      AST.pow(value, squareResultSuperscript)
+      Node.pow(value, squareResultSuperscript)
     | None => value
     };
-  | NLog({base}) => AST.div(AST.log(arg), AST.log(base))
-  | Sum({start, end_}) => AST.sum(start, end_, arg)
-  | Product({start, end_}) => AST.product(start, end_, arg)
+  | NLog({base}) => Node.div(Node.log(arg), Node.log(base))
+  | Sum({start, end_}) => Node.sum(start, end_, arg)
+  | Product({start, end_}) => Node.product(start, end_, arg)
   };
 
 let handleOp = (op, a, b) =>
   switch (op) {
-  | AST_ReduceMap.Add => AST.add(a, b)
-  | Sub => AST.sub(a, b)
-  | Mul => AST.mul(a, b)
-  | Div => AST.div(a, b)
-  | Dot => AST.dot(a, b)
+  | AST_ReduceMap.Add => Node.add(a, b)
+  | Sub => Node.sub(a, b)
+  | Mul => Node.mul(a, b)
+  | Div => Node.div(a, b)
+  | Dot => Node.dot(a, b)
   };

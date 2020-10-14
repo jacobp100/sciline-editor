@@ -1,4 +1,4 @@
-open AST_Types;
+open AST;
 
 [@bs.module "./Encoding_Mapping"] external mapping: array(int) = "mapping";
 [@bs.module "./Encoding_Mapping"]

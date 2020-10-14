@@ -17,7 +17,7 @@ type t = {
 let specialCharBias = 256;
 let specialCharBase = 32;
 
-let encode = (input: array(AST_Types.t)): t => {
+let encode = (input: array(AST.t)): t => {
   let unitConversions = ref(MutableArrayBuilder.empty);
   let customAtoms = ref(MutableArrayBuilder.empty);
   let variables = ref(MutableArrayBuilder.empty);
@@ -59,7 +59,7 @@ let encode = (input: array(AST_Types.t)): t => {
 
 let decode =
     ({elements, unitConversions, customAtoms, variables}: t)
-    : option(array(AST_Types.t)) => {
+    : option(array(AST.t)) => {
   Encoding_VarInt.decodeU(elements, (. value) =>
     if (value < specialCharBias) {
       Encoding_Element.ofInt(value);

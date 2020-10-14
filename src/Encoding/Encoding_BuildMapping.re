@@ -1,5 +1,5 @@
 let%private makeSureThisIsTheLastIndex = 78;
-let%private toInt = (element: AST_Types.t) =>
+let%private toInt = (element: AST.t) =>
   switch (element) {
   /* Most common (make varint encoding more efficient) */
   | N0_S => 0
@@ -90,10 +90,9 @@ let%private toInt = (element: AST_Types.t) =>
   };
 
 let mapping = Belt.Array.make(makeSureThisIsTheLastIndex + 1, 0);
-let reverseMapping =
-  Belt.Array.make(makeSureThisIsTheLastIndex + 1, AST_Types.Arg);
+let reverseMapping = Belt.Array.make(makeSureThisIsTheLastIndex + 1, AST.Arg);
 for (i in 0 to makeSureThisIsTheLastIndex) {
-  let element: AST_Types.t = Obj.magic(i);
+  let element: AST.t = Obj.magic(i);
   let index = toInt(element);
   assert(Belt.Array.set(mapping, i, index));
   assert(Belt.Array.set(reverseMapping, index, element));
