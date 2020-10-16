@@ -1,4 +1,4 @@
-open AST_ReduceMap;
+open AST;
 open Mml_Builders;
 
 let map = (accum, range) => Mml_Accum.toString(accum, range);
@@ -63,7 +63,7 @@ let%private table = (~numRows, ~numColumns, elements, superscript, range) => {
   elementWithRange(~superscript?, "mrow", range, body);
 };
 
-let reduce = (accum, element: t(string), range) =>
+let reduce = (accum, element: foldState(string), range) =>
   switch (element) {
   | OpenBracket => Mml_Accum.appendOpenBracket(accum, range)
   | CloseBracket(superscript) =>
@@ -122,9 +122,17 @@ let reduce = (accum, element: t(string), range) =>
   | CustomAtom({mml, superscript}) =>
     elementWithRange(~superscript?, "mrow", range, mml)
     ->Mml_Accum.append(accum, _)
+  | Label({mml, superscript}) =>
+    elementWithRange(
+      ~attributes=Placeholder.attributes,
+      ~superscript?,
+      "mrow",
+      range,
+      mml,
+    )
+    ->Mml_Accum.append(accum, _)
   | Function({func, squareResultSuperscript: superscript}) =>
-    let attributes =
-      func == AST_ReduceMap.Gamma ? [("mathvariant", "normal")] : [];
+    let attributes = func == AST.Gamma ? [("mathvariant", "normal")] : [];
     Mml_Util.stringOfFunction(func)
     ->elementWithRange(~superscript?, ~attributes, "mi", range, _)
     ->Mml_Accum.append(accum, _);
@@ -222,7 +230,7 @@ let reduce = (accum, element: t(string), range) =>
 let create = (~digitGrouping=true, ~inline=false, elements) => {
   let body =
     if (Belt.Array.length(elements) != 0) {
-      AST_ReduceMap.reduceMap(
+      AST.reduceMap(
         elements,
         ~reduce,
         ~map,

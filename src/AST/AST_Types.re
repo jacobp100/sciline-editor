@@ -39,6 +39,7 @@ type t =
   | CoshS
   | CosS
   | ImaginaryUnitS
+  | LabelS({mml: string})
   | N0_S
   | N1_S
   | N2_S
@@ -138,6 +139,7 @@ let argCountExn = (arg: t) =>
   | CosS
   | CustomAtomS(_)
   | ImaginaryUnitS
+  | LabelS(_)
   | N0_S
   | N1_S
   | N2_S

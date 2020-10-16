@@ -2,14 +2,13 @@ module Node = TechniCalcCalculator.AST_Base;
 
 let withSuperscript = (value, superscript) =>
   switch (superscript) {
-  | Some(AST_ReduceMap.{superscriptBody}) =>
-    Node.pow(value, superscriptBody)
+  | Some(AST.{superscriptBody}) => Node.pow(value, superscriptBody)
   | None => value
   };
 
 let handleGenericFunction = (arg, fn) =>
   switch (fn) {
-  | AST_ReduceMap.Sin => Node.sin(arg)
+  | AST.Sin => Node.sin(arg)
   | Asin => Node.asin(arg)
   | Sinh => Node.sinh(arg)
   | Asinh => Node.asinh(arg)
@@ -43,7 +42,7 @@ let handleFunction = (arg, fn) =>
 
 let handleOp = (op, a, b) =>
   switch (op) {
-  | AST_ReduceMap.Add => Node.add(a, b)
+  | AST.Add => Node.add(a, b)
   | Sub => Node.sub(a, b)
   | Mul => Node.mul(a, b)
   | Div => Node.div(a, b)

@@ -9,7 +9,5 @@ test("encodes and decodes", (.) => {
     let decoded =
       Encoding_VarInt.decodeU(encoded, (. x) => Some(x))->Belt.Option.getExn;
     expect(decoded)->toEqual([|value|]);
-  };
-
-  Js.undefined;
+  }
 });

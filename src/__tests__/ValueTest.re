@@ -18,8 +18,6 @@ test("Parses with bodmas", (.) => {
   parseEval([|N4_S, Div, N2_S, Mul, N3_S|])
   ->expect
   ->toEqual(Some(ofString("6")));
-
-  Js.undefined;
 });
 
 test("Parses unary operators", (.) => {
@@ -32,8 +30,6 @@ test("Parses unary operators", (.) => {
   parseEval([|N1_S, Sub, Sub, Sub, N2_S|])
   ->expect
   ->toEqual(Some(ofString("-1")));
-
-  Js.undefined;
 });
 
 test("Parses brackets", (.) => {
@@ -49,9 +45,7 @@ test("Parses brackets", (.) => {
     N2_S,
   |])
   ->expect
-  ->toEqual(Some(ofString("28")));
-
-  Js.undefined;
+  ->toEqual(Some(ofString("28")))
 });
 
 test("Parses functions", (.) => {
@@ -60,8 +54,6 @@ test("Parses functions", (.) => {
   parseEval([|CosS, OpenBracket, N0_S, CloseBracketS|])
   ->expect
   ->toEqual(Some(ofString("1")));
-
-  Js.undefined;
 });
 
 test("Parses iteration operators", (.) => {
@@ -83,6 +75,4 @@ test("Parses iteration operators", (.) => {
   |])
   ->expect
   ->toEqual(Some(ofString("10")));
-
-  Js.undefined;
 });

@@ -86,6 +86,7 @@ let%private toInt = (element: AST.t) =>
   /* Custom handling */
   | UnitConversion(_)
   | CustomAtomS(_)
+  | LabelS(_)
   | VariableS(_) => assert(false)
   };
 

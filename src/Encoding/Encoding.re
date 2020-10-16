@@ -11,15 +11,23 @@ type t = {
   elements: string,
   unitConversions: array(unitConversion),
   customAtoms: array(customAtom),
+  labels: array(string),
   variables: array(string),
 };
 
 let specialCharBias = 256;
 let specialCharBase = 32;
 
+let%private appendTo = (mutableArray, value, specialCharIndex) => {
+  let index = MutableArrayBuilder.length(mutableArray^);
+  mutableArray := MutableArrayBuilder.append(mutableArray^, value);
+  specialCharBias + specialCharIndex * specialCharBase + index;
+};
+
 let encode = (input: array(AST.t)): t => {
   let unitConversions = ref(MutableArrayBuilder.empty);
   let customAtoms = ref(MutableArrayBuilder.empty);
+  let labels = ref(MutableArrayBuilder.empty);
   let variables = ref(MutableArrayBuilder.empty);
 
   let elements =
@@ -28,20 +36,11 @@ let encode = (input: array(AST.t)): t => {
         let code =
           switch (element) {
           | UnitConversion({fromUnits, toUnits}) =>
-            let index = MutableArrayBuilder.length(unitConversions^);
-            unitConversions :=
-              (unitConversions^)
-              ->MutableArrayBuilder.append({fromUnits, toUnits});
-            specialCharBias + 0 * specialCharBase + index;
+            appendTo(unitConversions, {fromUnits, toUnits}, 0)
           | CustomAtomS({mml, value}) =>
-            let index = MutableArrayBuilder.length(customAtoms^);
-            customAtoms :=
-              (customAtoms^)->MutableArrayBuilder.append({mml, value});
-            specialCharBias + 1 * specialCharBase + index;
-          | VariableS(string) =>
-            let index = MutableArrayBuilder.length(variables^);
-            variables := (variables^)->MutableArrayBuilder.append(string);
-            specialCharBias + 2 * specialCharBase + index;
+            appendTo(customAtoms, {mml, value}, 1)
+          | LabelS({mml}) => appendTo(labels, mml, 3)
+          | VariableS(string) => appendTo(variables, string, 2)
           | element => Encoding_Element.toInt(element)
           };
 
@@ -53,12 +52,13 @@ let encode = (input: array(AST.t)): t => {
     elements,
     unitConversions: MutableArrayBuilder.toArray(unitConversions^),
     customAtoms: MutableArrayBuilder.toArray(customAtoms^),
+    labels: MutableArrayBuilder.toArray(labels^),
     variables: MutableArrayBuilder.toArray(variables^),
   };
 };
 
 let decode =
-    ({elements, unitConversions, customAtoms, variables}: t)
+    ({elements, unitConversions, customAtoms, labels, variables}: t)
     : option(array(AST.t)) => {
   Encoding_VarInt.decodeU(elements, (. value) =>
     if (value < specialCharBias) {
@@ -68,15 +68,26 @@ let decode =
       let argumentIndex = (value - specialCharBias) mod specialCharBase;
       switch (specialCharType) {
       | 0 =>
-        let {fromUnits, toUnits} =
-          Belt.Array.getExn(unitConversions, argumentIndex);
-        Some(UnitConversion({fromUnits, toUnits}));
+        switch (Belt.Array.get(unitConversions, argumentIndex)) {
+        | Some({fromUnits, toUnits}) =>
+          Some(UnitConversion({fromUnits, toUnits}))
+        | None => None
+        }
       | 1 =>
-        let {mml, value} = Belt.Array.getExn(customAtoms, argumentIndex);
-        Some(CustomAtomS({mml, value}));
+        switch (Belt.Array.get(customAtoms, argumentIndex)) {
+        | Some({mml, value}) => Some(CustomAtomS({mml, value}))
+        | None => None
+        }
+      | 3 =>
+        switch (Belt.Array.get(labels, argumentIndex)) {
+        | Some(mml) => Some(LabelS({mml: mml}))
+        | None => None
+        }
       | 2 =>
-        let string = Belt.Array.getExn(variables, argumentIndex);
-        Some(VariableS(string));
+        switch (Belt.Array.get(variables, argumentIndex)) {
+        | Some(string) => Some(VariableS(string))
+        | None => None
+        }
       | _ => None
       };
     }

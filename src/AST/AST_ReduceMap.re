@@ -1,3 +1,5 @@
+open AST_Types;
+
 type superscript('a) = {
   superscriptBody: 'a,
   index: int,
@@ -35,7 +37,7 @@ type operator =
   | Div
   | Dot;
 
-type t('a) =
+type foldState('a) =
   | Abs({
       arg: 'a,
       superscript: option(superscript('a)),
@@ -88,6 +90,10 @@ type t('a) =
       a: 'a,
       b: 'a,
       body: 'a,
+    })
+  | Label({
+      mml: string,
+      superscript: option(superscript('a)),
     })
   | Lcm({
       a: 'a,
@@ -194,13 +200,13 @@ let%private digitNucleus = digit =>
 
 let reduceMap =
     (
-      input: array(AST_Types.t),
-      ~reduce: ('accum, t('a), range) => 'accum,
+      input: array(t),
+      ~reduce: ('accum, foldState('a), range) => 'accum,
       ~map: ('accum, range) => 'value,
       ~initial: 'accum,
     )
     : 'value => {
-  let rec readNodeExn = (i): (t('a), int) =>
+  let rec readNodeExn = (i): (foldState('a), int) =>
     switch (Belt.Array.getExn(input, i)) {
     | Conj => (Conj, i + 1)
     | DecimalSeparator => (DecimalSeparator, i + 1)
@@ -272,6 +278,10 @@ let reduceMap =
       let i' = i + 1;
       let (superscript, i') = readSuperscript(i');
       (Variable({nucleus, superscript}), i');
+    | LabelS({mml}) =>
+      let i' = i + 1;
+      let (superscript, i') = readSuperscript(i');
+      (Label({mml, superscript}), i');
     | Magnitude1 =>
       let (value, i') = readArg(i + 1);
       (Magnitude({value: value}), i');

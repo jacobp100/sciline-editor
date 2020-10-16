@@ -2,7 +2,7 @@ type node = TechniCalcCalculator.AST_Types.t;
 
 type funcitionLike =
   | GenericFunction({
-      func: AST_ReduceMap.func,
+      func: AST.func,
       squareResultSuperscript: option(node),
     })
   | NLog({base: node})
@@ -17,5 +17,5 @@ type funcitionLike =
 
 type partialNode =
   | Resolved(node)
-  | Unresolved(AST_ReduceMap.t(node), int, int)
+  | Unresolved(AST.foldState(node), int, int)
   | UnresolvedFunction(funcitionLike, int, int);

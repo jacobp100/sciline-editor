@@ -1,4 +1,4 @@
-open AST_ReduceMap;
+open AST;
 open Value_Types;
 
 module AST = TechniCalcCalculator.AST_Base;
@@ -6,14 +6,14 @@ module AST = TechniCalcCalculator.AST_Base;
 let numberIsValidForBase = (base, nucleus) =>
   switch (base, nucleus) {
   | (_, "0" | "1")
-  | (None | Some(AST_ReduceMap.Oct | Hex), "2" | "3" | "4" | "5" | "6" | "7")
+  | (None | Some(Oct | Hex), "2" | "3" | "4" | "5" | "6" | "7")
   | (None | Some(Hex), "8" | "9")
   | (Some(Hex), "A" | "B" | "C" | "D" | "E" | "F") => true
   | _ => false
   };
 
 type numState = {
-  numBase: option(AST_ReduceMap.base),
+  numBase: option(base),
   numString: string,
   numHasDecimal: bool,
   numSup: option(node),

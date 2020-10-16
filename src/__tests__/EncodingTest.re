@@ -18,6 +18,4 @@ test("encodes and decodes", (.) => {
   let decoded = Encoding.decode(encoded)->Belt.Option.getExn;
 
   expect(value)->toEqual(decoded);
-
-  Js.undefined;
 });

@@ -85,7 +85,7 @@ module DigitGroups = {
 
 module BracketGroups = {
   type bracketGroup = {
-    openBracketRange: AST_ReduceMap.range,
+    openBracketRange: AST.range,
     body: DigitGroups.t,
   };
   type t = {
@@ -138,7 +138,7 @@ module BracketGroups = {
       // Every other element works differently to this
       let closeBracket =
         switch (superscript) {
-        | Some({AST_ReduceMap.superscriptBody: _, index}) =>
+        | Some({AST.superscriptBody: _, index}) =>
           elementWithRange("mo", (fst(range), index), ")")
         | None => elementWithRange("mo", range, ")")
         };
@@ -147,7 +147,7 @@ module BracketGroups = {
       ->DigitGroups.append(closeBracket)
       ->DigitGroups.map(body =>
           switch (superscript) {
-          | Some({AST_ReduceMap.superscriptBody}) =>
+          | Some({AST.superscriptBody}) =>
             createElement(
               ~attributes=[("id", ":" ++ snd(range)->string_of_int)],
               "msup",

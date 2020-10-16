@@ -1,6 +1,6 @@
 let stringOfOperator = x =>
   switch (x) {
-  | AST_ReduceMap.Add => "+"
+  | AST.Add => "+"
   | Sub => "-"
   | Mul => "&#x00D7;"
   | Div => "&#x00F7;"
@@ -9,7 +9,7 @@ let stringOfOperator = x =>
 
 let stringOfFunction = x =>
   switch (x) {
-  | AST_ReduceMap.Sin => "sin"
+  | AST.Sin => "sin"
   | Asin => "arcsin"
   | Sinh => "sinh"
   | Asinh => "arcsinh"
@@ -29,7 +29,7 @@ let stringOfFunction = x =>
 
 let stringOfBase = base =>
   switch (base) {
-  | AST_ReduceMap.Bin => "0b"
+  | AST.Bin => "0b"
   | Oct => "0o"
   | Hex => "0x"
   };

@@ -28,16 +28,12 @@ test("Parses numbers", (.) => {
   parseEval([|N5_S, DecimalSeparator|])
   ->expect
   ->toEqual(Some(ofString("5")));
-
-  Js.undefined;
 });
 
 test("Does not parse invalid numbers", (.) => {
   parseEval([|N1_S, DecimalSeparator, N2_S, DecimalSeparator, N3_S|])
   ->expect
-  ->toEqual(None);
-
-  Js.undefined;
+  ->toEqual(None)
 });
 
 test("Parses superscripts on numbers", (.) => {
@@ -52,8 +48,6 @@ test("Parses superscripts on numbers", (.) => {
   parseEval([|N1_S, Superscript1, N2_S, Arg, N0_S, Superscript1, N2_S, Arg|])
   ->expect
   ->toEqual(None);
-
-  Js.undefined;
 });
 
 test("Parses magnitudes", (.) => {
@@ -64,8 +58,6 @@ test("Parses magnitudes", (.) => {
   parseEval([|N2_S, Superscript1, N2_S, Arg, Magnitude1, N3_S, Arg|])
   ->expect
   ->toEqual(Some(ofString("4000")));
-
-  Js.undefined;
 });
 
 test("Parses imaginary units", (.) => {
@@ -100,8 +92,6 @@ test("Parses imaginary units", (.) => {
   |])
   ->expect
   ->toEqual(Some(ofString("-100")));
-
-  Js.undefined;
 });
 
 test("Angles", (.) => {
@@ -130,6 +120,4 @@ test("Angles", (.) => {
   parseEval([|N1_S, Degree, N1_S, Degree|])->expect->toEqual(None);
 
   parseEval([|N1_S, Degree, N1_S|])->expect->toEqual(None);
-
-  Js.undefined;
 });

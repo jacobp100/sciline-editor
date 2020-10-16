@@ -1,9 +1,11 @@
-open AST_ReduceMap;
+open AST;
 open Value_Builders;
 
-let map = (element: t('a), i, i') =>
+let map = (element: foldState('a), i, i') =>
   switch (element) {
-  | AST_ReduceMap.Superscript(_) => assert(false)
+  | AST.(Superscript(_) | Label(_)) =>
+    // Handled in Value.re
+    assert(false)
   | Function({func, squareResultSuperscript}) =>
     let squareResultSuperscript =
       Belt.Option.map(squareResultSuperscript, superscriptBody);

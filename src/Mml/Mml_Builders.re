@@ -20,7 +20,7 @@ let elementWithRange =
       ...attributes,
     ];
     createElement(~attributes, element, body);
-  | Some({AST_ReduceMap.superscriptBody, index: s}) =>
+  | Some({AST.superscriptBody, index: s}) =>
     let base =
       createElement(
         ~attributes=[("id", ":" ++ string_of_int(s)), ...attributes],

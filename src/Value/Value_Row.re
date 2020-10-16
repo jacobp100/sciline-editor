@@ -69,7 +69,7 @@ let parseNumbers = elements => {
         iter(Value_NumberParser.empty, Some((number, angle)), rest)
       | (
           Some(number),
-          Some((angleAccum, AST_ReduceMap.Degree)),
+          Some((angleAccum, AST.Degree)),
           ArcMinute | ArcSecond,
         )
       | (Some(number), Some((angleAccum, ArcMinute)), ArcSecond) =>

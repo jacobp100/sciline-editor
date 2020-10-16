@@ -1,13 +1,14 @@
-open AST_ReduceMap;
+open AST;
 open Value_Builders;
 
-let parse = (elements: array(AST_Types.t)) => {
+let parse = (elements: array(t)) => {
   let error = ref(None);
 
   let reduce = (accum, element, (i, i')) =>
     if (error^ == None) {
       switch (element) {
-      | Superscript(_) =>
+      | Superscript(_)
+      | Label(_) =>
         error := Some(i);
         MutableListBuilder.empty;
       | _ =>

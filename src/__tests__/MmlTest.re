@@ -54,8 +54,6 @@ test("Formats numbers", (.) => {
   ->toEqual(
       {j|$openRow<mn id="0:1">0x</mn><mn id="1:2">2</mn><mn id="2:3">3</mn><mn id="3:4">4</mn><mn id="4:5">5</mn><mn id="5:6">6</mn><mn id="6:7">7</mn>$closeRow|j},
     );
-
-  Js.undefined;
 });
 
 test("Invalid brackets", (.) => {
@@ -69,8 +67,6 @@ test("Invalid brackets", (.) => {
   ->toEqual(
       {j|$openRow<mn id="0:1">1</mn><mn id="1:2">2</mn><mo id="2:3" $invalidAttrs>)</mo><mn id="3:4">3</mn>$closeRow|j},
     );
-
-  Js.undefined;
 });
 
 test("Bracket states", (.) => {
@@ -94,6 +90,4 @@ test("Bracket states", (.) => {
   ->toEqual(
       {j|$openRow<mn id="0:1">1</mn><mrow><mo id="1:2">(</mo><mn id="2:3">2</mn><mrow><mo id="3:4">(</mo><mn id="4:5">3</mn><mo id="5:6">)</mo></mrow><mn id="6:7">4</mn><mo id="7:8">)</mo></mrow><mn id="8:9">5</mn>$closeRow|j},
     );
-
-  Js.undefined;
 });
