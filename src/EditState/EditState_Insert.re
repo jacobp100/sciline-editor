@@ -33,7 +33,10 @@ let%private skipInsertables = (x: array(AST.t), ~from, ~direction) => {
   let rec iter = (~index, ~bracketLevel) =>
     switch (Belt.Array.get(x, index)) {
     | None
-    | Some(Add | Sub | Mul | Div | Dot) when bracketLevel == 0 => Some(index)
+    | Some(Add | Sub | Mul | Div | Dot)
+    | Some(Asin | Asinh | Acos | Acosh | Atan | Atanh | Log | Re | Im | SinS)
+    | Some(SinhS | CosS | CoshS | TanS | TanhS | Gamma) when bracketLevel == 0 =>
+      Some(index)
     | None => None
     | Some(v) =>
       let bracketLevel =

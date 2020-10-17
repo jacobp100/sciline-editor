@@ -1,9 +1,9 @@
 open EditState_Types;
 open EditState_Base;
 
-let%private hasIsolatedLabelAtIndex = (elements: array(AST.t), index: int) =>
+let%private isIsolatedLabel = (elements, index) =>
   switch (Belt.Array.get(elements, index)) {
-  | Some(LabelS(_)) =>
+  | Some(AST.LabelS(_)) =>
     switch (Belt.Array.get(elements, index - 1)) {
     | Some(LabelS(_)) => false
     | _ => true
@@ -98,7 +98,7 @@ let delete = (editState: t) => {
   let {index, elements, allowLabelEditing} = editState;
   let elements = AST.normalize(elements);
 
-  if (hasIsolatedLabelAtIndex(elements, index)) {
+  if (!allowLabelEditing && isIsolatedLabel(elements, index)) {
     let (elements, _) = ArrayUtil.splice(elements, ~offset=index, ~len=1);
     make(~index, ~elements, ~allowLabelEditing);
   } else if (index > 0) {
