@@ -146,7 +146,17 @@ let insertArray =
     );
   if (valid) {
     let elements = ArrayUtil.insertArray(elements, insertedElements, index);
-    let index = index + Belt.Array.length(insertedElements);
+
+    let advanceBy =
+      Belt.Array.getIndexByU(insertedElements, (. element) =>
+        switch (element) {
+        | LabelS(_) => true
+        | _ => false
+        }
+      )
+      ->Belt.Option.getWithDefault(Belt.Array.length(insertedElements));
+
+    let index = index + advanceBy;
     make(~index, ~elements, ~allowLabelEditing);
   } else {
     editState;
