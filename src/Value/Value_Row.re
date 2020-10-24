@@ -13,10 +13,7 @@ let rec parseRest = (~current=None, elements) =>
   | (None, [Resolved(next), ...rest]) =>
     parseRest(~current=Some(next), rest)
   | (Some(a), [Unresolved(Percent, _, _)]) => Ok(Node.percent(a))
-  | (
-      _,
-      [UnresolvedFunction(_, _, i'), ..._] | [Unresolved(_, _, i'), ..._],
-    ) =>
+  | (_, [UnresolvedFunction(_, _, i') | Unresolved(_, _, i'), ..._]) =>
     Error(i')
   | (Some(v), []) => Ok(v)
   | (None, []) => UnknownError

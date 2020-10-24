@@ -54,7 +54,7 @@ type foldState('a) =
   | Conj
   | CustomAtom({
       mml: string,
-      value: TechniCalcCalculator.Value_Encoding.encoding,
+      value: string,
       superscript: option(superscript('a)),
     })
   | DecimalSeparator
@@ -162,8 +162,8 @@ type foldState('a) =
       superscript: option(superscript('a)),
     })
   | UnitConversion({
-      fromUnits: TechniCalcCalculator.Unit_Types.units,
-      toUnits: TechniCalcCalculator.Unit_Types.units,
+      fromUnits: array(TechniCalcCalculator.Unit_Types.unitPower),
+      toUnits: array(TechniCalcCalculator.Unit_Types.unitPower),
     })
   | Variable({
       nucleus: string,

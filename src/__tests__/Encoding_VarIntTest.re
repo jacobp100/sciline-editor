@@ -1,7 +1,7 @@
 open Jest;
 
 test("encodes and decodes", (.) => {
-  for (value in 0 to 1024) {
+  for (value in 0 to 4096) {
     let encoded = Encoding_VarInt.encodeElement(value);
 
     expect(Encoding_VarInt.decodedLength(encoded))->toEqual(1);

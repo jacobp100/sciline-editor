@@ -36,7 +36,7 @@ let map = (element: foldState('a), i, i') =>
   | Variable({nucleus, superscript}) =>
     Resolved(Node.variable(nucleus)->withSuperscript(superscript))
   | CustomAtom({value, superscript}) =>
-    Resolved(Node.ofEncoded(value)->withSuperscript(superscript))
+    Resolved(Node.ofString(value)->withSuperscript(superscript))
   | ConstPi(superscript) => Node.pi->withSuperscript(superscript)->Resolved
   | ConstE(superscript) => Node.e->withSuperscript(superscript)->Resolved
   | Frac({num, den, superscript}) =>

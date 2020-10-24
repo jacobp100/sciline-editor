@@ -21,6 +21,7 @@ let unitMmlSymbol = (unit: TechniCalcCalculator.Unit_Types.unitType) =>
   | Foot => "ft"
   | Yard => "yd"
   | Mile => "mi"
+  | NauticalMile => "NM"
   | LightYear => "ly"
   | Parsec => "pc"
   | Angstrom => "&#x212B;"
@@ -58,6 +59,17 @@ let unitMmlSymbol = (unit: TechniCalcCalculator.Unit_Types.unitType) =>
   | FluidOunce => "fl oz"
   | Milliliter => "ml"
   | Centiliter => "cl"
+  /* Speed */
+  | Knot => "kn"
+  /* Force */
+  | Newton => "N"
+  | PoundForce => "lbf"
+  /* Pressure */
+  | Pascal => "Pa"
+  | Atmosphere => "atm"
+  | Bar => "bar"
+  | HectoPascal => "hPa"
+  | Millibar => "mbar"
   /* Energy */
   | Joule => "J"
   | Calorie => "cal"
@@ -122,16 +134,17 @@ let unitToMml = (unit: TechniCalcCalculator.Unit_Types.unitType) =>
   };
 
 let unitPowerToMml =
-    ((unit, power): TechniCalcCalculator.Unit_Types.unitPower) =>
-  switch (power) {
-  | 1 => unitToMml(unit)
-  | _ =>
-    let powerMml = "<mn>" ++ string_of_int(power) ++ "</mn>";
-    "<msup>" ++ unitToMml(unit) ++ powerMml ++ "</msup>";
-  };
+  (. (unit, power): TechniCalcCalculator.Unit_Types.unitPower) =>
+    switch (power) {
+    | 1 => unitToMml(unit)
+    | _ =>
+      let powerMml = "<mn>" ++ string_of_int(power) ++ "</mn>";
+      "<msup>" ++ unitToMml(unit) ++ powerMml ++ "</msup>";
+    };
 
-let unitPowersToMml = (units: TechniCalcCalculator.Unit_Types.units) => {
+let unitPowersToMml =
+    (units: array(TechniCalcCalculator.Unit_Types.unitPower)) => {
   let unitsMmlList =
-    Belt.Array.map(units, unitPowerToMml)->Belt.List.fromArray;
+    Belt.Array.mapU(units, unitPowerToMml)->Belt.List.fromArray;
   String.concat("<mspace width=\"0.1em\" />", unitsMmlList);
 };

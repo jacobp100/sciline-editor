@@ -1,13 +1,24 @@
 const path = require("path");
 const fs = require("fs");
 
-const {
-  mapping,
-  reverseMapping,
-} = require("./src/Encoding/Encoding_BuildMapping.bs");
+const files = [
+  {
+    in: "src/Encoding/Encoding_BuildElementMapping.bs",
+    out: "src/Encoding/Encoding_ElementMapping.js",
+  },
+  {
+    in: "src/Encoding/Encoding_BuildUnitMapping.bs",
+    out: "src/Encoding/Encoding_UnitMapping.js",
+  },
+];
 
-const js = `export const mapping = ${JSON.stringify(mapping)};
-export const reverseMapping = ${JSON.stringify(reverseMapping)};
-`;
+files.forEach((file) => {
+  const { mapping, reverseMapping } = require(path.join(__dirname, file.in));
 
-fs.writeFileSync(path.join(__dirname, "src/Encoding/Encoding_Mapping.js"), js);
+  const js = [
+    `export const mapping = ${JSON.stringify(mapping)};`,
+    `export const reverseMapping = ${JSON.stringify(reverseMapping)};`,
+  ].join("\n");
+
+  fs.writeFileSync(path.join(__dirname, file.out), js);
+});

@@ -1,7 +1,8 @@
 open AST;
 
-[@bs.module "./Encoding_Mapping"] external mapping: array(int) = "mapping";
-[@bs.module "./Encoding_Mapping"]
+[@bs.module "./Encoding_ElementMapping"]
+external mapping: array(int) = "mapping";
+[@bs.module "./Encoding_ElementMapping"]
 external reverseMapping: array(t) = "reverseMapping";
 
 let toInt = (element: t): int =>

@@ -29,8 +29,8 @@ type t =
   | Re
   | Sub
   | UnitConversion({
-      fromUnits: TechniCalcCalculator.Unit_Types.units,
-      toUnits: TechniCalcCalculator.Unit_Types.units,
+      fromUnits: array(TechniCalcCalculator.Unit_Types.unitPower),
+      toUnits: array(TechniCalcCalculator.Unit_Types.unitPower),
     })
   /* AtomS */
   | CloseBracketS
@@ -63,7 +63,7 @@ type t =
   | TanS
   | CustomAtomS({
       mml: string,
-      value: TechniCalcCalculator.Value_Encoding.encoding,
+      value: string,
     })
   | VariableS(string)
   /* Atom1 */
