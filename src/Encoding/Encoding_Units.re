@@ -1,4 +1,4 @@
-open Encoding_Base;
+open TechniCalcCalculator.Encoding;
 
 /*
  Encoding *msuuuuuuuu

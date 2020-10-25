@@ -1,4 +1,4 @@
-open Encoding_Base;
+open TechniCalcCalculator.Encoding;
 
 let%private encodeUnitConversion = (~fromUnits, ~toUnits) =>
   Encoding_Units.encode(fromUnits) ++ Encoding_Units.encode(toUnits);
@@ -10,10 +10,17 @@ let%private readUnitConversion = reader =>
   };
 
 let%private encodeCustomAtom = (~mml, ~value) =>
-  encodeString(mml) ++ encodeString(value);
+  encodeString(mml) ++ /* Already encoded */ value;
 let%private readCustomAtom = reader =>
-  switch (readString(reader), readString(reader)) {
-  | (Some(mml), Some(value)) => AST_Types.CustomAtomS({mml, value})->Some
+  switch (
+    readString(reader),
+    TechniCalcCalculator.Encoding_Value.readValue(reader),
+  ) {
+  | (Some(mml), Some(value)) =>
+    // This is a round-trip, but it does check for validity
+    // And is required to get the reader in the right position
+    let value = TechniCalcCalculator.Encoding_Value.encodeValue(value);
+    AST_Types.CustomAtomS({mml, value})->Some;
   | _ => None
   };
 
