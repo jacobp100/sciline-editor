@@ -19,6 +19,7 @@ type t =
   | Dot
   | Factorial
   | Gamma
+  | Gradian
   | Hex
   | Im
   | Log
@@ -121,6 +122,7 @@ let argCountExn = (arg: t) =>
   | Dot
   | Factorial
   | Gamma
+  | Gradian
   | Hex
   | Im
   | Log

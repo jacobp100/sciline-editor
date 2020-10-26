@@ -29,7 +29,8 @@ type func =
 type angle =
   | Degree
   | ArcMinute
-  | ArcSecond;
+  | ArcSecond
+  | Gradian;
 type operator =
   | Add
   | Sub
@@ -240,6 +241,7 @@ let reduceMap =
     | Degree => (Angle(Degree), i + 1)
     | ArcMinute => (Angle(ArcMinute), i + 1)
     | ArcSecond => (Angle(ArcSecond), i + 1)
+    | Gradian => (Angle(Gradian), i + 1)
     | UnitConversion({fromUnits, toUnits}) => (
         UnitConversion({fromUnits, toUnits}),
         i + 1,

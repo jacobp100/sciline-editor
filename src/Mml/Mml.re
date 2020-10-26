@@ -90,13 +90,15 @@ let reduce = (accum, element: foldState(string), range) =>
   | Angle(Degree) =>
     elementWithRange("mo", range, "&#x00B0;")->Mml_Accum.append(accum, _)
   | Angle(angle) =>
-    let symbol =
+    let superscript =
       switch (angle) {
-      | ArcMinute => "&#x2032;"
-      | ArcSecond => "&#x2033;"
+      | ArcMinute => createElement("mo", "&#x2032;")
+      | ArcSecond => createElement("mo", "&#x2033;")
+      | Gradian =>
+        createElement(~attributes=[("mathvariant", "normal")], "mi", "g")
       | Degree => assert(false)
       };
-    elementWithRange("msup", range, "<mo />" ++ createElement("mo", symbol))
+    elementWithRange("msup", range, "<mo />" ++ superscript)
     ->Mml_Accum.append(accum, _);
   | ImaginaryUnit(superscript) =>
     elementWithRange(~superscript?, "mi", range, "i")

@@ -39,8 +39,10 @@ let rec parsePostfixes = elements =>
   };
 let next = parsePostfixes;
 
+type angleState = option((Value_Types.node, AST_ReduceMap.angle));
+
 let parseNumbers = elements => {
-  let next' = (numberState, angleState, rest) => {
+  let next' = (numberState, angleState: angleState, rest) => {
     switch (Value_NumberParser.toNode(numberState), angleState) {
     | (None, Some((angleAccum, _))) =>
       next([Resolved(angleAccum), ...rest])
@@ -48,7 +50,7 @@ let parseNumbers = elements => {
     | _ => next(elements)
     };
   };
-  let rec iter = (numberState, angleState, rest) => {
+  let rec iter = (numberState, angleState: angleState, rest) => {
     switch (rest) {
     | [Unresolved(Angle(angle), i, _), ...rest] =>
       let number =
@@ -59,16 +61,14 @@ let parseNumbers = elements => {
           Some(Node.(mul(number, div(pi, ofInt(10800)))))
         | (Some(number), ArcSecond) =>
           Some(Node.(mul(number, div(pi, ofInt(648000)))))
+        | (Some(number), Gradian) =>
+          Some(Node.(mul(number, div(pi, ofInt(200)))))
         | (None, _) => None
         };
       switch (number, angleState, angle) {
       | (Some(number), None, _) =>
         iter(Value_NumberParser.empty, Some((number, angle)), rest)
-      | (
-          Some(number),
-          Some((angleAccum, AST.Degree)),
-          ArcMinute | ArcSecond,
-        )
+      | (Some(number), Some((angleAccum, Degree)), ArcMinute | ArcSecond)
       | (Some(number), Some((angleAccum, ArcMinute)), ArcSecond) =>
         iter(
           Value_NumberParser.empty,

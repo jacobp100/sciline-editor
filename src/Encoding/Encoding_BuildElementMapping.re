@@ -1,7 +1,7 @@
-let%private makeSureThisIsTheLastIndex = 78;
+let%private makeSureThisIsTheLastIndex = 79;
 let%private toInt = (element: AST.t) =>
   switch (element) {
-  /* Most common (make varint encoding more efficient) */
+  /* Most common (make var-int encoding more efficient) */
   | N0_S => 0
   | N1_S => 1
   | N2_S => 2
@@ -82,7 +82,9 @@ let%private toInt = (element: AST.t) =>
   | Min2S => 75
   | Max2S => 76
   | Gcd2S => 77
-  | Lcm2S => makeSureThisIsTheLastIndex
+  | Lcm2S => 78
+  /* 3rd set Additions */
+  | Gradian => makeSureThisIsTheLastIndex
   /* Custom handling */
   | UnitConversion(_)
   | CustomAtomS(_)
